@@ -19,6 +19,7 @@ public final class Constants
          * TunerConstants
          */
         public static final int INTAKE = 20;
+        public static final int SHOOTERFLYWHEEL = 21;
     }
 
     public static class Drive
@@ -44,6 +45,11 @@ public final class Constants
     {
         public static final double LOOP_PERIOD_SECS = 0.02;
         public static final double MOTOR_VOLTAGE    = 12.0;
+    }
+    public static class Flywheel{
+        public static final double PIDTolerance =1.;
+        public static final double MAX_FLYWHEEL_SPEED = 1.;
+        public static final double VELOCITY_RANGE = 0.15;
     }
 
     public static class Vision
