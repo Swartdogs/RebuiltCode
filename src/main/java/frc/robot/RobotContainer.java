@@ -18,6 +18,7 @@ import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.vision.Vision;
 
 public class RobotContainer {
 
@@ -33,6 +34,9 @@ public class RobotContainer {
 
     private final CommandSwerveDrivetrain _drivetrain = TunerConstants.createDrivetrain();
     private final Intake _intake = new Intake();
+
+    public final Vision visionLeft = Vision.create(_drivetrain, Constants.Vision.LEFT_CAMERA_NAME);
+    public final Vision visionRight = Vision.create(_drivetrain, Constants.Vision.RIGHT_CAMERA_NAME);
 
     public RobotContainer() {
         configureBindings();

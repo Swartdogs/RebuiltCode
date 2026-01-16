@@ -71,4 +71,21 @@ public final class Constants
         public static final double LOOP_PERIOD_SECS = 0.02;
         public static final double MOTOR_VOLTAGE = 12.0;
     }
+
+    public static class Vision
+    {
+        public static final String LEFT_CAMERA_NAME      = "limelight-left";
+        public static final String RIGHT_CAMERA_NAME     = "limelight-right";
+
+        public static final double MAX_DETECTION_RANGE   = 6.0;   // meters
+        public static final double BASE_XY_STD_DEV       = 0.5;   // meters
+        public static final double BASE_THETA_STD_DEV    = 9999.0; // Don't let vision correct heading, trust gyro
+
+        public static final double MULTI_TAG_MULTIPLIER  = 0.5;   // Trust 2+ tags more
+        public static final double FAR_TAG_MULTIPLIER    = 2.0;   // Trust far tags less
+        public static final double FAR_TAG_THRESHOLD     = 4.0;   // meters
+
+        // Reject vision updates when spinning faster than this (MegaTag2 guidance)
+        public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
+    }
 }
