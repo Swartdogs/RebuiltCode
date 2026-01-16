@@ -1,7 +1,6 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
-
 public final class Constants
 {
     public static class AdvantageKit
@@ -41,6 +40,7 @@ public final class Constants
         public static final int BL_TURN  = 6;
         public static final int BR_TURN  = 8;
         public static final int INTAKE   = 67; 
+        public static final int SHOOTERFLYWHEEL = 21;
     }
 
     public static class Drive
@@ -50,12 +50,20 @@ public final class Constants
 
     public static class Intake 
     {
-        public static final double INTAKE_VOLTS;
-        public static final int    CURRENT_LIMIT; 
+ 
     }
 
     public static class General
     {
-        public static final double MOTOR_VOLTS; 
+        public static final double MOTOR_VOLTAGE    = 12.0;
+        public static final double MAX_NEO_SPEED    = 5874;
+
+    }
+    public static class Flywheel{
+        public static final double PIDTolerance =1.;
+        public static final double MAX_FLYWHEEL_SPEED = 1.;
+        public static final double VELOCITY_RANGE = 0.15;
+
+        
     }
 }

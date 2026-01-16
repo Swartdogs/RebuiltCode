@@ -1,0 +1,48 @@
+package frc.robot.subsystems.shooter;
+
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+
+import frc.robot.Constants;
+
+public class ShooterFlywheelIOSim implements ShooterFlywheelIO
+{
+    private final DCMotor    _motor        = DCMotor.getNEO(1);
+    private final DCMotorSim _motorSim     = new DCMotorSim(_motor, 1, 0.001);
+
+    public ShooterFlywheelIOSim()
+    {
+        // getVoltage() calculates voltage needed for a given torque at a given speed.
+        // Torque at max speed is 0
+    }
+
+    @Override
+    public void updateInputs(ShooterFlywheelIOInputs inputs)
+    {
+        _motorSim.update(Constants.General.LOOP_PERIOD_SECS);
+        inputs.velocity = _motorSim.getAngularVelocityRPM();
+    }
+
+
+    @Override
+    public void setVelocity(double velocity)
+    {
+        _lowerAppliedVolts = LOWER_MOTOR_MAX_VOLTAGE * velocity / Units.radiansPerSecondToRotationsPerMinute(_lowerMotor.freeSpeedRadPerSec);
+        _lowerMotorSim.setInputVoltage(_lowerAppliedVolts);
+    }
+
+    @Override
+    public void setUpperVolts(double volts)
+    {
+        _upperMotorSim.setInputVoltage(volts);
+        _upperAppliedVolts = volts;
+    }
+
+    @Override
+    public void setLowerVolts(double volts)
+    {
+        _lowerMotorSim.setInputVoltage(volts);
+        _lowerAppliedVolts = volts;
+    }
+}

@@ -1,4 +1,4 @@
-package frc.robot.subsystems.shooter;
+package frc.robot.subsystems.turret;
 
 import org.littletonrobotics.junction.AutoLog;
 
@@ -17,5 +17,14 @@ public interface ShooterFlywheelIO
 
     public default void setVelocity(double velocity)
     {
+    }
+    public default double getVelocity()
+    {
+        return 0. ;
+    }
+
+    public default void stop()
+    {
+
     }
 }
