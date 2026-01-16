@@ -2,11 +2,14 @@ package frc.robot.subsystems.intake;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import edu.wpi.first.epilogue.Logged; 
+
 import frc.robot.Constants;
 
+@Logged
 public class Intake extends SubsystemBase
 {
     public enum IntakeState

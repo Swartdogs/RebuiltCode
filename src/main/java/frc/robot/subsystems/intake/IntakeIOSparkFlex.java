@@ -24,7 +24,7 @@ public class IntakeIOSparkFlex implements IntakeIO
         .smartCurrentLimit(Constants.Intake.CURRENT_LIMIT)
         .voltageCompensation(Constants.General.MOTOR_VOLTAGE);
 
-        _motor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        _motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     @Override
