@@ -2,11 +2,14 @@ package frc.robot.subsystems.intake;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import edu.wpi.first.epilogue.Logged; 
+
 import frc.robot.Constants;
 
+@Logged
 public class Intake extends SubsystemBase
 {
     public enum IntakeState
@@ -25,8 +28,10 @@ public class Intake extends SubsystemBase
         _io = io;
     }
 
-    public static Intake create(){
-        IntakeIO io = switch (Constants.CURRENT_MODE){
+    public static Intake create()
+    {
+        IntakeIO io = switch (Constants.CURRENT_MODE)
+        {
             case REAL -> new IntakeIOSparkFlex();
             case SIM -> new IntakeIOSim();
             default -> new IntakeIO() {};
@@ -53,19 +58,25 @@ public class Intake extends SubsystemBase
 
     public void initializeCamera() 
     {
-        _camera = CameraServer.startAutomaticCapture();
-        _camera.setResolution(320, 240); 
-        _camera.setFPS(15);
+        if (_camera != null || Constants.CURRENT_MODE != Constants.Mode.REAL)
+        {
+            return;
+        }
+
+        _camera = CameraServer.startAutomaticCapture(Constants.Intake.CAMERA_NAME, Constants.Intake.CAMERA_DEVICE_INDEX);
+        _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
+        _camera.setResolution(Constants.Intake.CAMERA_WIDTH, Constants.Intake.CAMERA_HEIGHT);
+        _camera.setFPS(Constants.Intake.CAMERA_FPS);
     }
 
     public void setInSpeed(double speed)
     {
-        _inVolts = Constants.General.MOTOR_VOLTAGE * speed;
+        _inVolts = Constants.General.MOTOR_VOLTAGE * MathUtil.clamp(speed, 0.0, 1.0);
     }
 
     public void setOutSpeed(double speed)
     {
-        _outVolts = -Constants.General.MOTOR_VOLTAGE * speed;
+        _outVolts = -Constants.General.MOTOR_VOLTAGE * MathUtil.clamp(speed, 0.0, 1.0);
     }
 
     public double getSpeed()

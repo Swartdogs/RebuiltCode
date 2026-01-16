@@ -45,11 +45,17 @@ public final class Constants
         
     }
 
-    public static class Intake 
+    public static class Intake
     {
         public static final double INTAKE_VOLTS  = 8.0;
-        public static final double REVERSE_VOLTS  = 4.0;
+        public static final double REVERSE_VOLTS = -4.0;
         public static final int    CURRENT_LIMIT = 40;
+
+        public static final int CAMERA_DEVICE_INDEX = 0;
+        public static final String CAMERA_NAME = "IntakeCam";
+        public static final int CAMERA_WIDTH = 320;
+        public static final int CAMERA_HEIGHT = 240;
+        public static final int CAMERA_FPS = 15;
     }
 
     public static class General
