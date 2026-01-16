@@ -32,6 +32,7 @@ public class RobotContainer
     public RobotContainer()
     {
         configureBindings();
+        intake.initializeCamera();
     }
 
     private void configureBindings()
