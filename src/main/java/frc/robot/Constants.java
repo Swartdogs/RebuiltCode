@@ -9,7 +9,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import frc.robot.generated.TunerConstants;
-import edu.wpi.first.wpilibj.RobotBase;
 
 public final class Constants
 {
