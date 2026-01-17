@@ -12,6 +12,7 @@ import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
@@ -21,8 +22,42 @@ public class Intake extends SubsystemBase
 {
     public enum IntakeState
     {
-        On, Off, Reverse
+        Forward, Off, Reverse
     }
+    
+    public class IntakeCommand extends Command
+    {
+        private final IntakeState _state;
+
+        public IntakeCommand(IntakeState state)
+        {
+            _state  = state;
+
+            // addRequirements(intake);
+        }
+
+        @Override
+        public void initialize()
+        {
+            set(_state);
+        }
+
+        @Override
+        public void end(boolean interrupted)
+        {
+            set(IntakeState.Off);
+        }
+
+        @Override
+        public boolean isFinished()
+        {
+            return false;
+        }
+    }
+
+    public Command     cmdForward() { return new IntakeCommand(IntakeState.Forward) ; }
+    public Command     cmdReverse() { return new IntakeCommand(IntakeState.Reverse) ; }
+
 
     private final SparkFlex _intakeMotor;
     private UsbCamera       _camera;
@@ -65,7 +100,7 @@ public class Intake extends SubsystemBase
     {
         _intakeMotor.setVoltage(switch (state)
         {
-            case On -> Constants.Intake.INTAKE_VOLTS;
+            case Forward -> Constants.Intake.INTAKE_VOLTS;
             case Reverse -> Constants.Intake.REVERSE_VOLTS;
             case Off -> 0;
         });
