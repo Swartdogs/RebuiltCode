@@ -16,10 +16,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
-import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.intake.SetIntake;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.Intake.IntakeState;
 
 public class RobotContainer
 {
@@ -39,11 +40,10 @@ public class RobotContainer
     private final CommandXboxController joystick = new CommandXboxController(0);
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    public final Intake intake = Intake.create();
+    public final Intake intake = new Intake();
 
     public RobotContainer() {
         configureBindings();
-        intake.initializeCamera();
     }
 
     private void configureBindings()
@@ -77,8 +77,11 @@ public class RobotContainer
         // Reset the field-centric heading on left bumper press.
         joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-        joystick.rightBumper().whileTrue(IntakeCommands.run(intake));
-        joystick.rightTrigger().whileTrue(IntakeCommands.runReverse(intake));
+        SetIntake runIntake = new SetIntake(intake, IntakeState.On);
+        SetIntake reverseIntake = new SetIntake(intake, IntakeState.Reverse);
+
+        joystick.rightBumper().whileTrue(runIntake);
+        joystick.rightTrigger().whileTrue(reverseIntake);
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
