@@ -49,6 +49,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
 
+    private final String _limelightLeftName  = Constants.Vision.LEFT_CAMERA_NAME;
+    private final String _limelightRightName = Constants.Vision.RIGHT_CAMERA_NAME;
+
     private Limelight _limelightLeft;
     private Limelight _limelightRight;
     private LimelightPoseEstimator _poseEstimatorLeft;
@@ -334,18 +337,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
 
         if (_limelightLeft == null) {
-            _limelightLeft = new Limelight(Constants.Vision.LEFT_CAMERA_NAME);
-            _limelightRight = new Limelight(Constants.Vision.RIGHT_CAMERA_NAME);
+            _limelightLeft = new Limelight(_limelightLeftName);
+            _limelightRight = new Limelight(_limelightRightName);
             _poseEstimatorLeft = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2);
             _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG2);
         }
 
-        double gyroRateDegPerSec = Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble());
-        if (gyroRateDegPerSec > Constants.Vision.MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC) {
+        if (isRotatingTooFast() || isOnBump()) {
             _hasVisionLeft = false;
             _hasVisionRight = false;
             return;
         }
+
+        // TODO: Learn how Limelight MegaTag2 works internally and consider implementing
+        // our own pose prediction using the raw fiducial data (tag positions, distances,
+        // ambiguity values) instead of relying on the pre-computed pose estimate.
 
         var rotation = getPigeon2().getRotation3d();
         var angularVelocity = new AngularVelocity3d(
@@ -396,5 +402,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds, stdDevs);
 
         return true;
+    }
+
+    private boolean isRotatingTooFast() {
+        double gyroRateDegPerSec = Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble());
+        return gyroRateDegPerSec > Constants.Vision.MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC;
+    }
+
+    private boolean isOnBump() {
+        var rotation = getPigeon2().getRotation3d();
+        double pitchDeg = Math.abs(Math.toDegrees(rotation.getY()));
+        double rollDeg = Math.abs(Math.toDegrees(rotation.getX()));
+        return pitchDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG
+            || rollDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG;
     }
 }

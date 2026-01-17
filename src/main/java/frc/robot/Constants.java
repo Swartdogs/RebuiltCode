@@ -71,5 +71,8 @@ public final class Constants
 
         // Reject vision updates when spinning faster than this (MegaTag2 guidance)
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
+
+        // Reject vision updates when robot is tilted more than this (on ramp)
+        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct vaule
     }
 }
