@@ -329,7 +329,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     private void updateVision() {
-        if (!RobotBase.isReal()) {
+        if (RobotBase.isSimulation()) {
             return;
         }
 
