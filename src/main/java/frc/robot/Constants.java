@@ -62,12 +62,12 @@ public final class Constants
 
     public static class Vision
     {
-        public static final String LEFT_CAMERA_NAME      = "limelight-left";
-        public static final String RIGHT_CAMERA_NAME     = "limelight-right";
+        public static final String LEFT_CAMERA_NAME  = "limelight-left";
+        public static final String RIGHT_CAMERA_NAME = "limelight-right";
 
-        public static final double MAX_DETECTION_RANGE   = 6.0;    // meters
-        public static final double XY_STD_DEV            = 0.7;    // meters
-        public static final double THETA_STD_DEV         = 9999.0; // Trust gyro for heading, not vision
+        public static final double MAX_DETECTION_RANGE = 6.0;    // meters
+        public static final double XY_STD_DEV          = 0.7;    // meters
+        public static final double THETA_STD_DEV       = 9999.0; // Trust gyro for heading, not vision
 
         // Reject vision updates when spinning faster than this (MegaTag2 guidance)
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
