@@ -49,13 +49,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
 
-    private final String _limelightLeftName  = Constants.Vision.LEFT_CAMERA_NAME;
-    private final String _limelightRightName = Constants.Vision.RIGHT_CAMERA_NAME;
+    private final Limelight _limelightLeft  = RobotBase.isReal() ? new Limelight(Constants.Vision.LEFT_CAMERA_NAME) : null;
+    private final Limelight _limelightRight = RobotBase.isReal() ? new Limelight(Constants.Vision.RIGHT_CAMERA_NAME) : null;
 
-    private Limelight _limelightLeft;
-    private Limelight _limelightRight;
-    private LimelightPoseEstimator _poseEstimatorLeft;
-    private LimelightPoseEstimator _poseEstimatorRight;
+    private final LimelightPoseEstimator _poseEstimatorLeft  = _limelightLeft != null ? _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2) : null;
+    private final LimelightPoseEstimator _poseEstimatorRight = _limelightRight != null ? _limelightRight.createPoseEstimator(EstimationMode.MEGATAG2) : null;
 
     private double _lastTimestampLeft  = 0.0;
     private double _lastTimestampRight = 0.0;
@@ -332,15 +330,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     private void updateVision() {
-        if (RobotBase.isSimulation()) {
-            return;
-        }
-
         if (_limelightLeft == null) {
-            _limelightLeft = new Limelight(_limelightLeftName);
-            _limelightRight = new Limelight(_limelightRightName);
-            _poseEstimatorLeft = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2);
-            _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG2);
+            return;
         }
 
         if (isRotatingTooFast() || isOnBump()) {
