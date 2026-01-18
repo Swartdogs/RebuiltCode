@@ -43,6 +43,13 @@ public class Intake extends SubsystemBase
         return setCommand(IntakeState.Reverse);
     }
 
+    public Command getOffCmd() 
+    {
+        return runOnce(
+            () -> set(IntakeState.Off)
+        );
+    }
+
     private final SparkFlex _intakeMotor;
     private UsbCamera       _camera;
 
