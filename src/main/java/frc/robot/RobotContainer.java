@@ -13,9 +13,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.intake.Intake;
 
 public class RobotContainer
 {
@@ -28,8 +28,6 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final CommandSwerveDrivetrain        _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    public final Vision                          visionLeft  = Vision.create(_drivetrain, Constants.Vision.LEFT_CAMERA_NAME);
-    public final Vision                          visionRight = Vision.create(_drivetrain, Constants.Vision.RIGHT_CAMERA_NAME);
 
     public RobotContainer()
     {
