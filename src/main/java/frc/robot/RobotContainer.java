@@ -17,25 +17,22 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
-public class RobotContainer {
+public class RobotContainer
+{
 
     /* Setting up bindings for necessary control of the swerve drive platform */
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+    private final SwerveRequest.FieldCentric     drive       = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+    private final SwerveRequest.SwerveDriveBrake brake       = new SwerveRequest.SwerveDriveBrake();
+    private final SwerveRequest.PointWheelsAt    point       = new SwerveRequest.PointWheelsAt();
+    private final Telemetry                      _logger     = new Telemetry(Constants.Drive.MAX_SPEED);
+    private final CommandXboxController          _joystick   = new CommandXboxController(0);
+    private final CommandSwerveDrivetrain        _drivetrain = TunerConstants.createDrivetrain();
+    private final Intake                         _intake     = new Intake();
+    public final Vision                          visionLeft  = Vision.create(_drivetrain, Constants.Vision.LEFT_CAMERA_NAME);
+    public final Vision                          visionRight = Vision.create(_drivetrain, Constants.Vision.RIGHT_CAMERA_NAME);
 
-    private final Telemetry _logger = new Telemetry(Constants.Drive.MAX_SPEED);
-
-    private final CommandXboxController _joystick = new CommandXboxController(0);
-
-    private final CommandSwerveDrivetrain _drivetrain = TunerConstants.createDrivetrain();
-    private final Intake _intake = new Intake();
-
-    public final Vision visionLeft = Vision.create(_drivetrain, Constants.Vision.LEFT_CAMERA_NAME);
-    public final Vision visionRight = Vision.create(_drivetrain, Constants.Vision.RIGHT_CAMERA_NAME);
-
-    public RobotContainer() {
+    public RobotContainer()
+    {
         configureBindings();
     }
 
@@ -44,26 +41,22 @@ public class RobotContainer {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         _drivetrain.setDefaultCommand(
-            // Drivetrain will execute this command periodically
-            _drivetrain.applyRequest(() ->
-                drive.withVelocityX(MathUtil.applyDeadband(-_joystick.getLeftY() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive forward with negative Y (forward)
-                    .withVelocityY(MathUtil.applyDeadband(-_joystick.getLeftX() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive left with negative X (left)
-                    .withRotationalRate(-_joystick.getRightX() * Constants.Drive.MAX_ANGULAR_RATE) // Drive counterclockwise with negative X (left)
-            )
+                // Drivetrain will execute this command periodically
+                _drivetrain.applyRequest(
+                        () -> drive.withVelocityX(MathUtil.applyDeadband(-_joystick.getLeftY() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive forward with negative Y (forward)
+                                .withVelocityY(MathUtil.applyDeadband(-_joystick.getLeftX() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive left with negative X (left)
+                                .withRotationalRate(-_joystick.getRightX() * Constants.Drive.MAX_ANGULAR_RATE) // Drive counterclockwise with negative X (left)
+                )
         );
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
 
-        RobotModeTriggers.disabled().whileTrue(
-            _drivetrain.applyRequest(() -> idle).ignoringDisable(true)
-        );
+        RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
         _joystick.a().whileTrue(_drivetrain.applyRequest(() -> brake));
-        _joystick.b().whileTrue(_drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-_joystick.getLeftY(), -_joystick.getLeftX()))
-        ));
+        _joystick.b().whileTrue(_drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_joystick.getLeftY(), -_joystick.getLeftX()))));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
@@ -86,18 +79,13 @@ public class RobotContainer {
         final var idle = new SwerveRequest.Idle();
         return Commands.sequence(
 
-            // Reset our field centric heading to match the robot
-            // facing away from our alliance station wall (0 deg).
-            _drivetrain.runOnce(() -> _drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            // Then slowly drive forward (away from us) for 5 seconds.
-            _drivetrain.applyRequest(() ->
-                drive.withVelocityX(0.5)
-                    .withVelocityY(0)
-                    .withRotationalRate(0)
-            )
-            .withTimeout(5.0),
-            // Finally idle for the rest of auton
-            _drivetrain.applyRequest(() -> idle)
+                // Reset our field centric heading to match the robot
+                // facing away from our alliance station wall (0 deg).
+                _drivetrain.runOnce(() -> _drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                // Then slowly drive forward (away from us) for 5 seconds.
+                _drivetrain.applyRequest(() -> drive.withVelocityX(0.5).withVelocityY(0).withRotationalRate(0)).withTimeout(5.0),
+                // Finally idle for the rest of auton
+                _drivetrain.applyRequest(() -> idle)
         );
     }
 }
