@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.Intake.IntakeState;
 
 public class RobotContainer {
 
@@ -73,11 +74,8 @@ public class RobotContainer {
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
-        Command forwardIntake = _intake.cmdForward();
-        Command reverseIntake = _intake.cmdReverse();
-
-        _joystick.rightBumper().whileTrue(forwardIntake);
-        _joystick.rightTrigger().whileTrue(reverseIntake);
+        _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
+        _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

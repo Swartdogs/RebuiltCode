@@ -24,40 +24,24 @@ public class Intake extends SubsystemBase
     {
         Forward, Off, Reverse
     }
-    
-    public class IntakeCommand extends Command
+
+    private Command setCommand(IntakeState state) 
     {
-        private final IntakeState _state;
-
-        public IntakeCommand(IntakeState state)
-        {
-            _state  = state;
-
-            // addRequirements(intake);
-        }
-
-        @Override
-        public void initialize()
-        {
-            set(_state);
-        }
-
-        @Override
-        public void end(boolean interrupted)
-        {
-            set(IntakeState.Off);
-        }
-
-        @Override
-        public boolean isFinished()
-        {
-            return false;
-        }
+        return startEnd(
+            () -> set(state), 
+            () -> set(IntakeState.Off)
+            );
     }
 
-    public Command     cmdForward() { return new IntakeCommand(IntakeState.Forward) ; }
-    public Command     cmdReverse() { return new IntakeCommand(IntakeState.Reverse) ; }
+    public Command getForwardCmd() 
+    { 
+        return setCommand(IntakeState.Forward);
+    }
 
+    public Command getReverseCmd() 
+    {
+        return setCommand(IntakeState.Reverse);
+    }
 
     private final SparkFlex _intakeMotor;
     private UsbCamera       _camera;
