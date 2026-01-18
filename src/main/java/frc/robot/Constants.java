@@ -1,0 +1,46 @@
+package frc.robot;
+
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
+import frc.robot.generated.TunerConstants;
+
+public final class Constants
+{
+    public static class AIO
+    {
+    }
+
+    public static class CAN
+    {
+        /* CAN IDs 1 through 13 are used by the drive subsystem and configured in TunerConstants */
+        public static final int INTAKE = 20;
+    }
+
+    public static class Drive
+    {
+        public static final double MAX_SPEED = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+        public static final double DEADBAND = 0.05; 
+    }
+
+    public static class Intake
+    {
+        public static final double INTAKE_VOLTS  = 8.0;
+        public static final double REVERSE_VOLTS = -4.0;
+        public static final int    CURRENT_LIMIT = 40;
+
+        public static final int CAMERA_DEVICE_INDEX = 0;
+        public static final String CAMERA_NAME = "IntakeCam";
+        public static final int CAMERA_WIDTH = 320;
+        public static final int CAMERA_HEIGHT = 240;
+        public static final int CAMERA_FPS = 15;
+    }
+
+    public static class General
+    {
+        public static final double LOOP_PERIOD_SECS = 0.02;
+        public static final double MOTOR_VOLTAGE = 12.0;
+    }
+}
