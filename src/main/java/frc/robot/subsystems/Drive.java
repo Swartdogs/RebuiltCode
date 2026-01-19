@@ -43,14 +43,14 @@ import limelight.networktables.PoseEstimate;
  */
 public class Drive extends TunerSwerveDrivetrain implements Subsystem
 {
-    private static final double    kSimLoopPeriod      = 0.004; // 4 ms
-    private Notifier               m_simNotifier       = null;
-    private double                 m_lastSimTime;
+    private static final double kSimLoopPeriod  = 0.004; // 4 ms
+    private Notifier            m_simNotifier   = null;
+    private double              m_lastSimTime;
     @Logged
-    private boolean                _hasVisionLeft      = false;
+    private boolean             _hasVisionLeft  = false;
     @Logged
-    private boolean                _hasVisionRight     = false;
-    private DriveVision            _vision; 
+    private boolean             _hasVisionRight = false;
+    private DriveVision         _vision;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -134,7 +134,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
-        _vision = new DriveVision(); 
+        _vision = new DriveVision();
     }
 
     /**
@@ -157,7 +157,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
-        _vision = new DriveVision(); 
+        _vision = new DriveVision();
     }
 
     /**
@@ -308,97 +308,103 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     /**
      * Return the pose at a given timestamp, if the buffer is not empty.
      *
-     * @param timestampSeconds The timestamp of the pose in seconds.
-     * @return The pose at the given timestamp (or Optional.empty() if the buffer is empty).
+     * @param  timestampSeconds The timestamp of the pose in seconds.
+     *
+     * @return                  The pose at the given timestamp (or Optional.empty()
+     *                          if the buffer is empty).
      */
     @Override
-    public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
+    public Optional<Pose2d> samplePoseAt(double timestampSeconds)
+    {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
     }
 
-    private class DriveVision {
-        private final Limelight _limelightLeft;
-        private final Limelight _limelightRight;
-
+    private class DriveVision
+    {
+        private final Limelight              _limelightLeft;
+        private final Limelight              _limelightRight;
         private final LimelightPoseEstimator _poseEstimatorLeft;
         private final LimelightPoseEstimator _poseEstimatorRight;
+        private double                       _lastTimestampLeft  = 0.0;
+        private double                       _lastTimestampRight = 0.0;
+        private boolean                      _hasVisionLeft      = false;
+        private boolean                      _hasVisionRight     = false;
 
-        private double _lastTimestampLeft = 0.0;
-        private double _lastTimestampRight = 0.0;
-
-        private boolean _hasVisionLeft = false;
-
-        private boolean _hasVisionRight = false;
-
-        public DriveVision() {
-            if (RobotBase.isReal()) {
-                _limelightLeft = new Limelight(Constants.Vision.LEFT_CAMERA_NAME);
+        public DriveVision()
+        {
+            if (RobotBase.isReal())
+            {
+                _limelightLeft  = new Limelight(Constants.Vision.LEFT_CAMERA_NAME);
                 _limelightRight = new Limelight(Constants.Vision.RIGHT_CAMERA_NAME);
 
-                _poseEstimatorLeft = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2);
+                _poseEstimatorLeft  = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2);
                 _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG2);
-            } else {
-                _limelightLeft = null;
-                _limelightRight = null;
-                _poseEstimatorLeft = null;
+            }
+            else
+            {
+                _limelightLeft      = null;
+                _limelightRight     = null;
+                _poseEstimatorLeft  = null;
                 _poseEstimatorRight = null;
             }
             setVisionMeasurementStdDevs(Constants.Vision.STD_DEVS);
         }
 
-        public void update() {
-            if (_limelightLeft == null) {
+        public void update()
+        {
+            if (_limelightLeft == null)
+            {
                 return;
             }
 
-            if (isRotatingTooFast() || isOnBump()) {
-                _hasVisionLeft = false;
+            if (isRotatingTooFast() || isOnBump())
+            {
+                _hasVisionLeft  = false;
                 _hasVisionRight = false;
                 return;
             }
 
             // TODO: Learn how Limelight MegaTag2 works internally and consider implementing
-            // our own pose prediction using the raw fiducial data (tag positions, distances,
+            // our own pose prediction using the raw fiducial data (tag positions,
+            // distances,
             // ambiguity values) instead of relying on the pre-computed pose estimate.
 
-            var rotation = getPigeon2().getRotation3d();
+            var rotation        = getPigeon2().getRotation3d();
             var angularVelocity = new AngularVelocity3d(
-                DegreesPerSecond.of(getPigeon2().getAngularVelocityXWorld().getValueAsDouble()),
-                DegreesPerSecond.of(getPigeon2().getAngularVelocityYWorld().getValueAsDouble()),
-                DegreesPerSecond.of(getPigeon2().getAngularVelocityZWorld().getValueAsDouble())
+                    DegreesPerSecond.of(getPigeon2().getAngularVelocityXWorld().getValueAsDouble()), DegreesPerSecond.of(getPigeon2().getAngularVelocityYWorld().getValueAsDouble()),
+                    DegreesPerSecond.of(getPigeon2().getAngularVelocityZWorld().getValueAsDouble())
             );
-            var orientation = new Orientation3d(rotation, angularVelocity);
+            var orientation     = new Orientation3d(rotation, angularVelocity);
 
             _limelightLeft.getSettings().withRobotOrientation(orientation).save();
             _limelightRight.getSettings().withRobotOrientation(orientation).save();
 
             _hasVisionLeft = processLimelight(_poseEstimatorLeft, _lastTimestampLeft);
-            if (_hasVisionLeft) {
-                _lastTimestampLeft = _poseEstimatorLeft.getPoseEstimate()
-                    .map(e -> e.timestampSeconds)
-                    .orElse(_lastTimestampLeft);
+            if (_hasVisionLeft)
+            {
+                _lastTimestampLeft = _poseEstimatorLeft.getPoseEstimate().map(e -> e.timestampSeconds).orElse(_lastTimestampLeft);
             }
 
             _hasVisionRight = processLimelight(_poseEstimatorRight, _lastTimestampRight);
-            if (_hasVisionRight) {
-                _lastTimestampRight = _poseEstimatorRight.getPoseEstimate()
-                    .map(e -> e.timestampSeconds)
-                    .orElse(_lastTimestampRight);
+            if (_hasVisionRight)
+            {
+                _lastTimestampRight = _poseEstimatorRight.getPoseEstimate().map(e -> e.timestampSeconds).orElse(_lastTimestampRight);
             }
         }
 
-        private boolean processLimelight(LimelightPoseEstimator poseEstimator, double lastTimestamp) {
+        private boolean processLimelight(LimelightPoseEstimator poseEstimator, double lastTimestamp)
+        {
             Optional<PoseEstimate> estimate = poseEstimator.getPoseEstimate();
 
-            if (estimate.isEmpty()) {
+            if (estimate.isEmpty())
+            {
                 return false;
             }
 
             PoseEstimate poseEstimate = estimate.get();
 
-            if (poseEstimate.tagCount == 0
-                || poseEstimate.avgTagDist > Constants.Vision.MAX_DETECTION_RANGE
-                || poseEstimate.timestampSeconds == lastTimestamp) {
+            if (poseEstimate.tagCount == 0 || poseEstimate.avgTagDist > Constants.Vision.MAX_DETECTION_RANGE || poseEstimate.timestampSeconds == lastTimestamp)
+            {
                 return false;
             }
 
@@ -407,17 +413,18 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             return true;
         }
 
-        private boolean isRotatingTooFast() {
+        private boolean isRotatingTooFast()
+        {
             double gyroRateDegPerSec = Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble());
             return gyroRateDegPerSec > Constants.Vision.MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC;
         }
 
-        private boolean isOnBump() {
-            var rotation = getPigeon2().getRotation3d();
+        private boolean isOnBump()
+        {
+            var    rotation = getPigeon2().getRotation3d();
             double pitchDeg = Math.abs(Math.toDegrees(rotation.getY()));
-            double rollDeg = Math.abs(Math.toDegrees(rotation.getX()));
-            return pitchDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG
-                || rollDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG;
+            double rollDeg  = Math.abs(Math.toDegrees(rotation.getX()));
+            return pitchDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG || rollDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG;
         }
     }
 }
