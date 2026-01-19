@@ -162,6 +162,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
+        setVisionMeasurementStdDevs(Constants.Vision.STD_DEVS);
+
     }
 
     /**
@@ -385,8 +387,6 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             return false;
         }
 
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(Constants.Vision.XY_STD_DEV, Constants.Vision.XY_STD_DEV, Constants.Vision.THETA_STD_DEV);
-        setVisionMeasurementStdDevs(stdDevs);
         addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds);
 
 
