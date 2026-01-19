@@ -25,50 +25,39 @@ public class Intake extends SubsystemBase
         Forward, Off, Reverse
     }
 
-    private Command setCommand(IntakeState state) 
+    private Command setCommand(IntakeState state)
     {
-        return startEnd(
-            () -> set(state), 
-            () -> set(IntakeState.Off)
-            );
+        return startEnd(() -> set(state), () -> set(IntakeState.Off));
     }
 
-    public Command getForwardCmd() 
-    { 
+    public Command getForwardCmd()
+    {
         return setCommand(IntakeState.Forward);
     }
 
-    public Command getReverseCmd() 
+    public Command getReverseCmd()
     {
         return setCommand(IntakeState.Reverse);
     }
 
-    public Command getOffCmd() 
+    public Command getOffCmd()
     {
-        return runOnce(
-            () -> set(IntakeState.Off)
-        );
+        return runOnce(() -> set(IntakeState.Off));
     }
 
     private final SparkFlex _intakeMotor;
     private UsbCamera       _camera;
-
     @Logged
-    private double _motorVoltage = 0.0;
-
+    private double          _motorVoltage = 0.0;
     @Logged
-    private IntakeState _intakeState = IntakeState.Off;
+    private IntakeState     _intakeState  = IntakeState.Off;
 
     public Intake()
     {
         _intakeMotor = new SparkFlex(Constants.CAN.INTAKE, MotorType.kBrushless);
 
         var config = new SparkFlexConfig();
-        config
-            .inverted(false)
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(Constants.Intake.CURRENT_LIMIT)
-            .voltageCompensation(Constants.General.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(Constants.Intake.CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
 
         _intakeMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 

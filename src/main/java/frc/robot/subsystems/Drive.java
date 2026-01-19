@@ -32,7 +32,7 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
  * the 2026 Tuner X Swerve Project Generator
  * https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/tuner-swerve/index.html
  */
-public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem
+public class Drive extends TunerSwerveDrivetrain implements Subsystem
 {
     private static final double kSimLoopPeriod = 0.004; // 4 ms
     private Notifier            m_simNotifier  = null;
@@ -113,7 +113,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param drivetrainConstants Drivetrain-wide constants for the swerve drive
      * @param modules             Constants for each specific module
      */
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules)
+    public Drive(SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules)
     {
         super(drivetrainConstants, modules);
         if (Utils.isSimulation())
@@ -135,7 +135,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      *                                CAN FD, and 100 Hz on CAN 2.0.
      * @param modules                 Constants for each specific module
      */
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants drivetrainConstants, double odometryUpdateFrequency, SwerveModuleConstants<?, ?, ?>... modules)
+    public Drive(SwerveDrivetrainConstants drivetrainConstants, double odometryUpdateFrequency, SwerveModuleConstants<?, ?, ?>... modules)
     {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
         if (Utils.isSimulation())
@@ -164,7 +164,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      *                                  units in meters and radians
      * @param modules                   Constants for each specific module
      */
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants drivetrainConstants, double odometryUpdateFrequency, Matrix<N3, N1> odometryStandardDeviation, Matrix<N3, N1> visionStandardDeviation, SwerveModuleConstants<?, ?, ?>... modules)
+    public Drive(SwerveDrivetrainConstants drivetrainConstants, double odometryUpdateFrequency, Matrix<N3, N1> odometryStandardDeviation, Matrix<N3, N1> visionStandardDeviation, SwerveModuleConstants<?, ?, ?>... modules)
     {
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation, modules);
         if (Utils.isSimulation())
