@@ -386,7 +386,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
 
         Matrix<N3, N1> stdDevs = VecBuilder.fill(Constants.Vision.XY_STD_DEV, Constants.Vision.XY_STD_DEV, Constants.Vision.THETA_STD_DEV);
-        addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds, stdDevs);
+        setVisionMeasurementStdDevs(stdDevs);
+        addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds);
+
 
         return true;
     }

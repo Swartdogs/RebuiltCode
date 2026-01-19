@@ -4,6 +4,10 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import frc.robot.generated.TunerConstants;
 import edu.wpi.first.wpilibj.RobotBase;
 
@@ -81,6 +85,7 @@ public final class Constants
         public static final double MAX_DETECTION_RANGE = 6.0;    // meters
         public static final double XY_STD_DEV          = 0.7;    // meters
         public static final double THETA_STD_DEV       = 9999.0; // Trust gyro for heading, not vision
+        public static final Matrix<N3, N1> STD_DEVS = VecBuilder.fill(XY_STD_DEV, XY_STD_DEV, THETA_STD_DEV);
 
         // Reject vision updates when spinning faster than this (MegaTag2 guidance)
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
