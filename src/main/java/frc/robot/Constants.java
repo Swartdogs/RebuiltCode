@@ -4,14 +4,14 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import frc.robot.generated.TunerConstants;
 
 public final class Constants
 {
-    public static class AIO
-    {
-    }
-
     public static class CAN
     {
         /*
@@ -44,5 +44,21 @@ public final class Constants
     {
         public static final double LOOP_PERIOD_SECS = 0.02;
         public static final double MOTOR_VOLTAGE    = 12.0;
+    }
+
+    public static class Vision
+    {
+        public static final String         LEFT_CAMERA_NAME    = "limelight-left";
+        public static final String         RIGHT_CAMERA_NAME   = "limelight-right";
+        public static final double         MAX_DETECTION_RANGE = 6.0;    // meters
+        public static final double         XY_STD_DEV          = 0.7;    // meters
+        public static final double         THETA_STD_DEV       = 9999.0; // Trust gyro for heading, not vision
+        public static final Matrix<N3, N1> STD_DEVS            = VecBuilder.fill(XY_STD_DEV, XY_STD_DEV, THETA_STD_DEV);
+
+        // Reject vision updates when spinning faster than this (MegaTag2 guidance)
+        public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
+
+        // Reject vision updates when robot is tilted more than this (on ramp)
+        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
     }
 }
