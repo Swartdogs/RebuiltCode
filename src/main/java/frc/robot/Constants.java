@@ -1,11 +1,16 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import frc.robot.generated.TunerConstants;
@@ -67,6 +72,18 @@ public final class Constants
         public static final double         XY_STD_DEV          = 0.7;    // meters
         public static final double         THETA_STD_DEV       = 9999.0; // Trust gyro for heading, not vision
         public static final Matrix<N3, N1> STD_DEVS            = VecBuilder.fill(XY_STD_DEV, XY_STD_DEV, THETA_STD_DEV);
+
+        // Camera translations
+        public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(0.875), Inches.of(13), Inches.of(7.625));
+        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(15.25), Inches.of(-5.75), Inches.of(7.5));
+
+        // Camera rotations
+        public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(-90));
+        public static final Rotation3d RIGHT_CAMERA_ROTATION = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(0));
+
+        // Camera offsets
+        public static final Pose3d LEFT_CAMERA_OFFSET  = new Pose3d(LEFT_CAMERA_TRANSLATION, LEFT_CAMERA_ROTATION);
+        public static final Pose3d RIGHT_CAMERA_OFFSET = new Pose3d(RIGHT_CAMERA_TRANSLATION, RIGHT_CAMERA_ROTATION);
 
         // Reject vision updates when spinning faster than this (MegaTag2 guidance)
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
