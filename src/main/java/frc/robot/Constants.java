@@ -42,15 +42,7 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int FL_DRIVE = 1;
-        public static final int FR_DRIVE = 3;
-        public static final int BL_DRIVE = 5;
-        public static final int BR_DRIVE = 7;
-        public static final int FL_TURN  = 2;
-        public static final int FR_TURN  = 4;
-        public static final int BL_TURN  = 6;
-        public static final int BR_TURN  = 8;
-        public static final int INTAKE   = 20;
+        public static final int INTAKE = 20;
     }
 
     public static class Drive
