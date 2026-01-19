@@ -13,7 +13,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
@@ -135,7 +134,6 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
-        setVisionMeasurementStdDevs(Constants.Vision.STD_DEVS);
         _vision = new DriveVision(); 
     }
 
@@ -159,7 +157,6 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
-        setVisionMeasurementStdDevs(Constants.Vision.STD_DEVS);
         _vision = new DriveVision(); 
     }
 
@@ -346,6 +343,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 _poseEstimatorLeft = null;
                 _poseEstimatorRight = null;
             }
+            setVisionMeasurementStdDevs(Constants.Vision.STD_DEVS);
         }
 
         public void update() {
@@ -404,12 +402,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 return false;
             }
 
-            Matrix<N3, N1> stdDevs = VecBuilder.fill(
-                Constants.Vision.XY_STD_DEV,
-                Constants.Vision.XY_STD_DEV,
-                Constants.Vision.THETA_STD_DEV
-            );
-            addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds, stdDevs);
+            addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds);
 
             return true;
         }
