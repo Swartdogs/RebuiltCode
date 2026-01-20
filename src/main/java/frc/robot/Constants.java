@@ -75,7 +75,7 @@ public final class Constants
 
         // Camera translations
         public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(0.875), Inches.of(13), Inches.of(7.625));
-        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(15.25), Inches.of(-5.75), Inches.of(7.5));
+        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(15.25), Inches.of(5.75), Inches.of(7.5));
 
         // Camera rotations
         public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(-90));
