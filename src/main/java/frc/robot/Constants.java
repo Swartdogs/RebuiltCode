@@ -18,7 +18,7 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE = 20;
+        public static final int INTAKE          = 20;
         public static final int SHOOTERFLYWHEEL = 21;
     }
 
@@ -45,11 +45,14 @@ public final class Constants
     {
         public static final double LOOP_PERIOD_SECS = 0.02;
         public static final double MOTOR_VOLTAGE    = 12.0;
+        public static final double MAX_NEO_SPEED    = 0;
     }
-    public static class Flywheel{
-        public static final double PIDTolerance =1.;
+
+    public static class Shooter
+    {
+        public static final double PIDTolerance       = 1.;
         public static final double MAX_FLYWHEEL_SPEED = 1.;
-        public static final double VELOCITY_RANGE = 0.15;
+        public static final double VELOCITY_RANGE     = 0.15;
     }
 
     public static class Vision
