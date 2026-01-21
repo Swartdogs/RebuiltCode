@@ -2,7 +2,6 @@ package frc.robot.subsystems.shooter;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-
 /*
  * Hardware The following motors and sensors will need to be added to the
  * subsystem for controlling the hardware Motors Flywheel (2x NEO Vortex motors
@@ -14,5 +13,5 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterFlywheel extends SubsystemBase
 {
-   
+
 }
