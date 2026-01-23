@@ -75,7 +75,6 @@ public class ShooterFlywheel extends SubsystemBase
     public void periodic()
     {
         _velocity = _encoder.getVelocity();
-        // updateInputs(_inputs);
     }
 
     public boolean atSpeed()
@@ -86,8 +85,6 @@ public class ShooterFlywheel extends SubsystemBase
     public void setVelocity(double velocity)
     {
         _velocityTarget = MathUtil.clamp(velocity, 0, _maxSpeed);
-        // Logger.recordOutput("Shooter/Flywheel/UpperVelocitySetpoint",
-        // _velocityTarget);
         _closedLoopControl.setSetpoint(_velocityTarget, ControlType.kVelocity, ClosedLoopSlot.kSlot1);
     }
 
