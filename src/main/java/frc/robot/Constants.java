@@ -19,7 +19,8 @@ public final class Constants
          * TunerConstants
          */
         public static final int INTAKE          = 20;
-        public static final int SHOOTERFLYWHEEL = 21;
+        public static final int FLYWHEEL_LEAD   = 21;
+        public static final int FLYWHEEL_FOLLOW = 22;
     }
 
     public static class Drive
@@ -50,9 +51,12 @@ public final class Constants
 
     public static class Shooter
     {
-        public static final double PIDTolerance       = 1.;
-        public static final double MAX_FLYWHEEL_SPEED = 1.;
-        public static final double VELOCITY_RANGE     = 0.15;
+        public static final double PIDTolerance           = 1.;
+        public static final double FLYWHEEL_KP            = .01;
+        public static final double FLYWHEEL_KD            = -1e-6;
+        public static final double MAX_FLYWHEEL_SPEED     = 1.;
+        public static final double VELOCITY_RANGE         = 0.15;
+        public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
     }
 
     public static class Vision
