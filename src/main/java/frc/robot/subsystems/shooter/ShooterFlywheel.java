@@ -4,7 +4,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.spark.*;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -23,7 +23,7 @@ import frc.robot.Constants;
 
 public class ShooterFlywheel extends SubsystemBase
 {
-    private final SparkMax                  _motor;
+    private final SparkFlex                 _motor;
     private final SparkClosedLoopController _control;
     private final RelativeEncoder           _encoder;
     private double                          _velocity;
@@ -31,9 +31,9 @@ public class ShooterFlywheel extends SubsystemBase
     private double                          _maxSpeed      = Constants.Shooter.MAX_FLYWHEEL_SPEED * Constants.General.MAX_NEO_SPEED;
     private double                          _velocityRange = Constants.Shooter.VELOCITY_RANGE;
 
-    private SparkMaxConfig config()
+    private SparkFlexConfig config()
     {
-        SparkMaxConfig val = new SparkMaxConfig();
+        SparkFlexConfig val = new SparkFlexConfig();
 
         val.encoder.positionConversionFactor(1).velocityConversionFactor(1);
 
@@ -49,7 +49,7 @@ public class ShooterFlywheel extends SubsystemBase
         return val;
     }
 
-    private void initMotor(SparkMax motor)
+    private void initMotor(SparkFlex motor)
     {
         motor.setCANTimeout(250);
 
@@ -61,7 +61,7 @@ public class ShooterFlywheel extends SubsystemBase
 
     public ShooterFlywheel()
     {
-        _motor   = new SparkMax(Constants.CAN.SHOOTERFLYWHEEL, MotorType.kBrushless);
+        _motor   = new SparkFlex(Constants.CAN.SHOOTERFLYWHEEL, MotorType.kBrushless);
         _control = _motor.getClosedLoopController();
         _encoder = _motor.getEncoder();
 
