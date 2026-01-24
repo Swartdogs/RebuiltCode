@@ -36,6 +36,7 @@ public class RobotContainer
     private final Intake                         _intake     = new Intake();
     // private final Shooter _shooter = new Shooter();
     private final Feeder _feeder = new Feeder();
+    private final Shooter                        _shooter    = new Shooter();
 
     public RobotContainer()
     {
@@ -73,8 +74,11 @@ public class RobotContainer
 
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-        //_joystick.rightBumper().whileTrue(_intake.extend()); // TODO
-        //_joystick.rightTrigger().whileTrue(_intake.retract()); // TODO
+
+        _joystick.povUp().whileTrue(_feeder.getForwardCmd());
+        _joystick.rightStick().onTrue(_feeder.getstopCmd());
+        _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
+        _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
         // _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());  // TODO
 
         // Temporary shooter bindings (adjust later).
@@ -82,9 +86,6 @@ public class RobotContainer
         // _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM,
         // ShooterConstants.PASS_HOOD_ANGLE_DEG));
         // _joystick.leftStick().onTrue(_shooter.getStopCmd());
-
-        _joystick.povUp().whileTrue(_feeder.getForwardCmd());
-        _joystick.rightStick().onTrue(_feeder.getstopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

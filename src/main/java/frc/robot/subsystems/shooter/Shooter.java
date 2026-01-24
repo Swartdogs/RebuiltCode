@@ -10,13 +10,15 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 
 import frc.robot.util.Utilities;
+import frc.robot.Constants;
+import frc.robot.util.GameState;
 
 @Logged
 public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, Preparing, Ready, Firing
+        Idle, HubInactive, Tracking, Ready
     }
 
     public enum ShootMode
@@ -27,12 +29,13 @@ public class Shooter extends SubsystemBase
     public Command getAimCmd()
     {
         return startEnd(() ->
-        {
-            _mode = ShootMode.Shoot;
-            setState(ShooterState.Preparing);
+            double distance = _turret.getDistanceToTarget();
+            _flywheel.setVelocity(Constants.Shooter.getFlywheelSpeedForDistance(distance));
+            _hood.setAngle(Constants.Shooter.getHoodAngleForDistance(distance));
         }, () ->
         {
-            setState(ShooterState.Idle);
+            _flywheel.stop();
+            _hood.stop();
         });
     }
 
@@ -80,6 +83,8 @@ public class Shooter extends SubsystemBase
     private AngularVelocity     _passFlywheelVelocity = RPM.zero();
     @Logged
     private double              _passHoodAngleDeg     = 0.0;
+    @Logged
+    private boolean               _hasTarget = false;
 
     public Shooter()
     {
@@ -87,6 +92,15 @@ public class Shooter extends SubsystemBase
         _hood     = new Hood();
         _turret   = new ShooterTurret();
         _feeder   = new Feeder();
+    }
+
+    public Command getStopCmd()
+    {
+        return runOnce(() ->
+        {
+            _flywheel.stop();
+            _hood.stop();
+        });
     }
 
     @Override
@@ -99,6 +113,17 @@ public class Shooter extends SubsystemBase
 
         updateState();
         applySetpoints();
+
+        if (_turret.hasTarget())
+        {
+            _turret.setState(ShooterTurret.TurretState.Track);
+        }
+        else
+        {
+            _turret.setState(ShooterTurret.TurretState.Off);
+        }
+
+        _hasTarget = _turret.hasTarget();
     }
 
     @Override
@@ -112,24 +137,30 @@ public class Shooter extends SubsystemBase
 
     private void updateState()
     {
-        switch (_state)
+        if (!GameState.isHubActive())
         {
-            case Preparing:
-                if (isReadyInternal())
-                {
-                    _state = ShooterState.Ready;
-                }
-                break;
+            _state = ShooterState.HubInactive;
+            return;
+        }
 
-            case Ready:
-                if (!isReadyInternal())
-                {
-                    _state = ShooterState.Preparing;
-                }
-                break;
-
-            default:
-                break;
+        if (_flywheel.getVelocity() <= 0)
+        {
+            if (_turret.hasTarget())
+            {
+                _state = ShooterState.Tracking;
+            }
+            else
+            {
+                _state = ShooterState.Idle;
+            }
+        }
+        else if (_flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint())
+        {
+            _state = ShooterState.Ready;
+        }
+        else
+        {
+            _state = ShooterState.Tracking;
         }
     }
 
@@ -203,6 +234,21 @@ public class Shooter extends SubsystemBase
         }
     }
 
+    public boolean isReady()
+    {
+        return _state == ShooterState.Ready;
+    }
+
+    public boolean isHubActive()
+    {
+        return GameState.isHubActive();
+    }
+
+    public boolean hasTarget()
+    {
+        return _hasTarget;
+    }
+
     public ShooterState getState()
     {
         return _state;
@@ -231,5 +277,10 @@ public class Shooter extends SubsystemBase
     private boolean isReadyInternal()
     {
         return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint();
+    }
+
+    public boolean atSetpoint()
+    {
+        return _turret.atSetpoint();
     }
 }
