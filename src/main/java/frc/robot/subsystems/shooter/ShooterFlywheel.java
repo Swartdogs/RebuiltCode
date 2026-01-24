@@ -14,6 +14,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
@@ -44,7 +45,7 @@ public class ShooterFlywheel extends SubsystemBase
 
         config.inverted(false);
         config.closedLoop.p(Constants.Shooter.FLYWHEEL_KP).d(Constants.Shooter.FLYWHEEL_KD);
-        config.closedLoop.feedForward.kV(Constants.Shooter.FLYWHEEL_KV);
+        config.closedLoop.feedForward.kS(Constants.Shooter.FLYWHEEL_KS).kV(Constants.Shooter.FLYWHEEL_KV).kA(Constants.Shooter.FLYWHEEL_KA);
         _leadMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         config.follow(_leadMotor, true);
@@ -61,19 +62,20 @@ public class ShooterFlywheel extends SubsystemBase
         }
         else
         {
-            _leadMotorSim = new SparkSim(_leadMotor, DCMotor.getNeoVortex(1));
+            _leadMotorSim = new SparkSim(_leadMotor, DCMotor.getNeoVortex(2));
         }
     }
 
     @Override
     public void periodic()
     {
-        if (RobotBase.isSimulation())
-        {
-            _leadMotorSim.iterate(_velocity, 12.0, Constants.General.LOOP_PERIOD_SECS);
-        }
-
         _velocity = _encoder.getVelocity();
+    }
+
+    @Override
+    public void simulationPeriodic()
+    {
+        _leadMotorSim.iterate(getVelocity(), RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
     }
 
     public void setVelocity(double rpm)
