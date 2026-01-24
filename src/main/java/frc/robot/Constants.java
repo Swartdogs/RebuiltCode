@@ -46,16 +46,16 @@ public final class Constants
     {
         public static final double LOOP_PERIOD_SECS = 0.02;
         public static final double MOTOR_VOLTAGE    = 12.0;
-        public static final double MAX_NEO_SPEED    = 0;
     }
 
     public static class Shooter
     {
-        public static final double PIDTolerance           = 1.;
-        public static final double FLYWHEEL_KP            = .01;
-        public static final double FLYWHEEL_KD            = -1e-6;
-        public static final double MAX_FLYWHEEL_SPEED     = 1.;
-        public static final double VELOCITY_RANGE         = 0.15;
+        public static final double FLYWHEEL_KP            = 0.0001; // TODO: Tune
+        public static final double FLYWHEEL_KD            = 0.0;
+        public static final double FLYWHEEL_KS            = 0.0;            // TODO: Tune - static friction voltage
+        public static final double FLYWHEEL_KV            = 12.0 / 6784.0;  // Volts / NEO Vortex free speed RPM
+        public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
+        public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
     }
 
