@@ -26,7 +26,7 @@ public final class GameState
         var table = NetworkTableInstance.getDefault().getTable("FMSInfo");
         _hubActiveSubscriber = table.getBooleanTopic("HubActive").subscribe(true);
     }
-    
+
     public static boolean isHubActive()
     {
         if (DriverStation.isAutonomous())

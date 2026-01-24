@@ -52,20 +52,18 @@ public final class Constants
     public static class Shooter
     {
         // Turret
-        public static final double TURRET_CURRENT_LIMIT = 40.0;
-        public static final double TURRET_KP            = 2.4;   // TODO: Tune
-        public static final double TURRET_KI            = 0.0;
-        public static final double TURRET_KD            = 0.1;
-        public static final double TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
-        public static final double TURRET_MIN_ANGLE     = -90.0; // degrees
-        public static final double TURRET_MAX_ANGLE     = 90.0;  // degrees
-        public static final double TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
-        public static final double TURRET_TOLERANCE     = 2.0;   // degrees
-
-        public static final String LIMELIGHT_NAME = "limelight-shooter";
-
-        public static final List<Double> BLUE_HUB_TAG_IDS = List.of(2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 10.0, 11.0);
-        public static final List<Double> RED_HUB_TAG_IDS  = List.of(18.0, 19.0, 20.0, 21.0, 24.0, 25.0, 26.0, 27.0);
+        public static final double       TURRET_CURRENT_LIMIT = 40.0;
+        public static final double       TURRET_KP            = 2.4;   // TODO: Tune
+        public static final double       TURRET_KI            = 0.0;
+        public static final double       TURRET_KD            = 0.1;
+        public static final double       TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
+        public static final double       TURRET_MIN_ANGLE     = -90.0; // degrees
+        public static final double       TURRET_MAX_ANGLE     = 90.0;  // degrees
+        public static final double       TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
+        public static final double       TURRET_TOLERANCE     = 2.0;   // degrees
+        public static final String       LIMELIGHT_NAME       = "limelight-shooter";
+        public static final List<Double> BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 10.0, 11.0);
+        public static final List<Double> RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0, 24.0, 25.0, 26.0, 27.0);
     }
 
     public static class Vision
