@@ -12,9 +12,7 @@ public class TurretTracking extends SubsystemBase
 {
     private Limelight _trackingLimelight;
     @Logged
-    private double    tx;
-    @Logged
-    private double    ty;
+    private double    _tx;
 
     public TurretTracking()
     {
@@ -24,8 +22,7 @@ public class TurretTracking extends SubsystemBase
     @Override
     public void periodic()
     {
-        tx = _trackingLimelight.getData().targetData.getHorizontalOffset();
-        ty = _trackingLimelight.getData().targetData.getVerticalOffset();
+        var pose = _trackingLimelight.getData().targetData.getCameraToTarget(); 
     }
 
     public double getTX()
