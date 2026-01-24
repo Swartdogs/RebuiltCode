@@ -8,6 +8,8 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import static edu.wpi.first.units.Units.Inches;
 
+import java.util.List;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -38,8 +40,8 @@ public final class Constants
 
     public static class DriveConstants
     {
-        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
         public static final double DEADBAND         = 0.05;
     }
 
@@ -102,7 +104,7 @@ public final class Constants
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
 
         // Reject vision updates when robot is tilted more than this (on ramp)
-        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
+        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: Find the correct value
     }
 
     public static class ClimberConstants
