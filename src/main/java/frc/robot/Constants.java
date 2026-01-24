@@ -53,7 +53,7 @@ public final class Constants
         public static final double FLYWHEEL_KP            = 0.0001; // TODO: Tune
         public static final double FLYWHEEL_KD            = 0.0;
         public static final double FLYWHEEL_KV            = 12.0 / 6784.0; // Volts / NEO Vortex free speed RPM
-        public static final double VELOCITY_RANGE         = 0.15; // 15% tolerance for atSpeed()
+        public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
     }
 

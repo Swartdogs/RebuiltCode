@@ -6,11 +6,13 @@ import com.revrobotics.ResetMode;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkSim;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -22,25 +24,20 @@ public class ShooterFlywheel extends SubsystemBase
     private final SparkFlex                 _followMotor;
     private final SparkClosedLoopController _closedLoopController;
     private final RelativeEncoder           _encoder;
+    private final SparkSim                  _leadMotorSim;
     private double                          _velocity       = 0.0;
     private double                          _velocityTarget = 0.0;
 
     public ShooterFlywheel()
     {
-        if (RobotBase.isSimulation())
-        {
-            _leadMotor            = null;
-            _followMotor          = null;
-            _closedLoopController = null;
-            _encoder              = null;
-            return;
-        }
-
         _leadMotor   = new SparkFlex(Constants.CAN.FLYWHEEL_LEAD, MotorType.kBrushless);
         _followMotor = new SparkFlex(Constants.CAN.FLYWHEEL_FOLLOW, MotorType.kBrushless);
 
-        _leadMotor.setCANTimeout(250);
-        _followMotor.setCANTimeout(250);
+        if (RobotBase.isReal())
+        {
+            _leadMotor.setCANTimeout(250);
+            _followMotor.setCANTimeout(250);
+        }
 
         var config = new SparkFlexConfig();
         config.idleMode(IdleMode.kCoast).smartCurrentLimit(Constants.Shooter.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
@@ -56,22 +53,31 @@ public class ShooterFlywheel extends SubsystemBase
         _closedLoopController = _leadMotor.getClosedLoopController();
         _encoder              = _leadMotor.getEncoder();
 
-        _leadMotor.setCANTimeout(0);
-        _followMotor.setCANTimeout(0);
+        if (RobotBase.isReal())
+        {
+            _leadMotor.setCANTimeout(0);
+            _followMotor.setCANTimeout(0);
+            _leadMotorSim = null;
+        }
+        else
+        {
+            _leadMotorSim = new SparkSim(_leadMotor, DCMotor.getNeoVortex(1));
+        }
     }
 
     @Override
     public void periodic()
     {
-        if (_encoder == null) return;
+        if (RobotBase.isSimulation())
+        {
+            _leadMotorSim.iterate(_velocity, 12.0, Constants.General.LOOP_PERIOD_SECS);
+        }
 
         _velocity = _encoder.getVelocity();
     }
 
     public void setVelocity(double rpm)
     {
-        if (_closedLoopController == null) return;
-
         _velocityTarget = rpm;
         _closedLoopController.setSetpoint(rpm, ControlType.kVelocity, ClosedLoopSlot.kSlot0);
     }
@@ -79,19 +85,15 @@ public class ShooterFlywheel extends SubsystemBase
     public void stop()
     {
         _velocityTarget = 0.0;
-
-        if (_leadMotor != null)
-        {
-            _leadMotor.setVoltage(0);
-        }
+        _leadMotor.setVoltage(0);
     }
 
     public boolean atSpeed()
     {
         if (_velocityTarget <= 0) return true;
 
-        double error = Math.abs(_velocity - _velocityTarget);
-        return error <= _velocityTarget * Constants.Shooter.VELOCITY_RANGE;
+        double error = Math.abs(getVelocity() - _velocityTarget);
+        return error <= _velocityTarget * Constants.Shooter.FLYWHEEL_TOLERANCE;
     }
 
     public double getVelocity()
