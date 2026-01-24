@@ -59,6 +59,7 @@ public final class Constants
     {
         public static final String         LEFT_CAMERA_NAME    = "limelight-left";
         public static final String         RIGHT_CAMERA_NAME   = "limelight-right";
+        public static final String         TRACKING_CAMERA_NAME  = "limelight-right"; // TODO 
         public static final double         MAX_DETECTION_RANGE = 6.0;    // meters
         public static final double         XY_STD_DEV          = 0.7;    // meters
         public static final double         THETA_STD_DEV       = 9999.0; // Trust gyro for heading, not vision
@@ -69,5 +70,9 @@ public final class Constants
 
         // Reject vision updates when robot is tilted more than this (on ramp)
         public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
+
+        public static final double TURN_ANGLE_KP = 0.0; // TODO 
+        public static final double TURN_ANGLE_KI = 0.0; // TODO 
+        public static final double TURN_ANGLE_KD = 0.0; // TODO 
     }
 }

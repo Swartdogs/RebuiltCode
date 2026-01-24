@@ -70,6 +70,11 @@ public class RobotContainer
         _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
         _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
 
+        // Turn the robot to face the target 
+        _joystick.leftTrigger().whileTrue(_drivetrain.applyRequest(
+            () -> drive.withRotationalRate(_tracking.getNewRotationalRate())
+        ));
+
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 
