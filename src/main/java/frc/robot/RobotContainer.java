@@ -43,9 +43,9 @@ public class RobotContainer
         _drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 _drivetrain.applyRequest(
-                        () -> drive.withVelocityX(MathUtil.applyDeadband(-_joystick.getLeftY() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive forward with negative Y (forward)
-                                .withVelocityY(MathUtil.applyDeadband(-_joystick.getLeftX() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(-_joystick.getRightX() * Constants.Drive.MAX_ANGULAR_RATE) // Drive counterclockwise with negative X (left)
+                        () -> drive.withVelocityX(MathUtil.applyDeadband(-_joystick.getLeftY(), Constants.Drive.DEADBAND) * Constants.Drive.MAX_SPEED) // Drive forward with negative Y (forward)
+                                .withVelocityY(MathUtil.applyDeadband(-_joystick.getLeftX(), Constants.Drive.DEADBAND) * Constants.Drive.MAX_SPEED) // Drive left with negative X (left)
+                                .withRotationalRate(MathUtil.applyDeadband(-_joystick.getRightX(), Constants.Drive.DEADBAND) * Constants.Drive.MAX_ANGULAR_RATE) // Drive counterclockwise with negative X (left)
                 )
         );
 
@@ -70,10 +70,8 @@ public class RobotContainer
         _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
         _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
 
-        // Turn the robot to face the target 
-        _joystick.leftTrigger().whileTrue(_drivetrain.applyRequest(
-            () -> drive.withRotationalRate(_tracking.getNewRotationalRate())
-        ));
+        // Turn the robot to face the target
+        _joystick.leftTrigger().whileTrue(_drivetrain.applyRequest(() -> drive.withVelocityX(0).withVelocityY(0).withRotationalRate(_tracking.getNewRotationalRate())));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

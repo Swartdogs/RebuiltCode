@@ -26,7 +26,7 @@ public final class Constants
     {
         public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
         public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-        public static final double DEADBAND         = 0.05;
+        public static final double DEADBAND         = 0.15;
     }
 
     public static class Intake
@@ -57,22 +57,21 @@ public final class Constants
 
     public static class Vision
     {
-        public static final String         LEFT_CAMERA_NAME    = "limelight-left";
-        public static final String         RIGHT_CAMERA_NAME   = "limelight-right";
-        public static final String         TRACKING_CAMERA_NAME  = "limelight-right"; // TODO 
-        public static final double         MAX_DETECTION_RANGE = 6.0;    // meters
-        public static final double         XY_STD_DEV          = 0.7;    // meters
-        public static final double         THETA_STD_DEV       = 9999.0; // Trust gyro for heading, not vision
-        public static final Matrix<N3, N1> STD_DEVS            = VecBuilder.fill(XY_STD_DEV, XY_STD_DEV, THETA_STD_DEV);
+        public static final String         LEFT_CAMERA_NAME     = "limelight-left";
+        public static final String         RIGHT_CAMERA_NAME    = "limelight-right";
+        public static final String         TRACKING_CAMERA_NAME = "limelight-right"; // TODO
+        public static final double         MAX_DETECTION_RANGE  = 6.0;    // meters
+        public static final double         XY_STD_DEV           = 0.7;    // meters
+        public static final double         THETA_STD_DEV        = 9999.0; // Trust gyro for heading, not vision
+        public static final Matrix<N3, N1> STD_DEVS             = VecBuilder.fill(XY_STD_DEV, XY_STD_DEV, THETA_STD_DEV);
 
         // Reject vision updates when spinning faster than this (MegaTag2 guidance)
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
 
         // Reject vision updates when robot is tilted more than this (on ramp)
         public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
-
-        public static final double TURN_ANGLE_KP = 0.0; // TODO 
-        public static final double TURN_ANGLE_KI = 0.0; // TODO 
-        public static final double TURN_ANGLE_KD = 0.0; // TODO 
+        public static final double TURN_ANGLE_KP           = Drive.MAX_ANGULAR_RATE * 0.5 / 45.0; // TODO
+        public static final double TURN_ANGLE_KI           = 0.0;
+        public static final double TURN_ANGLE_KD           = 0.0;
     }
 }
