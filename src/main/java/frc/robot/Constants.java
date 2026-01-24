@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
+import java.util.List;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.numbers.N1;
@@ -18,15 +20,14 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE          = 20;
-        public static final int FLYWHEEL_LEAD   = 21;
-        public static final int FLYWHEEL_FOLLOW = 22;
+        public static final int INTAKE       = 20;
+        public static final int TURRET_MOTOR = 24;
     }
 
     public static class Drive
     {
-        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
         public static final double DEADBAND         = 0.05;
     }
 
@@ -46,17 +47,25 @@ public final class Constants
     {
         public static final double LOOP_PERIOD_SECS = 0.02;
         public static final double MOTOR_VOLTAGE    = 12.0;
-        public static final double MAX_NEO_SPEED    = 0;
     }
 
     public static class Shooter
     {
-        public static final double PIDTolerance           = 1.;
-        public static final double FLYWHEEL_KP            = .01;
-        public static final double FLYWHEEL_KD            = -1e-6;
-        public static final double MAX_FLYWHEEL_SPEED     = 1.;
-        public static final double VELOCITY_RANGE         = 0.15;
-        public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
+        // Turret
+        public static final double TURRET_CURRENT_LIMIT = 40.0;
+        public static final double TURRET_KP            = 2.4;   // TODO: Tune
+        public static final double TURRET_KI            = 0.0;
+        public static final double TURRET_KD            = 0.1;
+        public static final double TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
+        public static final double TURRET_MIN_ANGLE     = -90.0; // degrees
+        public static final double TURRET_MAX_ANGLE     = 90.0;  // degrees
+        public static final double TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
+        public static final double TURRET_TOLERANCE     = 2.0;   // degrees
+
+        public static final String LIMELIGHT_NAME = "limelight-shooter";
+
+        public static final List<Double> BLUE_HUB_TAG_IDS = List.of(2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 10.0, 11.0);
+        public static final List<Double> RED_HUB_TAG_IDS  = List.of(18.0, 19.0, 20.0, 21.0, 24.0, 25.0, 26.0, 27.0);
     }
 
     public static class Vision
@@ -72,6 +81,6 @@ public final class Constants
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
 
         // Reject vision updates when robot is tilted more than this (on ramp)
-        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
+        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: Find the correct value
     }
 }
