@@ -42,19 +42,16 @@ public class ShooterFlywheel extends SubsystemBase
         _leadMotor.setCANTimeout(250);
         _followMotor.setCANTimeout(250);
 
-        var leaderConfig = new SparkFlexConfig();
-        leaderConfig.inverted(false).idleMode(IdleMode.kCoast).smartCurrentLimit(Constants.Shooter.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
+        var config = new SparkFlexConfig();
+        config.idleMode(IdleMode.kCoast).smartCurrentLimit(Constants.Shooter.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
 
-        leaderConfig.closedLoop.p(Constants.Shooter.FLYWHEEL_KP).d(Constants.Shooter.FLYWHEEL_KD);
+        config.inverted(false);
+        config.closedLoop.p(Constants.Shooter.FLYWHEEL_KP).d(Constants.Shooter.FLYWHEEL_KD);
+        config.closedLoop.feedForward.kV(Constants.Shooter.FLYWHEEL_KV);
+        _leadMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        leaderConfig.closedLoop.feedForward.kV(Constants.Shooter.FLYWHEEL_KV);
-
-        _leadMotor.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-        var followerConfig = new SparkFlexConfig();
-        followerConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(Constants.Shooter.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE).follow(_leadMotor, true);
-
-        _followMotor.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        config.follow(_leadMotor, true);
+        _followMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         _closedLoopController = _leadMotor.getClosedLoopController();
         _encoder              = _leadMotor.getEncoder();
