@@ -15,10 +15,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Feeder;
+import frc.robot.subsystems.shooter.Shooter;
 
 @Logged
 public class RobotContainer
@@ -32,8 +34,7 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    // private final Shooter _shooter = new Shooter();
-    private final Feeder _feeder = new Feeder();
+    private final Shooter                        _shooter    = new Shooter();
 
     public RobotContainer()
     {
