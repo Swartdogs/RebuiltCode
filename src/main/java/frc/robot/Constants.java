@@ -20,8 +20,11 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE       = 20;
-        public static final int TURRET_MOTOR = 24;
+        public static final int INTAKE          = 20;
+        public static final int FLYWHEEL_LEAD   = 21;
+        public static final int FLYWHEEL_FOLLOW = 22;
+        public static final int HOOD_MOTOR      = 23;
+        public static final int TURRET_MOTOR    = 24;
     }
 
     public static class Drive
@@ -51,19 +54,60 @@ public final class Constants
 
     public static class Shooter
     {
+        // Flywheel
+        public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
+        public static final double FLYWHEEL_KP            = 0.0001; // TODO: Tune
+        public static final double FLYWHEEL_KD            = 0.0;
+        public static final double FLYWHEEL_KS            = 0.0;            // TODO: Tune - static friction voltage
+        public static final double FLYWHEEL_KV            = 12.0 / 6784.0;  // Volts / NEO Vortex free speed RPM
+        public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
+        public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
+
+        // Hood (VictorSPX with analog potentiometer - see Sidewinder 2021)
+        public static final int    HOOD_ANALOG_INPUT = 0;     // AIO port for potentiometer
+        public static final double HOOD_KP           = 0.016; // From Sidewinder
+        public static final double HOOD_KI           = 0.001; // From Sidewinder
+        public static final double HOOD_KD           = 0.0;
+        public static final double HOOD_MIN_ANGLE    = 0.0;   // degrees
+        public static final double HOOD_MAX_ANGLE    = 45.0;  // degrees
+        public static final double HOOD_TOLERANCE    = 2.0;   // degrees
+        public static final double HOOD_RAW_MIN      = 1035;  // TODO: Calibrate - analog value at min angle
+        public static final double HOOD_RAW_MAX      = 335;   // TODO: Calibrate - analog value at max angle
+
         // Turret
         public static final double       TURRET_CURRENT_LIMIT = 40.0;
         public static final double       TURRET_KP            = 2.4;   // TODO: Tune
         public static final double       TURRET_KI            = 0.0;
         public static final double       TURRET_KD            = 0.1;
         public static final double       TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
-        public static final double       TURRET_MIN_ANGLE     = -90.0; // degrees
-        public static final double       TURRET_MAX_ANGLE     = 90.0;  // degrees
+        public static final double       TURRET_MIN_ANGLE     = -180.0; // degrees (full 360° rotation)
+        public static final double       TURRET_MAX_ANGLE     = 180.0;  // degrees
         public static final double       TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
         public static final double       TURRET_TOLERANCE     = 2.0;   // degrees
         public static final String       LIMELIGHT_NAME       = "limelight-shooter";
         public static final List<Double> BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 10.0, 11.0);
         public static final List<Double> RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0, 24.0, 25.0, 26.0, 27.0);
+
+        // TODO: Tune these values with testing!
+        public static double getFlywheelSpeedForDistance(double meters)
+        {
+            if (meters <= 0) return 3000;
+            if (meters < 2.0) return 3000;
+            if (meters < 3.5) return 3500;
+            if (meters < 5.0) return 4000;
+            if (meters < 6.5) return 4500;
+            return 5000;
+        }
+
+        public static double getHoodAngleForDistance(double meters)
+        {
+            if (meters <= 0) return 20.0;
+            if (meters < 2.0) return 15.0;
+            if (meters < 3.5) return 22.0;
+            if (meters < 5.0) return 30.0;
+            if (meters < 6.5) return 38.0;
+            return 45.0;
+        }
     }
 
     public static class Vision
