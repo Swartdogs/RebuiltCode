@@ -15,7 +15,6 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
@@ -74,7 +73,6 @@ public class ShooterFlywheel extends SubsystemBase
         _velocity = _encoder.getVelocity();
     }
 
-    @Override
     public void simulationPeriodic()
     {
         _leadMotorSim.iterate(getVelocity(), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
