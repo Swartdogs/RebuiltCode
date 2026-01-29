@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.shooter.Shooter;
 
 public class RobotContainer
 {
@@ -28,6 +29,7 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
+    private final Shooter                        _shooter    = new Shooter();
 
     public RobotContainer()
     {
@@ -67,6 +69,12 @@ public class RobotContainer
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
         _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
         _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
+        _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());
+
+        // Temporary shooter bindings (adjust later).
+        _joystick.x().onTrue(_shooter.getFireCmd());
+        _joystick.y().whileTrue(_shooter.getPreparePassCmd(Constants.Shooter.PASS_FLYWHEEL_RPM, Constants.Shooter.PASS_HOOD_ANGLE_DEG));
+        _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
