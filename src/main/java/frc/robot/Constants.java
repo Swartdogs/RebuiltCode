@@ -27,6 +27,7 @@ public final class Constants
         public static final int FLYWHEEL_FOLLOW = 22;
         public static final int HOOD_MOTOR      = 23;
         public static final int TURRET_MOTOR    = 24;
+        public static final int FEEDER_MOTOR    = 25; // TODO: Confirm CAN ID
     }
 
     public static class AIO
