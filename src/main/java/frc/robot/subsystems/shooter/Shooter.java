@@ -7,18 +7,27 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
+<<<<<<< HEAD
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 
 import frc.robot.util.Utilities;
 import frc.robot.Constants;
 import frc.robot.util.GameState;
+=======
+import frc.robot.util.Utilities;
+>>>>>>> 2f7e1d3 (Add ShooterFeeder class and integrate into Shooter subsystem)
 
 @Logged
 public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, HubInactive, Tracking, Ready
+        Idle, Preparing, Ready, Firing
+    }
+
+    public enum ShootMode
+    {
+        Shoot, Pass
     }
 
     public enum ShootMode
@@ -34,8 +43,7 @@ public class Shooter extends SubsystemBase
             _hood.setAngle(Constants.Shooter.getHoodAngleForDistance(distance));
         }, () ->
         {
-            _flywheel.stop();
-            _hood.stop();
+            setState(ShooterState.Idle);
         });
     }
 
@@ -94,15 +102,6 @@ public class Shooter extends SubsystemBase
         _feeder   = new Feeder();
     }
 
-    public Command getStopCmd()
-    {
-        return runOnce(() ->
-        {
-            _flywheel.stop();
-            _hood.stop();
-        });
-    }
-
     @Override
     public void periodic()
     {
@@ -137,31 +136,58 @@ public class Shooter extends SubsystemBase
 
     private void updateState()
     {
-        if (!GameState.isHubActive())
+        switch (_state)
         {
-            _state = ShooterState.HubInactive;
+            case Preparing:
+                if (isReadyInternal())
+                {
+                    _state = ShooterState.Ready;
+                }
+                break;
+
+            case Ready:
+                if (!isReadyInternal())
+                {
+                    _state = ShooterState.Preparing;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void applySetpoints()
+    {
+        if (_state == ShooterState.Idle)
+        {
+            _flywheel.stop();
+            _hood.stop();
+            _turret.setState(ShooterTurret.TurretState.Off);
+            _feeder.set(false);
             return;
         }
 
-        if (_flywheel.getVelocity() <= 0)
+        if (_mode == ShootMode.Shoot)
         {
+            _turret.setState(ShooterTurret.TurretState.Track);
             if (_turret.hasTarget())
             {
-                _state = ShooterState.Tracking;
+                _lastDistanceMeters = _turret.getDistanceToTarget();
             }
-            else
-            {
-                _state = ShooterState.Idle;
-            }
-        }
-        else if (_flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint())
-        {
-            _state = ShooterState.Ready;
+
+            double distance = _lastDistanceMeters;
+            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
+            _hood.setAngle(ShooterConstants.getHoodAngleForDistance(distance));
         }
         else
         {
-            _state = ShooterState.Tracking;
+            _turret.setState(ShooterTurret.TurretState.Pass);
+            _flywheel.setVelocity(_passFlywheelRpm);
+            _hood.setAngle(_passHoodAngleDeg);
         }
+
+        _feeder.set(_state == ShooterState.Firing);
     }
 
     private void applySetpoints()
@@ -234,21 +260,6 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    public boolean isReady()
-    {
-        return _state == ShooterState.Ready;
-    }
-
-    public boolean isHubActive()
-    {
-        return GameState.isHubActive();
-    }
-
-    public boolean hasTarget()
-    {
-        return _hasTarget;
-    }
-
     public ShooterState getState()
     {
         return _state;
@@ -281,6 +292,6 @@ public class Shooter extends SubsystemBase
 
     public boolean atSetpoint()
     {
-        return _turret.atSetpoint();
+        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint();
     }
 }

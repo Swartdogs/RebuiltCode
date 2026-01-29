@@ -57,11 +57,10 @@ public class ShooterTurret
 
     public ShooterTurret()
     {
-        _turretMotor = new TalonFX(Constants.CAN.TURRET_MOTOR);
+        _turretMotor = new TalonFX(CANConstants.TURRET_MOTOR);
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT;
-
         currentConfig.StatorCurrentLimitEnable = true;
 
         var outputConfig = new MotorOutputConfigs();
@@ -69,7 +68,6 @@ public class ShooterTurret
         outputConfig.Inverted    = InvertedValue.CounterClockwise_Positive;
 
         var slot0Configs = new Slot0Configs();
-
         slot0Configs.kP = ShooterConstants.TURRET_KP;
         slot0Configs.kI = ShooterConstants.TURRET_KI;
         slot0Configs.kD = ShooterConstants.TURRET_KD;
@@ -87,7 +85,7 @@ public class ShooterTurret
         {
             _turretMotorSim = _turretMotor.getSimState();
 
-            var gearbox = DCMotor.getKrakenX60Foc(1);
+            var gearbox = DCMotor.getKrakenX44Foc(1);
             _motorSimModel = new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.001, ShooterConstants.TURRET_GEAR_RATIO), gearbox);
         }
     }
@@ -132,7 +130,7 @@ public class ShooterTurret
                 break;
         }
 
-        if (_angleSetpoint != null)
+        if (!Double.isNaN(_angleSetpoint))
         {
             double clampedSetpoint = MathUtil.clamp(_angleSetpoint, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
             double targetRotations = clampedSetpoint * ShooterConstants.TURRET_GEAR_RATIO / 360.0;
@@ -247,7 +245,7 @@ public class ShooterTurret
 
     public double getTX()
     {
-        return _tx;
+        return _targetHorizontalOffset;
     }
 
     public double getDistanceToTarget()

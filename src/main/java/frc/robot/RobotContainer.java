@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
@@ -86,6 +87,11 @@ public class RobotContainer
         // _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM,
         // ShooterConstants.PASS_HOOD_ANGLE_DEG));
         // _joystick.leftStick().onTrue(_shooter.getStopCmd());
+
+        // Temporary shooter bindings (adjust later).
+        _joystick.x().onTrue(_shooter.getFireCmd());
+        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM, ShooterConstants.PASS_HOOD_ANGLE_DEG));
+        _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

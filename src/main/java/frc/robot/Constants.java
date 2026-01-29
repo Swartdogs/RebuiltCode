@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import java.util.List;
+import java.util.Map;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -50,17 +51,19 @@ public final class Constants
         public static final int INTAKE_EXTENSION = 0;
         public static final int HOOD_MOTOR      = 23;
         public static final int TURRET_MOTOR = 24;
+        public static final int FEEDER_MOTOR    = 25; // TODO: Confirm CAN ID
     }
 
-    public static class DIOConstants
+    public static class AIOConstants
     {
         public static final int HOOD_ENCODER = 1; // TODO: Confirm AIO port wiring
+        public static final int HOOD_POTENTIOMETER = 0; // TODO: Confirm AIO port wiring
     }
 
     public static class DriveConstants
     {
-        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
         public static final double DEADBAND         = 0.05;
     }
 
@@ -102,7 +105,9 @@ public final class Constants
 
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
 
+        public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
         public static final double PASS_FLYWHEEL_RPM      = 3000.0; // TODO: Tune
+        public static final double PASS_HOOD_ANGLE_DEG    = 20.0;   // TODO: Tune
 
         // Hood (VictorSPX with analog potentiometer)
         public static final int    HOOD_ANALOG_INPUT = 0;     // AIO port for potentiometer
@@ -117,6 +122,7 @@ public final class Constants
         public static final Angle  HOOD_TOLERANCE   = Degrees.of(2);
         public static final double HOOD_RAW_MIN      = 1035;  // TODO: Calibrate - analog value at min angle
         public static final double HOOD_RAW_MAX      = 335;   // TODO: Calibrate - analog value at max angle
+        public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
 
         // Turret
         public static final double                      TURRET_CURRENT_LIMIT = 40.0;
@@ -129,6 +135,7 @@ public final class Constants
         public static final double                      TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
         public static final double                      TURRET_TOLERANCE     = 2.0;   // degrees
         public static final String                      LIMELIGHT_NAME       = "limelight-shooter";
+
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
         private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE     = InterpolatingDoubleTreeMap
@@ -150,12 +157,7 @@ public final class Constants
         // TODO: Tune these values with testing!
         public static double getFlywheelSpeedForDistanceX(double meters)
         {
-            if (meters <= 0) return 3000;
-            if (meters < 2.0) return 3000;
-            if (meters < 3.5) return 3500;
-            if (meters < 5.0) return 4000;
-            if (meters < 6.5) return 4500;
-            return 5000;
+            return FLYWHEEL_SPEED_TABLE.get(meters);
         }
 
         public static double getHoodAngleForDistance(double meters)
@@ -199,7 +201,7 @@ public final class Constants
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
 
         // Reject vision updates when robot is tilted more than this (on ramp)
-        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: Find the correct value
+        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
     }
 
     public static class ClimberConstants
