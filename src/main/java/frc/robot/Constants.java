@@ -87,6 +87,10 @@ public final class Constants
         public static final List<Double> BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 10.0, 11.0);
         public static final List<Double> RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0, 24.0, 25.0, 26.0, 27.0);
 
+        // Feeder
+        public static final int          FEEDER_CURRENT_LIMIT = 60;
+        public static final double       FEEDER_VOLTAGE       = 6;
+
         // TODO: Tune these values with testing!
         public static double getFlywheelSpeedForDistance(double meters)
         {
