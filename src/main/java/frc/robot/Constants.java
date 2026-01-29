@@ -5,9 +5,11 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import java.util.List;
+import java.util.Map;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import frc.robot.generated.TunerConstants;
@@ -27,10 +29,15 @@ public final class Constants
         public static final int TURRET_MOTOR    = 24;
     }
 
+    public static class AIO
+    {
+        public static final int HOOD_POTENTIOMETER = 0; // TODO: Confirm AIO port wiring
+    }
+
     public static class Drive
     {
-        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+        public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+        public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
         public static final double DEADBAND         = 0.05;
     }
 
@@ -55,37 +62,43 @@ public final class Constants
     public static class Shooter
     {
         public static final double FLYWHEEL_KP            = 0.0001; // TODO: Tune
+        public static final double FLYWHEEL_KI            = 0.0;    // TODO: Tune
         public static final double FLYWHEEL_KD            = 0.0;
         public static final double FLYWHEEL_KS            = 0.0;            // TODO: Tune - static friction voltage
-        public static final double FLYWHEEL_KV            = 12.0 / 6784.0;  // Volts / NEO Vortex free speed RPM
+        public static final double FLYWHEEL_KV            = 12.0 / 6784.0; // Volts / RPM
         public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
         public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
 
-        // Hood (VictorSPX with analog potentiometer - see Sidewinder 2021)
-        public static final int    HOOD_ANALOG_INPUT = 0;     // AIO port for potentiometer
-        public static final double HOOD_KP           = 0.016; // From Sidewinder
-        public static final double HOOD_KI           = 0.001; // From Sidewinder
-        public static final double HOOD_KD           = 0.0;
-        public static final double HOOD_MIN_ANGLE    = 0.0;   // degrees
-        public static final double HOOD_MAX_ANGLE    = 45.0;  // degrees
-        public static final double HOOD_TOLERANCE    = 2.0;   // degrees
-        public static final double HOOD_RAW_MIN      = 1035;  // TODO: Calibrate - analog value at min angle
-        public static final double HOOD_RAW_MAX      = 335;   // TODO: Calibrate - analog value at max angle
+        public static final double PASS_FLYWHEEL_RPM     = 3000.0; // TODO: Tune
+        public static final double PASS_HOOD_ANGLE_DEG   = 20.0;   // TODO: Tune
+
+        // Hood (VictorSPX with analog potentiometer)
+        public static final double HOOD_KP            = 0.016; // TODO: Tune
+        public static final double HOOD_KI            = 0.001; // TODO: Tune
+        public static final double HOOD_KD            = 0.0;   // TODO: Tune
+        public static final double HOOD_MIN_ANGLE     = 0.0;   // TODO: Confirm min angle (degrees)
+        public static final double HOOD_MAX_ANGLE     = 45.0;  // TODO: Confirm max angle (degrees)
+        public static final double HOOD_TOLERANCE     = 2.0;   // TODO: Tune (degrees)
+        public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
 
         // Turret
-        public static final double       TURRET_CURRENT_LIMIT = 40.0;
-        public static final double       TURRET_KP            = 2.4;   // TODO: Tune
-        public static final double       TURRET_KI            = 0.0;
-        public static final double       TURRET_KD            = 0.1;
-        public static final double       TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
-        public static final double       TURRET_MIN_ANGLE     = -180.0; // degrees (full 360° rotation)
-        public static final double       TURRET_MAX_ANGLE     = 180.0;  // degrees
-        public static final double       TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
-        public static final double       TURRET_TOLERANCE     = 2.0;   // degrees
-        public static final String       LIMELIGHT_NAME       = "limelight-shooter";
-        public static final List<Double> BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 10.0, 11.0);
-        public static final List<Double> RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0, 24.0, 25.0, 26.0, 27.0);
+        public static final double                      TURRET_CURRENT_LIMIT = 40.0;
+        public static final double                      TURRET_KP            = 2.4;   // TODO: Tune
+        public static final double                      TURRET_KI            = 0.0;
+        public static final double                      TURRET_KD            = 0.1;
+        public static final double                      TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
+        public static final double                      TURRET_MIN_ANGLE     = -180.0; // degrees (full 360° rotation)
+        public static final double                      TURRET_MAX_ANGLE     = 180.0;  // degrees
+        public static final double                      TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
+        public static final double                      TURRET_TOLERANCE     = 2.0;   // degrees
+        public static final String                      LIMELIGHT_NAME       = "limelight-shooter";
+        public static final List<Double>                BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0);
+        public static final List<Double>                RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0);
+        private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap
+                .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
+        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE     = InterpolatingDoubleTreeMap
+                .ofEntries(Map.entry(0.0, 20.0), Map.entry(2.0, 15.0), Map.entry(3.5, 22.0), Map.entry(5.0, 30.0), Map.entry(6.5, 38.0), Map.entry(7.0, 45.0));
 
         // Feeder
         public static final int          FEEDER_CURRENT_LIMIT = 60;
@@ -94,22 +107,12 @@ public final class Constants
         // TODO: Tune these values with testing!
         public static double getFlywheelSpeedForDistance(double meters)
         {
-            if (meters <= 0) return 3000;
-            if (meters < 2.0) return 3000;
-            if (meters < 3.5) return 3500;
-            if (meters < 5.0) return 4000;
-            if (meters < 6.5) return 4500;
-            return 5000;
+            return FLYWHEEL_SPEED_TABLE.get(meters);
         }
 
         public static double getHoodAngleForDistance(double meters)
         {
-            if (meters <= 0) return 20.0;
-            if (meters < 2.0) return 15.0;
-            if (meters < 3.5) return 22.0;
-            if (meters < 5.0) return 30.0;
-            if (meters < 6.5) return 38.0;
-            return 45.0;
+            return HOOD_ANGLE_TABLE.get(meters);
         }
     }
 
@@ -126,6 +129,6 @@ public final class Constants
         public static final double MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC = 720.0;
 
         // Reject vision updates when robot is tilted more than this (on ramp)
-        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: Find the correct value
+        public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
     }
 }

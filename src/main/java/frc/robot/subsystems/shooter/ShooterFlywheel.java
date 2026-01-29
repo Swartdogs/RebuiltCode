@@ -45,7 +45,7 @@ public class ShooterFlywheel
         config.idleMode(IdleMode.kCoast).smartCurrentLimit(Constants.Shooter.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
 
         config.inverted(false);
-        config.closedLoop.p(Constants.Shooter.FLYWHEEL_KP).d(Constants.Shooter.FLYWHEEL_KD);
+        config.closedLoop.p(Constants.Shooter.FLYWHEEL_KP).i(Constants.Shooter.FLYWHEEL_KI).d(Constants.Shooter.FLYWHEEL_KD);
         config.closedLoop.feedForward.kS(Constants.Shooter.FLYWHEEL_KS).kV(Constants.Shooter.FLYWHEEL_KV).kA(Constants.Shooter.FLYWHEEL_KA);
         _leadMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 

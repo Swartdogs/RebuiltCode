@@ -71,6 +71,11 @@ public class RobotContainer
         _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
         _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());
 
+        // Temporary shooter bindings (adjust later).
+        _joystick.x().onTrue(_shooter.getFireCmd());
+        _joystick.y().whileTrue(_shooter.getPreparePassCmd(Constants.Shooter.PASS_FLYWHEEL_RPM, Constants.Shooter.PASS_HOOD_ANGLE_DEG));
+        _joystick.leftStick().onTrue(_shooter.getStopCmd());
+
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 
