@@ -61,12 +61,6 @@ public final class Constants
         public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
         public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
-        public static final double FLYWHEEL_KP            = 0.0001; // TODO: Tune
-        public static final double FLYWHEEL_KD            = 0.0;
-        public static final double FLYWHEEL_KS            = 0.0;            // TODO: Tune - static friction voltage
-        public static final double FLYWHEEL_KV            = 12.0 / 6784.0;  // Volts / NEO Vortex free speed RPM
-        public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
-        public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
 
         // Hood (VictorSPX with analog potentiometer - see Sidewinder 2021)
         public static final int    HOOD_ANALOG_INPUT = 0;     // AIO port for potentiometer

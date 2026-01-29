@@ -16,7 +16,6 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
 
@@ -73,7 +72,6 @@ public class ShooterFlywheel
         _velocity = _encoder.getVelocity();
     }
 
-    @Override
     public void simulationPeriodic()
     {
         _leadMotorSim.iterate(getVelocity(), RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
