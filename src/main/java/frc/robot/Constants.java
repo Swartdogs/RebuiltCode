@@ -30,40 +30,23 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-<<<<<<< HEAD
         public static final int INTAKE           = 20;
         public static final int FLYWHEEL_LEAD    = 21;
         public static final int FLYWHEEL_FOLLOW  = 22;
         public static final int CLIMBER_EXTEND   = 26;
         public static final int INTAKE_EXTEND    = 27;
         public static final int CLIMBER_ROTATE   = 28;
-        public static final int INTAKE_EXTENSION = 0;
-=======
-<<<<<<< HEAD
-        public static final int INTAKE          = 20;
-        public static final int FLYWHEEL_LEAD   = 21;
-        public static final int FLYWHEEL_FOLLOW = 22;
         public static final int HOOD_MOTOR      = 23;
         public static final int TURRET_MOTOR    = 24;
-=======
-        public static final int INTAKE           = 20;
         public static final int INTAKE_EXTENSION = 21;
-        public static final int FLYWHEEL_LEAD    = 22;
-        public static final int FLYWHEEL_FOLLOW  = 23;
->>>>>>> d183c15 (Simulatable intake. Still need to fix math and switch to units library)
->>>>>>> 885d8f4 (WIP intake simulation)
     }
 
-<<<<<<< HEAD
-    public static class DriveConstants
-=======
     public static class AIO
     {
         public static final int HOOD_POTENTIOMETER = 0; // TODO: Confirm AIO port wiring
     }
 
     public static class Drive
->>>>>>> 5fed505 (Refactor Intake subsystem: streamline commands and state management, remove unused enums)
     {
         public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
         public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
@@ -72,7 +55,6 @@ public final class Constants
 
     public static class IntakeConstants
     {
-<<<<<<< HEAD
         public static final Voltage  INTAKE_VOLTS                = Volts.of(8.0);
         public static final Voltage  REVERSE_VOLTS               = Volts.of(-4.0);
         public static final int      CURRENT_LIMIT               = 40;
@@ -86,21 +68,6 @@ public final class Constants
         public static final Distance EXTENSION_MIN_POSITION      = Inches.of(0.0);
         public static final Voltage  EXTEND_OUTPUT               = Volts.zero();
         public static final Voltage  RETRACT_VOLTS               = Volts.zero();
-=======
-        public static final double INTAKE_VOLTS                = 8.0;
-        public static final double REVERSE_VOLTS               = -4.0;
-        public static final double EXTEND_VOLTS                = 6.0;
-        public static final double RETRACT_VOLTS               = -6.0;
-        public static final double EXTENSION_CONVERSION_FACTOR = 1.0;
-        public static final double EXTENSION_MIN_POSITION      = 0.0;
-        public static final double EXTENSION_MAX_POSITION      = 15.0; // Inches
-        public static final int    CURRENT_LIMIT               = 40;
-        public static final int    CAMERA_DEVICE_INDEX         = 0;
-        public static final String CAMERA_NAME                 = "IntakeCam";
-        public static final int    CAMERA_WIDTH                = 320;
-        public static final int    CAMERA_HEIGHT               = 240;
-        public static final int    CAMERA_FPS                  = 15;
->>>>>>> 885d8f4 (WIP intake simulation)
     }
 
     public static class GeneralConstants
@@ -119,50 +86,6 @@ public final class Constants
         public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
         public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
-<<<<<<< HEAD
-=======
-
-        public static final double PASS_FLYWHEEL_RPM     = 3000.0; // TODO: Tune
-        public static final double PASS_HOOD_ANGLE_DEG   = 20.0;   // TODO: Tune
-
-        // Hood (VictorSPX with analog potentiometer)
-        public static final double HOOD_KP            = 0.016; // TODO: Tune
-        public static final double HOOD_KI            = 0.001; // TODO: Tune
-        public static final double HOOD_KD            = 0.0;   // TODO: Tune
-        public static final double HOOD_MIN_ANGLE     = 0.0;   // TODO: Confirm min angle (degrees)
-        public static final double HOOD_MAX_ANGLE     = 45.0;  // TODO: Confirm max angle (degrees)
-        public static final double HOOD_TOLERANCE     = 2.0;   // TODO: Tune (degrees)
-        public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
-
-        // Turret
-        public static final double                      TURRET_CURRENT_LIMIT = 40.0;
-        public static final double                      TURRET_KP            = 2.4;   // TODO: Tune
-        public static final double                      TURRET_KI            = 0.0;
-        public static final double                      TURRET_KD            = 0.1;
-        public static final double                      TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
-        public static final double                      TURRET_MIN_ANGLE     = -180.0; // degrees (full 360° rotation)
-        public static final double                      TURRET_MAX_ANGLE     = 180.0;  // degrees
-        public static final double                      TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
-        public static final double                      TURRET_TOLERANCE     = 2.0;   // degrees
-        public static final String                      LIMELIGHT_NAME       = "limelight-shooter";
-        public static final List<Double>                BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0);
-        public static final List<Double>                RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0);
-        private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap
-                .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
-        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE     = InterpolatingDoubleTreeMap
-                .ofEntries(Map.entry(0.0, 20.0), Map.entry(2.0, 15.0), Map.entry(3.5, 22.0), Map.entry(5.0, 30.0), Map.entry(6.5, 38.0), Map.entry(7.0, 45.0));
-
-        // TODO: Tune these values with testing!
-        public static double getFlywheelSpeedForDistance(double meters)
-        {
-            return FLYWHEEL_SPEED_TABLE.get(meters);
-        }
-
-        public static double getHoodAngleForDistance(double meters)
-        {
-            return HOOD_ANGLE_TABLE.get(meters);
-        }
->>>>>>> 5fed505 (Refactor Intake subsystem: streamline commands and state management, remove unused enums)
     }
 
     public static class VisionConstants
