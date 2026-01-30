@@ -14,7 +14,7 @@ public class Shooter extends SubsystemBase
         Idle, Preparing, Ready, Firing
     }
 
-    public enum ShotMode
+    public enum ShootMode
     {
         Shoot, Pass
     }
@@ -23,7 +23,7 @@ public class Shooter extends SubsystemBase
     {
         return startEnd(() ->
         {
-            _mode = ShotMode.Shoot;
+            _mode = ShootMode.Shoot;
             setState(ShooterState.Preparing);
         }, () ->
         {
@@ -35,7 +35,7 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _mode = ShotMode.Shoot;
+            _mode = ShootMode.Shoot;
             setState(ShooterState.Preparing);
         });
     }
@@ -44,7 +44,7 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _mode             = ShotMode.Pass;
+            _mode             = ShootMode.Pass;
             _passFlywheelRpm  = flywheelRpm;
             _passHoodAngleDeg = hoodAngleDeg;
             setState(ShooterState.Preparing);
@@ -68,7 +68,7 @@ public class Shooter extends SubsystemBase
     @Logged
     private ShooterState          _state              = ShooterState.Idle;
     @Logged
-    private ShotMode              _mode               = ShotMode.Shoot;
+    private ShootMode             _mode               = ShootMode.Shoot;
     @Logged
     private double                _lastDistanceMeters = 0.0;
     @Logged
@@ -138,7 +138,7 @@ public class Shooter extends SubsystemBase
             return;
         }
 
-        if (_mode == ShotMode.Shoot)
+        if (_mode == ShootMode.Shoot)
         {
             _turret.setState(ShooterTurret.TurretState.Track);
             if (_turret.hasTarget())
@@ -162,7 +162,7 @@ public class Shooter extends SubsystemBase
 
     public void setState(ShooterState state)
     {
-        if (state == ShooterState.Preparing && _mode == ShotMode.Shoot && !Utilities.isHubActive())
+        if (state == ShooterState.Preparing && _mode == ShootMode.Shoot && !Utilities.isHubActive())
         {
             _state = ShooterState.Idle;
             return;
