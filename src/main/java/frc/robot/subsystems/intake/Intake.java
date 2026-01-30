@@ -5,12 +5,18 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.ResetMode;
+
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Value;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.revrobotics.PersistMode;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -48,7 +54,7 @@ public class Intake extends SubsystemBase
     private final SparkFlex _intakeMotor;
     private UsbCamera       _camera;
     @Logged
-    private double          _motorVoltage = 0.0;
+    private Voltage         _motorVoltage = Volts.of(0.0);
     @Logged
     private IntakeState     _intakeState  = IntakeState.Off;
 
@@ -57,7 +63,7 @@ public class Intake extends SubsystemBase
         _intakeMotor = new SparkFlex(Constants.CAN.INTAKE, MotorType.kBrushless);
 
         var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(Constants.Intake.CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)Constants.Intake.CURRENT_LIMIT.in(Amps)).voltageCompensation(Constants.General.MOTOR_VOLTAGE.in(Volts));
 
         _intakeMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -73,7 +79,7 @@ public class Intake extends SubsystemBase
     @Override
     public void periodic()
     {
-        _motorVoltage = _intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage();
+        _motorVoltage = Volts.of(_intakeMotor.getBusVoltage()).times(Value.of(_intakeMotor.getAppliedOutput()));
     }
 
     public void set(IntakeState state)
@@ -82,7 +88,7 @@ public class Intake extends SubsystemBase
         {
             case Forward -> Constants.Intake.INTAKE_VOLTS;
             case Reverse -> Constants.Intake.REVERSE_VOLTS;
-            case Off -> 0;
+            case Off     -> Volts.of(0.0);
         });
 
         _intakeState = state;

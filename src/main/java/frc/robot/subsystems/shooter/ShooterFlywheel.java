@@ -1,5 +1,10 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -13,6 +18,7 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -26,8 +32,8 @@ public class ShooterFlywheel extends SubsystemBase
     private final SparkClosedLoopController _closedLoopController;
     private final RelativeEncoder           _encoder;
     private final SparkSim                  _leadMotorSim;
-    private double                          _velocity       = 0.0;
-    private double                          _velocityTarget = 0.0;
+    private AngularVelocity                 _velocity       = RPM.of(0.0);
+    private AngularVelocity                 _velocityTarget = RPM.of(0.0);
 
     public ShooterFlywheel()
     {
@@ -41,7 +47,7 @@ public class ShooterFlywheel extends SubsystemBase
         }
 
         var config = new SparkFlexConfig();
-        config.idleMode(IdleMode.kCoast).smartCurrentLimit(Constants.Shooter.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
+        config.idleMode(IdleMode.kCoast).smartCurrentLimit((int)Constants.Shooter.FLYWHEEL_CURRENT_LIMIT.in(Amps)).voltageCompensation(Constants.General.MOTOR_VOLTAGE.in(Volts));
 
         config.inverted(false);
         config.closedLoop.p(Constants.Shooter.FLYWHEEL_KP).d(Constants.Shooter.FLYWHEEL_KD);
@@ -69,36 +75,36 @@ public class ShooterFlywheel extends SubsystemBase
     @Override
     public void periodic()
     {
-        _velocity = _encoder.getVelocity();
+        _velocity = RPM.of(_encoder.getVelocity());
     }
 
     @Override
     public void simulationPeriodic()
     {
-        _leadMotorSim.iterate(getVelocity(), RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
+        _leadMotorSim.iterate(getVelocity(), RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD.in(Seconds));
     }
 
-    public void setVelocity(double rpm)
+    public void setVelocity(AngularVelocity velocity)
     {
-        _velocityTarget = rpm;
-        _closedLoopController.setSetpoint(rpm, ControlType.kVelocity, ClosedLoopSlot.kSlot0);
+        _velocityTarget = velocity;
+        _closedLoopController.setSetpoint(_velocityTarget.in(RPM), ControlType.kVelocity, ClosedLoopSlot.kSlot0);
     }
 
     public void stop()
     {
-        _velocityTarget = 0.0;
+        _velocityTarget = RPM.of(0.0);
         _leadMotor.setVoltage(0);
     }
 
     public boolean atSpeed()
     {
-        if (_velocityTarget <= 0) return true;
+        if (_velocityTarget.in(RPM) <= 0) return true;
 
-        double error = Math.abs(getVelocity() - _velocityTarget);
+        double error = getVelocity().minus(_velocityTarget);
         return error <= _velocityTarget * Constants.Shooter.FLYWHEEL_TOLERANCE;
     }
 
-    public double getVelocity()
+    public AngularVelocity getVelocity()
     {
         return _velocity;
     }
