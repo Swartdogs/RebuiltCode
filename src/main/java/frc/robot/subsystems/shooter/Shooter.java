@@ -3,8 +3,7 @@ package frc.robot.subsystems.shooter;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import frc.robot.Constants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.Utilities;
 
 @Logged
@@ -45,8 +44,8 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _mode = ShotMode.Pass;
-            _passFlywheelRpm = flywheelRpm;
+            _mode             = ShotMode.Pass;
+            _passFlywheelRpm  = flywheelRpm;
             _passHoodAngleDeg = hoodAngleDeg;
             setState(ShooterState.Preparing);
         });
@@ -67,9 +66,9 @@ public class Shooter extends SubsystemBase
     private final ShooterTurret   _turret;
     private final ShooterFeeder   _feeder;
     @Logged
-    private ShooterState          _state     = ShooterState.Idle;
+    private ShooterState          _state              = ShooterState.Idle;
     @Logged
-    private ShotMode              _mode      = ShotMode.Shoot;
+    private ShotMode              _mode               = ShotMode.Shoot;
     @Logged
     private double                _lastDistanceMeters = 0.0;
     @Logged
@@ -148,8 +147,8 @@ public class Shooter extends SubsystemBase
             }
 
             double distance = _lastDistanceMeters;
-            _flywheel.setVelocity(Constants.Shooter.getFlywheelSpeedForDistance(distance));
-            _hood.setAngle(Constants.Shooter.getHoodAngleForDistance(distance));
+            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
+            _hood.setAngle(ShooterConstants.getHoodAngleForDistance(distance));
         }
         else
         {

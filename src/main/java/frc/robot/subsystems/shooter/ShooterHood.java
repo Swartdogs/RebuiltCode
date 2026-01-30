@@ -12,7 +12,10 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.AnalogInputSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 
-import frc.robot.Constants;
+import frc.robot.Constants.AIOConstants;
+import frc.robot.Constants.CANConstants;
+import frc.robot.Constants.GeneralConstants;
+import frc.robot.Constants.ShooterConstants;
 
 @Logged
 public class ShooterHood
@@ -29,12 +32,12 @@ public class ShooterHood
 
     public ShooterHood()
     {
-        _hoodMotor       = new WPI_VictorSPX(Constants.CAN.HOOD_MOTOR);
-        _hoodSensorInput = new AnalogInput(Constants.AIO.HOOD_POTENTIOMETER);
-        _hoodSensor      = new AnalogPotentiometer(_hoodSensorInput, Constants.Shooter.HOOD_MAX_ANGLE - Constants.Shooter.HOOD_MIN_ANGLE, Constants.Shooter.HOOD_MIN_ANGLE);
+        _hoodMotor       = new WPI_VictorSPX(CANConstants.HOOD_MOTOR);
+        _hoodSensorInput = new AnalogInput(AIOConstants.HOOD_POTENTIOMETER);
+        _hoodSensor      = new AnalogPotentiometer(_hoodSensorInput, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
 
-        _pid = new PIDController(Constants.Shooter.HOOD_KP, Constants.Shooter.HOOD_KI, Constants.Shooter.HOOD_KD);
-        _pid.setTolerance(Constants.Shooter.HOOD_TOLERANCE);
+        _pid = new PIDController(ShooterConstants.HOOD_KP, ShooterConstants.HOOD_KI, ShooterConstants.HOOD_KD);
+        _pid.setTolerance(ShooterConstants.HOOD_TOLERANCE);
 
         if (RobotBase.isReal())
         {
@@ -65,17 +68,17 @@ public class ShooterHood
     public void simulationPeriodic()
     {
         double motorOutput = _hoodMotor.get();
-        double maxSpeed    = Constants.Shooter.HOOD_SIM_MAX_SPEED;
+        double maxSpeed    = ShooterConstants.HOOD_SIM_MAX_SPEED;
 
-        _simAngle += motorOutput * maxSpeed * Constants.General.LOOP_PERIOD_SECS;
-        _simAngle  = MathUtil.clamp(_simAngle, Constants.Shooter.HOOD_MIN_ANGLE, Constants.Shooter.HOOD_MAX_ANGLE);
+        _simAngle += motorOutput * maxSpeed * GeneralConstants.LOOP_PERIOD_SECS;
+        _simAngle  = MathUtil.clamp(_simAngle, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
 
         updateSimSensorVoltage();
     }
 
     private void updateSimSensorVoltage()
     {
-        double normalized = (_simAngle - Constants.Shooter.HOOD_MIN_ANGLE) / (Constants.Shooter.HOOD_MAX_ANGLE - Constants.Shooter.HOOD_MIN_ANGLE);
+        double normalized = (_simAngle - ShooterConstants.HOOD_MIN_ANGLE) / (ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE);
         normalized = MathUtil.clamp(normalized, 0.0, 1.0);
 
         _hoodSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized);
@@ -83,7 +86,7 @@ public class ShooterHood
 
     public void setAngle(double angleDegrees)
     {
-        _angleSetpoint = MathUtil.clamp(angleDegrees, Constants.Shooter.HOOD_MIN_ANGLE, Constants.Shooter.HOOD_MAX_ANGLE);
+        _angleSetpoint = MathUtil.clamp(angleDegrees, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _pid.setSetpoint(_angleSetpoint);
     }
 

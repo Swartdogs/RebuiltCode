@@ -5,7 +5,8 @@ import java.util.stream.Stream;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import frc.robot.Constants;
+
+import frc.robot.Constants.ShooterConstants;
 
 /**
  * Utility class for reading REBUILT 2026 game data from the Driver Station /
@@ -22,7 +23,7 @@ public final class Utilities
     private static final double       kShift2EndTimeSecs          = 80.0;  // 1:20
     private static final double       kShift3EndTimeSecs          = 55.0;  // 0:55
     private static final double       kShift4EndTimeSecs          = 30.0;  // 0:30
-    private static final List<Double> kAllHubTagIds               = Stream.concat(Constants.Shooter.RED_HUB_TAG_IDS.stream(), Constants.Shooter.BLUE_HUB_TAG_IDS.stream()).toList();
+    private static final List<Double> kAllHubTagIds               = Stream.concat(ShooterConstants.RED_HUB_TAG_IDS.stream(), ShooterConstants.BLUE_HUB_TAG_IDS.stream()).toList();
 
     private Utilities()
     {
@@ -89,9 +90,9 @@ public final class Utilities
         if (alliance.isEmpty()) return kAllHubTagIds;
         if (isRedAlliance())
         {
-            return Constants.Shooter.RED_HUB_TAG_IDS;
+            return ShooterConstants.RED_HUB_TAG_IDS;
         }
-        return Constants.Shooter.BLUE_HUB_TAG_IDS;
+        return ShooterConstants.BLUE_HUB_TAG_IDS;
     }
 
     private static int getAllianceShift(double timeRemaining)
