@@ -111,8 +111,7 @@ public class Intake extends SubsystemBase
 
     public Intake()
     {
-        _intakeMotor    = new SparkFlex(Constants.CAN.INTAKE, MotorType.kBrushless);
-        _extensionMotor = new SparkFlex(Constants.CAN.INTAKE_EXTENSION, MotorType.kBrushless);
+        _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
         var config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
@@ -131,18 +130,8 @@ public class Intake extends SubsystemBase
         {
             _camera = CameraServer.startAutomaticCapture(IntakeConstants.CAMERA_NAME, IntakeConstants.CAMERA_DEVICE_INDEX);
             _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
-            _camera.setResolution(Constants.Intake.CAMERA_WIDTH, Constants.Intake.CAMERA_HEIGHT);
-            _camera.setFPS(Constants.Intake.CAMERA_FPS);
-            _intakeMotorSim    = null;
-            _extensionMotorSim = null;
-            _neoVortex         = null;
-        }
-        else
-        {
-            _camera            = null;
-            _neoVortex         = DCMotor.getNeoVortex(1);
-            _intakeMotorSim    = new SparkFlexSim(_intakeMotor, _neoVortex);
-            _extensionMotorSim = new SparkFlexSim(_extensionMotor, _neoVortex);
+            _camera.setResolution(IntakeConstants.CAMERA_WIDTH, IntakeConstants.CAMERA_HEIGHT);
+            _camera.setFPS(IntakeConstants.CAMERA_FPS);
         }
     }
 
@@ -216,10 +205,10 @@ public class Intake extends SubsystemBase
 
         var volts = switch (_intakeState)
         {
-            case Forward -> Constants.Intake.INTAKE_VOLTS;
-            case Reverse -> Constants.Intake.REVERSE_VOLTS;
-            default -> 0.0;
-        };
+            case Forward -> IntakeConstants.INTAKE_VOLTS;
+            case Reverse -> IntakeConstants.REVERSE_VOLTS;
+            case Off -> 0;
+        });
 
         _intakeMotor.setVoltage(volts);
 

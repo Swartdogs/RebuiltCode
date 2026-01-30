@@ -32,7 +32,6 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter();
 
     public RobotContainer()
     {
@@ -70,15 +69,8 @@ public class RobotContainer
 
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-<<<<<<< HEAD
         //_joystick.rightBumper().whileTrue(_intake.extend()); // TODO
         //_joystick.rightTrigger().whileTrue(_intake.retract()); // TODO
-=======
-<<<<<<< HEAD
-        _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
-        _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
-        _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());
-=======
 
         // Hold left trigger to "lock" rollers on
         _joystick.povUp().and(_joystick.leftTrigger()).onTrue(_intake.startRollers());
@@ -94,13 +86,6 @@ public class RobotContainer
 
         // Left stick stops the rollers if they're running
         _joystick.leftStick().onTrue(_intake.stopRollers());
->>>>>>> d183c15 (Simulatable intake. Still need to fix math and switch to units library)
->>>>>>> 885d8f4 (WIP intake simulation)
-
-        // Temporary shooter bindings (adjust later).
-        _joystick.x().onTrue(_shooter.getFireCmd());
-        _joystick.y().whileTrue(_shooter.getPreparePassCmd(Constants.Shooter.PASS_FLYWHEEL_RPM, Constants.Shooter.PASS_HOOD_ANGLE_DEG));
-        _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

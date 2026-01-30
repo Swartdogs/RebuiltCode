@@ -3,8 +3,7 @@ package frc.robot.subsystems.shooter;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import frc.robot.Constants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.Utilities;
 
 @Logged
@@ -15,7 +14,7 @@ public class Shooter extends SubsystemBase
         Idle, Preparing, Ready, Firing
     }
 
-    public enum ShotMode
+    public enum ShootMode
     {
         Shoot, Pass
     }
@@ -24,7 +23,7 @@ public class Shooter extends SubsystemBase
     {
         return startEnd(() ->
         {
-            _mode = ShotMode.Shoot;
+            _mode = ShootMode.Shoot;
             setState(ShooterState.Preparing);
         }, () ->
         {
@@ -36,7 +35,7 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _mode = ShotMode.Shoot;
+            _mode = ShootMode.Shoot;
             setState(ShooterState.Preparing);
         });
     }
@@ -45,8 +44,8 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _mode = ShotMode.Pass;
-            _passFlywheelRpm = flywheelRpm;
+            _mode             = ShootMode.Pass;
+            _passFlywheelRpm  = flywheelRpm;
             _passHoodAngleDeg = hoodAngleDeg;
             setState(ShooterState.Preparing);
         });
@@ -67,9 +66,9 @@ public class Shooter extends SubsystemBase
     private final ShooterTurret   _turret;
     private final ShooterFeeder   _feeder;
     @Logged
-    private ShooterState          _state     = ShooterState.Idle;
+    private ShooterState          _state              = ShooterState.Idle;
     @Logged
-    private ShotMode              _mode      = ShotMode.Shoot;
+    private ShootMode             _mode               = ShootMode.Shoot;
     @Logged
     private double                _lastDistanceMeters = 0.0;
     @Logged
@@ -139,7 +138,7 @@ public class Shooter extends SubsystemBase
             return;
         }
 
-        if (_mode == ShotMode.Shoot)
+        if (_mode == ShootMode.Shoot)
         {
             _turret.setState(ShooterTurret.TurretState.Track);
             if (_turret.hasTarget())
@@ -148,8 +147,8 @@ public class Shooter extends SubsystemBase
             }
 
             double distance = _lastDistanceMeters;
-            _flywheel.setVelocity(Constants.Shooter.getFlywheelSpeedForDistance(distance));
-            _hood.setAngle(Constants.Shooter.getHoodAngleForDistance(distance));
+            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
+            _hood.setAngle(ShooterConstants.getHoodAngleForDistance(distance));
         }
         else
         {
@@ -163,18 +162,39 @@ public class Shooter extends SubsystemBase
 
     public void setState(ShooterState state)
     {
-        if (state == ShooterState.Preparing && _mode == ShotMode.Shoot && !Utilities.isHubActive())
+        switch (_state)
         {
-            _state = ShooterState.Idle;
-            return;
-        }
+            case Idle:
+                if (state == ShooterState.Preparing)
+                {
+                    _state = state;
+                }
+                break;
 
-        if (state == ShooterState.Firing && _state != ShooterState.Ready)
-        {
-            return;
-        }
+            case Preparing:
+                if (state == ShooterState.Idle)
+                {
+                    _state = state;
+                }
+                break;
 
-        _state = state;
+            case Ready:
+                if (state == ShooterState.Firing || state == ShooterState.Idle)
+                {
+                    _state = state;
+                }
+                break;
+
+            case Firing:
+                if (state == ShooterState.Idle)
+                {
+                    _state = state;
+                }
+                break;
+
+            default:
+                break;
+        }
     }
 
     public ShooterState getState()

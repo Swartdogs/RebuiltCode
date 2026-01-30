@@ -20,7 +20,9 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 
-import frc.robot.Constants;
+import frc.robot.Constants.CANConstants;
+import frc.robot.Constants.GeneralConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.Utilities;
 import limelight.Limelight;
 import limelight.networktables.LimelightData;
@@ -51,10 +53,10 @@ public class ShooterTurret
 
     public ShooterTurret()
     {
-        _turretMotor = new TalonFX(Constants.CAN.TURRET_MOTOR);
+        _turretMotor = new TalonFX(CANConstants.TURRET_MOTOR);
 
         var currentConfig = new CurrentLimitsConfigs();
-        currentConfig.StatorCurrentLimit       = Constants.Shooter.TURRET_CURRENT_LIMIT;
+        currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT;
         currentConfig.StatorCurrentLimitEnable = true;
 
         var outputConfig = new MotorOutputConfigs();
@@ -62,13 +64,13 @@ public class ShooterTurret
         outputConfig.Inverted    = InvertedValue.CounterClockwise_Positive;
 
         var slot0Configs = new Slot0Configs();
-        slot0Configs.kP = Constants.Shooter.TURRET_KP;
-        slot0Configs.kI = Constants.Shooter.TURRET_KI;
-        slot0Configs.kD = Constants.Shooter.TURRET_KD;
+        slot0Configs.kP = ShooterConstants.TURRET_KP;
+        slot0Configs.kI = ShooterConstants.TURRET_KI;
+        slot0Configs.kD = ShooterConstants.TURRET_KD;
 
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0Configs));
 
-        _limelight = new Limelight(Constants.Shooter.LIMELIGHT_NAME);
+        _limelight = new Limelight(ShooterConstants.LIMELIGHT_NAME);
 
         if (RobotBase.isReal())
         {
@@ -80,7 +82,7 @@ public class ShooterTurret
             _turretMotorSim = _turretMotor.getSimState();
 
             var gearbox = DCMotor.getKrakenX44Foc(1);
-            _motorSimModel = new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.001, Constants.Shooter.TURRET_GEAR_RATIO), gearbox);
+            _motorSimModel = new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.001, ShooterConstants.TURRET_GEAR_RATIO), gearbox);
         }
     }
 
@@ -88,7 +90,7 @@ public class ShooterTurret
     {
         // TODO: Consider configuring Phoenix 6 sensor/gear ratio so the reported
         // position is in mechanism degrees.
-        _angle = _turretMotor.getPosition().getValueAsDouble() * 360.0 / Constants.Shooter.TURRET_GEAR_RATIO;
+        _angle = _turretMotor.getPosition().getValueAsDouble() * 360.0 / ShooterConstants.TURRET_GEAR_RATIO;
 
         _limelight.getSettings().withArilTagIdFilter(Utilities.getOurHubTagIds()).save();
 
@@ -109,20 +111,20 @@ public class ShooterTurret
                 }
                 else
                 {
-                    _angleSetpoint = Constants.Shooter.TURRET_HOME_ANGLE;
+                    _angleSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 }
                 break;
 
             case Pass:
                 // TODO: Implement pass angle logic
-                _angleSetpoint = Constants.Shooter.TURRET_HOME_ANGLE;
+                _angleSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 break;
         }
 
         if (!Double.isNaN(_angleSetpoint))
         {
-            double clampedSetpoint = MathUtil.clamp(_angleSetpoint, Constants.Shooter.TURRET_MIN_ANGLE, Constants.Shooter.TURRET_MAX_ANGLE);
-            double targetRotations = clampedSetpoint * Constants.Shooter.TURRET_GEAR_RATIO / 360.0;
+            double clampedSetpoint = MathUtil.clamp(_angleSetpoint, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
+            double targetRotations = clampedSetpoint * ShooterConstants.TURRET_GEAR_RATIO / 360.0;
             _turretMotor.setControl(_positionRequest.withPosition(targetRotations));
         }
         else
@@ -137,10 +139,10 @@ public class ShooterTurret
 
         var motorVoltage = _turretMotorSim.getMotorVoltageMeasure();
         _motorSimModel.setInputVoltage(motorVoltage.in(Volts));
-        _motorSimModel.update(Constants.General.LOOP_PERIOD_SECS);
+        _motorSimModel.update(GeneralConstants.LOOP_PERIOD_SECS);
 
-        _turretMotorSim.setRawRotorPosition(_motorSimModel.getAngularPosition().times(Constants.Shooter.TURRET_GEAR_RATIO));
-        _turretMotorSim.setRotorVelocity(_motorSimModel.getAngularVelocity().times(Constants.Shooter.TURRET_GEAR_RATIO));
+        _turretMotorSim.setRawRotorPosition(_motorSimModel.getAngularPosition().times(ShooterConstants.TURRET_GEAR_RATIO));
+        _turretMotorSim.setRotorVelocity(_motorSimModel.getAngularVelocity().times(ShooterConstants.TURRET_GEAR_RATIO));
     }
 
     public void setState(TurretState state)
@@ -156,7 +158,7 @@ public class ShooterTurret
     public boolean atSetpoint()
     {
         if (Double.isNaN(_angleSetpoint)) return true;
-        return Math.abs(_angle - _angleSetpoint) <= Constants.Shooter.TURRET_TOLERANCE;
+        return Math.abs(_angle - _angleSetpoint) <= ShooterConstants.TURRET_TOLERANCE;
     }
 
     public boolean hasTarget()
