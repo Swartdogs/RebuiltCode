@@ -15,7 +15,9 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants;
+import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.CANConstants;
+import frc.robot.Constants.GeneralConstants;
 
 @Logged
 public class Intake extends SubsystemBase
@@ -54,19 +56,19 @@ public class Intake extends SubsystemBase
 
     public Intake()
     {
-        _intakeMotor = new SparkFlex(Constants.CAN.INTAKE, MotorType.kBrushless);
+        _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
         var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(Constants.Intake.CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
 
         _intakeMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         if (RobotBase.isReal())
         {
-            _camera = CameraServer.startAutomaticCapture(Constants.Intake.CAMERA_NAME, Constants.Intake.CAMERA_DEVICE_INDEX);
+            _camera = CameraServer.startAutomaticCapture(IntakeConstants.CAMERA_NAME, IntakeConstants.CAMERA_DEVICE_INDEX);
             _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
-            _camera.setResolution(Constants.Intake.CAMERA_WIDTH, Constants.Intake.CAMERA_HEIGHT);
-            _camera.setFPS(Constants.Intake.CAMERA_FPS);
+            _camera.setResolution(IntakeConstants.CAMERA_WIDTH, IntakeConstants.CAMERA_HEIGHT);
+            _camera.setFPS(IntakeConstants.CAMERA_FPS);
         }
     }
 
@@ -80,8 +82,8 @@ public class Intake extends SubsystemBase
     {
         _intakeMotor.setVoltage(switch (state)
         {
-            case Forward -> Constants.Intake.INTAKE_VOLTS;
-            case Reverse -> Constants.Intake.REVERSE_VOLTS;
+            case Forward -> IntakeConstants.INTAKE_VOLTS;
+            case Reverse -> IntakeConstants.REVERSE_VOLTS;
             case Off -> 0;
         });
 

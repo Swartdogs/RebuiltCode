@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+
+import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
@@ -24,7 +26,7 @@ public class RobotContainer
     private final SwerveRequest.FieldCentric     drive       = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake       = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt    point       = new SwerveRequest.PointWheelsAt();
-    private final Telemetry                      _logger     = new Telemetry(Constants.Drive.MAX_SPEED);
+    private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED);
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
@@ -41,9 +43,9 @@ public class RobotContainer
         _drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 _drivetrain.applyRequest(
-                        () -> drive.withVelocityX(MathUtil.applyDeadband(-_joystick.getLeftY() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive forward with negative Y (forward)
-                                .withVelocityY(MathUtil.applyDeadband(-_joystick.getLeftX() * Constants.Drive.MAX_SPEED, Constants.Drive.DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(-_joystick.getRightX() * Constants.Drive.MAX_ANGULAR_RATE) // Drive counterclockwise with negative X (left)
+                        () -> drive.withVelocityX(MathUtil.applyDeadband(-_joystick.getLeftY() * DriveConstants.MAX_SPEED, DriveConstants.DEADBAND)) // Drive forward with negative Y (forward)
+                                .withVelocityY(MathUtil.applyDeadband(-_joystick.getLeftX() * DriveConstants.MAX_SPEED, DriveConstants.DEADBAND)) // Drive left with negative X (left)
+                                .withRotationalRate(-_joystick.getRightX() * DriveConstants.MAX_ANGULAR_RATE) // Drive counterclockwise with negative X (left)
                 )
         );
 
