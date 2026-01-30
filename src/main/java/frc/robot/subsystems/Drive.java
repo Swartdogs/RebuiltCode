@@ -26,8 +26,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
-import frc.robot.Constants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+
 import limelight.Limelight;
 import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
@@ -334,8 +335,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             if (RobotBase.isReal())
             {
-                _limelightLeft  = new Limelight(Constants.Vision.LEFT_CAMERA_NAME);
-                _limelightRight = new Limelight(Constants.Vision.RIGHT_CAMERA_NAME);
+                _limelightLeft  = new Limelight(VisionConstants.LEFT_CAMERA_NAME);
+                _limelightRight = new Limelight(VisionConstants.RIGHT_CAMERA_NAME);
 
                 _poseEstimatorLeft  = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2);
                 _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG2);
@@ -347,7 +348,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 _poseEstimatorLeft  = null;
                 _poseEstimatorRight = null;
             }
-            setVisionMeasurementStdDevs(Constants.Vision.STD_DEVS);
+            setVisionMeasurementStdDevs(VisionConstants.STD_DEVS);
         }
 
         public void update()
@@ -403,7 +404,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
             PoseEstimate poseEstimate = estimate.get();
 
-            if (poseEstimate.tagCount == 0 || poseEstimate.avgTagDist > Constants.Vision.MAX_DETECTION_RANGE || poseEstimate.timestampSeconds == lastTimestamp)
+            if (poseEstimate.tagCount == 0 || poseEstimate.avgTagDist > VisionConstants.MAX_DETECTION_RANGE || poseEstimate.timestampSeconds == lastTimestamp)
             {
                 return false;
             }
@@ -416,7 +417,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         private boolean isRotatingTooFast()
         {
             double gyroRateDegPerSec = Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble());
-            return gyroRateDegPerSec > Constants.Vision.MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC;
+            return gyroRateDegPerSec > VisionConstants.MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC;
         }
 
         private boolean isOnBump()
@@ -424,7 +425,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             var    rotation = getPigeon2().getRotation3d();
             double pitchDeg = Math.abs(Math.toDegrees(rotation.getY()));
             double rollDeg  = Math.abs(Math.toDegrees(rotation.getX()));
-            return pitchDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG || rollDeg > Constants.Vision.MAX_TILT_FOR_VISION_DEG;
+            return pitchDeg > VisionConstants.MAX_TILT_FOR_VISION_DEG || rollDeg > VisionConstants.MAX_TILT_FOR_VISION_DEG;
         }
     }
 }
