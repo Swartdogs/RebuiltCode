@@ -26,6 +26,8 @@ public final class Constants
         public static final int INTAKE          = 20;
         public static final int FLYWHEEL_LEAD   = 21;
         public static final int FLYWHEEL_FOLLOW = 22;
+        public static final int CLIMBER_EXTEND  = 26; 
+        public static final int CLIMBER_ROTATE  = 27; 
     }
 
     public static class DriveConstants
@@ -90,5 +92,16 @@ public final class Constants
 
         // Reject vision updates when robot is tilted more than this (on ramp)
         public static final double MAX_TILT_FOR_VISION_DEG = 10.0; // TODO: find the correct value
+    }
+
+    public static class ClimberConstants
+    {
+        public static final double L1_ROTATION          = 39.0; // TODO
+        public static final double L3_ROTATION          = 180.0; // TODO
+        public static final double EXTENSION_THRESHOLD  = 0.0; // TODO
+        public static final double RETRACTION_THRESHOLD = 0.0; // TODO
+        public static final double EXTEND_OUTPUT        = 1.0; // TODO: duty cycle
+        public static final double ROTATE_OUTPUT        = 1.0; // TODO: duty cycle
+        public static final double ROTATION_TOLERANCE   = 2.0; // TODO
     }
 }
