@@ -215,4 +215,12 @@ public final class Constants
         public static final Distance EXTENDED_DISTANCE  = Inches.of(10);
         public static final Distance RETRACTED_DISTANCE = Inches.of(0);
     }
+
+    public static class ClimberConstants
+    {
+        public static final double L1_ROTATION = 39.0; // TODO
+        public static final double L3_ROTATION = 180.0; // TODO
+        public static final double EXTENSION_THRESHOLD = 0.0; // TODO
+        public static final double RETRACTION_THRESHOLD = 0.0; 
+    }
 }
