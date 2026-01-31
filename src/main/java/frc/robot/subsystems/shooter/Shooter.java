@@ -161,24 +161,39 @@ public class Shooter extends SubsystemBase
     }
 
     public void setState(ShooterState state)
-    {   
-
-        switch (_state) {
-            case Preparing:
-                if (state != ShooterState.Firing){ _state = state;}
-                break;
-            case Ready:
-                 _state = state;
-                break;
+    {
+        switch (_state)
+        {
             case Idle:
-                if (state == ShooterState.Preparing){ _state = state;}
+                if (state == ShooterState.Preparing)
+                {
+                    _state = state;
+                }
                 break;
+
+            case Preparing:
+                if (state == ShooterState.Idle)
+                {
+                    _state = state;
+                }
+                break;
+
+            case Ready:
+                if (state == ShooterState.Firing || state == ShooterState.Idle)
+                {
+                    _state = state;
+                }
+                break;
+
             case Firing:
-                if (state == ShooterState.Idle){ _state = state;}
+                if (state == ShooterState.Idle)
+                {
+                    _state = state;
+                }
                 break;
+
             default:
                 break;
-
         }
     }
 
