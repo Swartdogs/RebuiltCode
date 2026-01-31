@@ -161,19 +161,25 @@ public class Shooter extends SubsystemBase
     }
 
     public void setState(ShooterState state)
-    {
-        if (state == ShooterState.Preparing && _mode == ShootMode.Shoot && !Utilities.isHubActive())
-        {
-            _state = ShooterState.Idle;
-            return;
-        }
+    {   
 
-        if (state == ShooterState.Firing && _state != ShooterState.Ready)
-        {
-            return;
-        }
+        switch (_state) {
+            case Preparing:
+                if (state != ShooterState.Firing){ _state = state;}
+                break;
+            case Ready:
+                 _state = state;
+                break;
+            case Idle:
+                if (state == ShooterState.Preparing){ _state = state;}
+                break;
+            case Firing:
+                if (state == ShooterState.Idle){ _state = state;}
+                break;
+            default:
+                break;
 
-        _state = state;
+        }
     }
 
     public ShooterState getState()
