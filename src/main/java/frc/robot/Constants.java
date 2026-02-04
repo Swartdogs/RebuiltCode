@@ -29,6 +29,7 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
+<<<<<<< HEAD
         public static final int INTAKE           = 20;
         public static final int FLYWHEEL_LEAD    = 21;
         public static final int FLYWHEEL_FOLLOW  = 22;
@@ -36,6 +37,20 @@ public final class Constants
         public static final int INTAKE_EXTEND    = 27;
         public static final int CLIMBER_ROTATE   = 28;
         public static final int INTAKE_EXTENSION = 0;
+=======
+<<<<<<< HEAD
+        public static final int INTAKE          = 20;
+        public static final int FLYWHEEL_LEAD   = 21;
+        public static final int FLYWHEEL_FOLLOW = 22;
+        public static final int HOOD_MOTOR      = 23;
+        public static final int TURRET_MOTOR    = 24;
+=======
+        public static final int INTAKE           = 20;
+        public static final int INTAKE_EXTENSION = 21;
+        public static final int FLYWHEEL_LEAD    = 22;
+        public static final int FLYWHEEL_FOLLOW  = 23;
+>>>>>>> d183c15 (Simulatable intake. Still need to fix math and switch to units library)
+>>>>>>> 885d8f4 (WIP intake simulation)
     }
 
     public static class DriveConstants
@@ -47,6 +62,7 @@ public final class Constants
 
     public static class IntakeConstants
     {
+<<<<<<< HEAD
         public static final Voltage  INTAKE_VOLTS                = Volts.of(8.0);
         public static final Voltage  REVERSE_VOLTS               = Volts.of(-4.0);
         public static final int      CURRENT_LIMIT               = 40;
@@ -60,6 +76,21 @@ public final class Constants
         public static final Distance EXTENSION_MIN_POSITION      = Inches.of(0.0);
         public static final Voltage  EXTEND_OUTPUT               = Volts.zero();
         public static final Voltage  RETRACT_VOLTS               = Volts.zero();
+=======
+        public static final double INTAKE_VOLTS                = 8.0;
+        public static final double REVERSE_VOLTS               = -4.0;
+        public static final double EXTEND_VOLTS                = 6.0;
+        public static final double RETRACT_VOLTS               = -6.0;
+        public static final double EXTENSION_CONVERSION_FACTOR = 1.0;
+        public static final double EXTENSION_MIN_POSITION      = 0.0;
+        public static final double EXTENSION_MAX_POSITION      = 15.0; // Inches
+        public static final int    CURRENT_LIMIT               = 40;
+        public static final int    CAMERA_DEVICE_INDEX         = 0;
+        public static final String CAMERA_NAME                 = "IntakeCam";
+        public static final int    CAMERA_WIDTH                = 320;
+        public static final int    CAMERA_HEIGHT               = 240;
+        public static final int    CAMERA_FPS                  = 15;
+>>>>>>> 885d8f4 (WIP intake simulation)
     }
 
     public static class GeneralConstants
