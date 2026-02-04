@@ -33,6 +33,7 @@ public final class Constants
     public static class AIOConstants
     {
         public static final int HOOD_POTENTIOMETER = 0; // TODO: Confirm AIO port wiring
+        public static final int TURRET_POTENTIOMETER = 0; // TODO 
     }
 
     public static class DriveConstants
