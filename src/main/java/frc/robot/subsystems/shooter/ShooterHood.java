@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
@@ -37,7 +39,7 @@ public class ShooterHood
         _hoodSensor      = new AnalogPotentiometer(_hoodSensorInput, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
 
         _pid = new PIDController(ShooterConstants.HOOD_KP, ShooterConstants.HOOD_KI, ShooterConstants.HOOD_KD);
-        _pid.setTolerance(ShooterConstants.HOOD_TOLERANCE);
+        _pid.setTolerance(ShooterConstants.HOOD_TOLERANCE.in(Degrees));
 
         if (RobotBase.isReal())
         {

@@ -1,5 +1,7 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
@@ -12,6 +14,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Angle;
 import frc.robot.generated.TunerConstants;
 
 public final class Constants
@@ -79,8 +82,10 @@ public final class Constants
         public static final double HOOD_KD            = 0.0;   // TODO: Tune
         public static final double HOOD_MIN_ANGLE     = 0.0;   // TODO: Confirm min angle (degrees)
         public static final double HOOD_MAX_ANGLE     = 45.0;  // TODO: Confirm max angle (degrees)
-        public static final double HOOD_TOLERANCE     = 2.0;   // TODO: Tune (degrees)
         public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
+        public static final Angle  HOOD_SHOOT_ANGLE   = Degrees.of(50); // TODO: Find the degree needed to shoot from.
+        public static final Angle  HOOD_PASS_ANGLE    = Degrees.of(30); // TODO: Find the degree to pass from.
+        public static final Angle  HOOD_TOLERANCE     = Degrees.of(2);
 
         // Turret
         public static final double                      TURRET_CURRENT_LIMIT = 40.0;
