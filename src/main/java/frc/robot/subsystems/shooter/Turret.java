@@ -1,15 +1,18 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
@@ -17,6 +20,8 @@ import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
+import frc.robot.Constants.ShooterConstants;
+import frc.robot.subsystems.intake.Intake.IntakeState;
 import limelight.Limelight;
 
 @Logged
@@ -40,6 +45,7 @@ public class Turret extends SubsystemBase
     private TurretState _turretState; 
     private Supplier<SwerveDriveState> _swerveStateSupplier; 
     private SwerveDriveState _swerveDriveState;
+    private PositionVoltage _positionRequest = new PositionVoltage(0).withSlot(0);
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier) 
     {
@@ -58,7 +64,20 @@ public class Turret extends SubsystemBase
         _robotTurretAngle = _turretMotor.getPosition().getValue(); 
         _swerveDriveState = _swerveStateSupplier.get(); 
         _fieldTurretAngle = _robotTurretAngle.plus(_swerveDriveState.Pose.getRotation().getMeasure()); 
-        _turretMotorVoltage = _turretMotor.getMotorVoltage().getValue(); 
+        _turretMotorVoltage = _turretMotor.getMotorVoltage().getValue();
+
+        Angle newAngle = switch(_turretState) {
+            case Idle -> _robotTurretAngle;
+
+            case Track -> Degrees.of(_limelight.getData().targetData.getHorizontalOffset());
+
+            // angle target in pass:
+            // angle = targetAngle - robotAngle 
+            case Pass -> ShooterConstants.TURRET_PASS_TARGET.minus(_swerveDriveState.Pose.getRotation().getMeasure());
+
+            default -> Degrees.of(0);
+        };
+        _turretMotor.setControl(_positionRequest.withPosition(newAngle));
     }
 
     public void setTurretState(TurretState state) 
@@ -77,14 +96,11 @@ public class Turret extends SubsystemBase
         switch (_turretState) {
             case Idle:
                 linedup = true;
-                break; 
-
-            case Track:
-                
                 break;
 
+            case Track:
             case Pass:
-
+                // TODO
                 break; 
         }
 
