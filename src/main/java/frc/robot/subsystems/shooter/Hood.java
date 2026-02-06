@@ -79,7 +79,7 @@ public class Hood extends SubsystemBase
     {
         _hoodMotorVoltage = Volts.of(_hoodMotor.getMotorOutputVoltage());
         _hoodAngle        = Degrees.of(_hoodSensor.get());
-        // TODO: Figure out hood position.;
+        
         if (_hoodSetpoint != null)
         {
             _hoodMotor.setVoltage(_pidController.calculate(_hoodAngle.in(Degrees)));
