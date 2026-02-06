@@ -6,6 +6,7 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -17,6 +18,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 
+@Logged
 public class RobotContainer
 {
 
@@ -65,8 +67,21 @@ public class RobotContainer
 
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-        _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
-        _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
+
+        // Hold left trigger to "lock" rollers on
+        _joystick.povUp().and(_joystick.leftTrigger()).onTrue(_intake.startRollers());
+        _joystick.povDown().and(_joystick.leftTrigger()).onTrue(_intake.reverseRollers());
+
+        // Don't hold the left trigger to make the intake run while the button is held
+        _joystick.povUp().and(_joystick.leftTrigger().negate()).whileTrue(_intake.startRollers());
+        _joystick.povDown().and(_joystick.leftTrigger().negate()).whileTrue(_intake.reverseRollers());
+
+        // Extend and retract
+        _joystick.povLeft().onTrue(_intake.extend());
+        _joystick.povRight().onTrue(_intake.retract());
+
+        // Left stick stops the rollers if they're running
+        _joystick.leftStick().onTrue(_intake.stopRollers());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
