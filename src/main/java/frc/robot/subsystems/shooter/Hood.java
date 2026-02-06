@@ -17,13 +17,14 @@ import frc.robot.Constants.ShooterConstants;
 
 @Logged
 public class Hood extends SubsystemBase
-{   
-
-    /** 
-     * Enumerates positions of Shoot, Pass and, Undefined.
-     * A private constructor is used to give an Angle to each enumeration
-     * @param angle The angle for each action, obtained from constants, undefined though is null.
-    */
+{
+    /**
+     * Enumerates positions of Shoot, Pass and, Undefined. A private constructor is
+     * used to give an Angle to each enumeration
+     *
+     * @param angle The angle for each action, obtained from constants, undefined
+     *              though is null.
+     */
     public enum HoodPosition
     {
         Shoot(ShooterConstants.HOOD_SHOOT_ANGLE), Pass(ShooterConstants.HOOD_PASS_ANGLE), Undefined(null);
@@ -34,11 +35,17 @@ public class Hood extends SubsystemBase
         {
             _angle = angle;
         }
+
         /**
-         * Returns true if the angle is null for simulation purposes.
-         * Otherwise, returns if the double absolute difference is less than the tolerance.
-         * @param angle Takes in the current angle desired as an angle (intended to be used with the enumerated angle values, once more per constants).
-         * @return If the absolute difference between target and current angle exceed tolerance is true.
+         * Returns true if the angle is null for simulation purposes. Otherwise, returns
+         * if the double absolute difference is less than the tolerance.
+         *
+         * @param  angle Takes in the current angle desired as an angle (intended to be
+         *               used with the enumerated angle values, once more per
+         *               constants).
+         *
+         * @return       If the absolute difference between target and current angle
+         *               exceed tolerance is true.
          */
         public boolean atPosition(Angle angle)
         {
@@ -76,7 +83,7 @@ public class Hood extends SubsystemBase
     {
         _hoodMotorVoltage = Volts.of(_hoodMotor.getMotorOutputVoltage());
         _hoodAngle        = Degrees.of(_hoodSensor.get());
-        
+
         if (_hoodSetpoint != null)
         {
             _hoodMotor.setVoltage(_pidController.calculate(_hoodAngle.in(Degrees)));
