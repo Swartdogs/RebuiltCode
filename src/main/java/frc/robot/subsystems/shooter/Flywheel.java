@@ -1,6 +1,6 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
@@ -59,8 +59,8 @@ public class Flywheel extends SubsystemBase
         _closedLoopController = _leadMotor.getClosedLoopController();
         _flywheelEncoder      = _leadMotor.getEncoder();
 
-        _velocity = RotationsPerSecond.zero();
-        _targetVelocity = RotationsPerSecond.zero(); 
+        _velocity = RPM.zero();
+        _targetVelocity = RPM.zero(); 
 
         if (RobotBase.isReal())
         {
@@ -77,33 +77,33 @@ public class Flywheel extends SubsystemBase
     @Override
     public void periodic()
     {
-        _velocity = RotationsPerSecond.of(_flywheelEncoder.getVelocity());
+        _velocity = RPM.of(_flywheelEncoder.getVelocity());
     }
 
     @Override
     public void simulationPeriodic()
     {
-        _leadMotorSim.iterate(getVelocity().in(RotationsPerSecond), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+        _leadMotorSim.iterate(getVelocity().in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
     }
 
     public void setVelocity(AngularVelocity targetVelocity)
     {
         _targetVelocity = targetVelocity;
-        _closedLoopController.setSetpoint(_targetVelocity.in(RotationsPerSecond) * 60.0, ControlType.kVelocity, ClosedLoopSlot.kSlot0);
+        _closedLoopController.setSetpoint(_targetVelocity.in(RPM), ControlType.kVelocity, ClosedLoopSlot.kSlot0);
     }
 
     public void stop()
     {
-        _targetVelocity = RotationsPerSecond.zero();
+        _targetVelocity = RPM.zero();
         _leadMotor.setVoltage(0);
     }
 
     public boolean atSpeed()
     {
-        if (_targetVelocity.in(RotationsPerSecond) <= 0) return true;
+        if (_targetVelocity.in(RPM) <= 0) return true;
 
-        double error = Math.abs(getVelocity().in(RotationsPerSecond) - _targetVelocity.in(RotationsPerSecond));
-        return error <= _targetVelocity.in(RotationsPerSecond) * ShooterConstants.FLYWHEEL_TOLERANCE;
+        double error = Math.abs(getVelocity().in(RPM) - _targetVelocity.in(RPM));
+        return error <= _targetVelocity.in(RPM) * ShooterConstants.FLYWHEEL_TOLERANCE;
     }
 
     public AngularVelocity getVelocity()
