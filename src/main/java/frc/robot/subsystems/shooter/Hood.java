@@ -70,7 +70,7 @@ public class Hood extends SubsystemBase
     public Hood()
     {
         _hoodMotor        = new WPI_VictorSPX(CANConstants.HOOD_MOTOR);
-        _hoodSensor       = new AnalogPotentiometer(AIOConstants.HOOD_POTENTIOMETER);
+        _hoodSensor       = new AnalogPotentiometer(AIOConstants.HOOD_POTENTIOMETER,ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
         _hoodMotorVoltage = Volts.of(0.0);
         _hoodAngle        = Degrees.of(0.0);
         _hoodPosition     = HoodPosition.Undefined;
@@ -87,6 +87,10 @@ public class Hood extends SubsystemBase
         if (_hoodSetpoint != null)
         {
             _hoodMotor.setVoltage(_pidController.calculate(_hoodAngle.in(Degrees)));
+        }
+        else
+        {
+            _hoodMotor.setVoltage(0.0);
         }
 
         for (HoodPosition position : HoodPosition.values())
