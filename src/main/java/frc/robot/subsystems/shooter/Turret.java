@@ -1,19 +1,21 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
@@ -21,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.subsystems.intake.Intake.IntakeState;
 import limelight.Limelight;
 
 @Logged
@@ -49,11 +50,28 @@ public class Turret extends SubsystemBase
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier) 
     {
+        // Setting up motor
         _turretMotor = new TalonFX(CANConstants.TURRET_MOTOR); 
+        var currentConfig = new CurrentLimitsConfigs();
+        currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT;
+        currentConfig.StatorCurrentLimitEnable = true;
+
+        var outputConfig = new MotorOutputConfigs();
+        outputConfig.NeutralMode = NeutralModeValue.Brake;
+        outputConfig.Inverted    = InvertedValue.CounterClockwise_Positive;
+
+        var slot0Configs = new Slot0Configs();
+        slot0Configs.kP = ShooterConstants.TURRET_KP;
+        slot0Configs.kI = ShooterConstants.TURRET_KI;
+        slot0Configs.kD = ShooterConstants.TURRET_KD;
+
+        _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0Configs));
+
         _turretSensor = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER); 
-        _robotTurretAngle = Degrees.of(0);
-        _fieldTurretAngle = Degrees.of(0);
-        _turretMotorVoltage = Volts.of(0); 
+        _limelight = new Limelight(ShooterConstants.LIMELIGHT_NAME);
+        _robotTurretAngle = Degrees.of(0.0);
+        _fieldTurretAngle = Degrees.of(0.0);
+        _turretMotorVoltage = Volts.of(0.0); 
         _turretState = TurretState.Idle; 
         _swerveStateSupplier = (swerveStateSupplier == null) ? () -> new SwerveDriveState() : swerveStateSupplier;
     }
@@ -75,7 +93,7 @@ public class Turret extends SubsystemBase
             // angle = targetAngle - robotAngle 
             case Pass -> ShooterConstants.TURRET_PASS_TARGET.minus(_swerveDriveState.Pose.getRotation().getMeasure());
 
-            default -> Degrees.of(0);
+            default -> Degrees.of(0.0);
         };
         _turretMotor.setControl(_positionRequest.withPosition(newAngle));
     }
@@ -92,18 +110,6 @@ public class Turret extends SubsystemBase
 
     public boolean isLinedUp()
     {
-        boolean linedup = false; 
-        switch (_turretState) {
-            case Idle:
-                linedup = true;
-                break;
-
-            case Track:
-            case Pass:
-                // TODO
-                break; 
-        }
-
-        return linedup; // TODO 
+        return _turretMotorVoltage.in(Volts) < 0.02; // TODO: return true if the motor's voltage is smaller than a specific value 
     }
 }
