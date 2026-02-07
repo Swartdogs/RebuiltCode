@@ -38,11 +38,16 @@ public class Hood extends SubsystemBase
             _targetAngle = angle;
         }
 
-        public boolean atPosition(Angle angle)
+        private boolean atPosition(Angle angle)
         {
             if (_targetAngle == null) return true;
             double difference = angle.minus(_targetAngle).abs(Degrees);
             return difference < ShooterConstants.HOOD_TOLERANCE.in(Degrees);
+        }
+
+        private Angle getTargetAngle()
+        {
+            return _targetAngle;
         }
     }
 
@@ -139,7 +144,7 @@ public class Hood extends SubsystemBase
             case Pass -> ShooterConstants.HOOD_PASS_ANGLE;
             default -> null;
         };
-        _pidController.setSetpoint(_hoodSetpoint.in(Degrees));
+        Angle targetAngle = hoodPosition.getTargetAngle();
     }
 
     private void updateSimSensorVoltage() // TODO: There is very likely a better way to do this.
