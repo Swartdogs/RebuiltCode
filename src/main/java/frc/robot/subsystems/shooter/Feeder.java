@@ -9,7 +9,7 @@ import com.revrobotics.spark.SparkSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-//yello
+
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
@@ -34,7 +34,7 @@ public class Feeder extends SubsystemBase
 
         var config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kCoast).smartCurrentLimit(ShooterConstants.FEEDER_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
-//hi
+
         _feederMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         if (RobotBase.isReal())
         {
@@ -56,7 +56,7 @@ public class Feeder extends SubsystemBase
         if (_feederMotorSim == null) return;
         _feederMotorSim.iterate(0., RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
     }
-//hello
+
     public void set(boolean on)
     {
         _feederMotor.setVoltage(on ? ShooterConstants.FEEDER_VOLTAGE : 0.0);
