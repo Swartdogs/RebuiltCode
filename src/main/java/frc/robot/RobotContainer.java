@@ -97,7 +97,5 @@ public class RobotContainer
                 // Finally idle for the rest of auton
                 _drivetrain.applyRequest(() -> idle)
         );
-
-        _drivetrain.getState()
     }
 }
