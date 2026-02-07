@@ -35,7 +35,7 @@ public final class Constants
     public static class AIOConstants
     {
         public static final int HOOD_POTENTIOMETER   = 0; // TODO: Confirm AIO port wiring
-        public static final int TURRET_POTENTIOMETER = 0; // TODO
+        public static final int TURRET_POTENTIOMETER = 1; // TODO: Confirm AIO port wiring
     }
 
     public static class DriveConstants
@@ -90,7 +90,7 @@ public final class Constants
         public static final double                      TURRET_KP            = 2.4;   // TODO: Tune
         public static final double                      TURRET_KI            = 0.0;
         public static final double                      TURRET_KD            = 0.1;
-        public static final double                      TURRET_GEAR_RATIO    = 1.0;   // TODO: Measure
+        public static final double                      TURRET_GEAR_RATIO    = 13.0;
         public static final double                      TURRET_MIN_ANGLE     = -180.0; // degrees (full 360° rotation)
         public static final double                      TURRET_MAX_ANGLE     = 180.0;  // degrees
         public static final double                      TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
@@ -98,7 +98,7 @@ public final class Constants
         public static final String                      LIMELIGHT_NAME       = "limelight-shooter";
         public static final List<Double>                BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0);
         public static final List<Double>                RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0);
-        public static final Angle                       TURRET_PASS_TARGET   = Degrees.of(0.0); // TODO
+        public static final Angle                       TURRET_PASS_TARGET   = Degrees.of(180.0); // TODO: Validate in driver practice
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
         private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE     = InterpolatingDoubleTreeMap
