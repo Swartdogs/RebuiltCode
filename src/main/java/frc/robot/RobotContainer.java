@@ -4,6 +4,9 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
+import static edu.wpi.first.units.Units.Degrees;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -77,7 +80,7 @@ public class RobotContainer
 
         // Temporary shooter bindings (adjust later).
         _joystick.x().onTrue(_shooter.getFireCmd());
-        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM, ShooterConstants.PASS_HOOD_ANGLE_DEG));
+        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM, ShooterConstants.HOOD_PASS_ANGLE.in(Degrees)));
         _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
