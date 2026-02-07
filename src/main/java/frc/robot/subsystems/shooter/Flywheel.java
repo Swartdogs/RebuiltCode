@@ -17,7 +17,6 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -95,7 +94,7 @@ public class Flywheel extends SubsystemBase
 
     public void setVelocity(AngularVelocity targetVelocity)
     {
-        if (_targetVelocity == null)
+        if (targetVelocity == null)
         {
             stop();
             return;
