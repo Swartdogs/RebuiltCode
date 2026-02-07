@@ -183,10 +183,10 @@ public class Intake extends SubsystemBase
 
         _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
 
-        var position       = _extensionMotorSim.getPosition();
-        var output         = _extensionMotorSim.getAppliedOutput();
-        var forwardPressed = position >= Constants.Intake.EXTENSION_MAX_POSITION;
-        var reversePressed = position <= Constants.Intake.EXTENSION_MIN_POSITION;
+        double position       = _extensionMotorSim.getPosition();
+        double output         = _extensionMotorSim.getAppliedOutput();
+        boolean forwardPressed = position >= Constants.Intake.EXTENSION_MAX_POSITION;
+        boolean reversePressed = position <= Constants.Intake.EXTENSION_MIN_POSITION;
 
         _extensionMotorSim.getForwardLimitSwitchSim().setPressed(forwardPressed);
         _extensionMotorSim.getReverseLimitSwitchSim().setPressed(reversePressed);
