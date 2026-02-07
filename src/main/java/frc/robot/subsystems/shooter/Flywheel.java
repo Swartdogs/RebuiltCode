@@ -59,8 +59,8 @@ public class Flywheel extends SubsystemBase
         _closedLoopController = _leadMotor.getClosedLoopController();
         _flywheelEncoder      = _leadMotor.getEncoder();
 
-        _velocity = RPM.zero();
-        _targetVelocity = RPM.zero(); 
+        _velocity       = RPM.zero();
+        _targetVelocity = RPM.zero();
 
         if (RobotBase.isReal())
         {
