@@ -30,7 +30,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants;
+import frc.robot.Constants.CANConstants;
+import frc.robot.Constants.GeneralConstants;
+import frc.robot.Constants.IntakeConstants;
 
 @Logged
 public class Intake extends SubsystemBase
@@ -111,7 +113,7 @@ public class Intake extends SubsystemBase
         _extensionMotor = new SparkFlex(Constants.CAN.INTAKE_EXTENSION, MotorType.kBrushless);
 
         var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(Constants.Intake.CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
 
         var encoderConfig = new EncoderConfig();
         encoderConfig.positionConversionFactor(Constants.Intake.EXTENSION_CONVERSION_FACTOR);
@@ -125,7 +127,7 @@ public class Intake extends SubsystemBase
 
         if (RobotBase.isReal())
         {
-            _camera = CameraServer.startAutomaticCapture(Constants.Intake.CAMERA_NAME, Constants.Intake.CAMERA_DEVICE_INDEX);
+            _camera = CameraServer.startAutomaticCapture(IntakeConstants.CAMERA_NAME, IntakeConstants.CAMERA_DEVICE_INDEX);
             _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
             _camera.setResolution(Constants.Intake.CAMERA_WIDTH, Constants.Intake.CAMERA_HEIGHT);
             _camera.setFPS(Constants.Intake.CAMERA_FPS);
