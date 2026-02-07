@@ -44,14 +44,19 @@ public final class Constants
 
     public static class IntakeConstants
     {
-        public static final double INTAKE_VOLTS        = 8.0;
-        public static final double REVERSE_VOLTS       = -4.0;
-        public static final int    CURRENT_LIMIT       = 40;
-        public static final int    CAMERA_DEVICE_INDEX = 0;
-        public static final String CAMERA_NAME         = "IntakeCam";
-        public static final int    CAMERA_WIDTH        = 320;
-        public static final int    CAMERA_HEIGHT       = 240;
-        public static final int    CAMERA_FPS          = 15;
+        public static final double INTAKE_VOLTS                = 8.0;
+        public static final double REVERSE_VOLTS               = -4.0;
+        public static final double EXTEND_VOLTS                = 6.0;
+        public static final double RETRACT_VOLTS               = -6.0;
+        public static final double EXTENSION_CONVERSION_FACTOR = 1.0;
+        public static final double EXTENSION_MIN_POSITION      = 0.0;
+        public static final double EXTENSION_MAX_POSITION      = 15.0; // Inches
+        public static final int    CURRENT_LIMIT               = 40;
+        public static final int    CAMERA_DEVICE_INDEX         = 0;
+        public static final String CAMERA_NAME                 = "IntakeCam";
+        public static final int    CAMERA_WIDTH                = 320;
+        public static final int    CAMERA_HEIGHT               = 240;
+        public static final int    CAMERA_FPS                  = 15;
     }
 
     public static class GeneralConstants
