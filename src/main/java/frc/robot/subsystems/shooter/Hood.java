@@ -25,7 +25,7 @@ import frc.robot.Constants.ShooterConstants;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
 @Logged
-public class Hood extends SubsystemBase
+public class Hood
 {
     public enum HoodPosition
     {
@@ -38,13 +38,6 @@ public class Hood extends SubsystemBase
             _targetAngle = angle;
         }
 
-        private boolean atPosition(Angle angle)
-        {
-            if (_targetAngle == null) return true;
-            double difference = angle.minus(_targetAngle).abs(Degrees);
-            return difference < ShooterConstants.HOOD_TOLERANCE.in(Degrees);
-        }
-
         private Angle getTargetAngle()
         {
             return _targetAngle;
@@ -54,7 +47,7 @@ public class Hood extends SubsystemBase
     private final WPI_VictorSPX       _hoodMotor;
     private final AnalogPotentiometer _hoodSensor;
     private final PIDController       _pidController;
-    private double                    _simAngle; // TODO: Check if behavior can be done with just _hoodAngle
+    private double                    _simAngle;
     private final AnalogInputSim      _hoodSensorSim;
     private final AnalogInput         _hoodSensorInput;
     @Logged
@@ -85,6 +78,7 @@ public class Hood extends SubsystemBase
             _hoodMotor.setNeutralMode(NeutralMode.Brake);
             _hoodMotor.setInverted(false); // TODO: Check direction
             _hoodSensorSim = null;
+
         }
         else
         {
@@ -107,23 +101,12 @@ public class Hood extends SubsystemBase
         {
             _hoodMotor.setVoltage(0.0);
         }
-
-        for (HoodPosition position : HoodPosition.values())
-        {
-            if (position.atPosition(_hoodAngle))
-            {
-                _hoodPosition = position;
-                break;
-            }
-        }
     }
 
     public void simulationPeriodic()
     {
-        double motorOutput = _hoodMotor.get();
-        double maxSpeed    = ShooterConstants.HOOD_SIM_MAX_SPEED;
-
-        _simAngle += motorOutput * maxSpeed * GeneralConstants.LOOP_PERIOD_SECS;
+        if (_hoodMotor == null) return;
+        _simAngle += _hoodMotor.get() * ShooterConstants.HOOD_SIM_MAX_SPEED * GeneralConstants.LOOP_PERIOD_SECS;
         _simAngle  = MathUtil.clamp(_simAngle, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
 
         updateSimSensorVoltage();
@@ -133,21 +116,32 @@ public class Hood extends SubsystemBase
     {
         setHoodPosition(HoodPosition.Undefined);
         _hoodMotor.setVoltage(0.0);
+        atSetPoint();
     }
 
     public void setHoodPosition(HoodPosition hoodPosition)
     {
         if (hoodPosition == null) hoodPosition = HoodPosition.Undefined;
-        _hoodSetpoint = switch (hoodPosition)
-        {
-            case Shoot -> ShooterConstants.HOOD_SHOOT_ANGLE;
-            case Pass -> ShooterConstants.HOOD_PASS_ANGLE;
-            default -> null;
-        };
         Angle targetAngle = hoodPosition.getTargetAngle();
+        if (targetAngle == null)
+        {
+            _hoodSetpoint = null;
+            _hoodMotor.setVoltage(0.0);
+            return;
+        }
+        double degreesClamped = MathUtil.clamp(targetAngle.in(Degrees), ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
+        _hoodSetpoint = Degrees.of(degreesClamped);
+        _pidController.setSetpoint(degreesClamped);
+
     }
 
-    private void updateSimSensorVoltage() // TODO: There is very likely a better way to do this.
+    private boolean atSetPoint()
+    {
+        if (_hoodMotor == null) return true;
+        return _hoodAngle.isNear(_hoodSetpoint, ShooterConstants.HOOD_TOLERANCE);
+    }
+
+    private void updateSimSensorVoltage()
     {
         double normalized = (_simAngle - ShooterConstants.HOOD_MIN_ANGLE) / (ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE);
         normalized = MathUtil.clamp(normalized, 0.0, 1.0);
