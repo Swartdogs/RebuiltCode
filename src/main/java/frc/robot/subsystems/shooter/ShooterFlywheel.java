@@ -17,7 +17,9 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants;
+import frc.robot.Constants.CANConstants;
+import frc.robot.Constants.GeneralConstants;
+import frc.robot.Constants.ShooterConstants;
 
 public class ShooterFlywheel extends SubsystemBase
 {
@@ -31,8 +33,8 @@ public class ShooterFlywheel extends SubsystemBase
 
     public ShooterFlywheel()
     {
-        _leadMotor   = new SparkFlex(Constants.CAN.FLYWHEEL_LEAD, MotorType.kBrushless);
-        _followMotor = new SparkFlex(Constants.CAN.FLYWHEEL_FOLLOW, MotorType.kBrushless);
+        _leadMotor   = new SparkFlex(CANConstants.FLYWHEEL_LEAD, MotorType.kBrushless);
+        _followMotor = new SparkFlex(CANConstants.FLYWHEEL_FOLLOW, MotorType.kBrushless);
 
         if (RobotBase.isReal())
         {
@@ -41,11 +43,11 @@ public class ShooterFlywheel extends SubsystemBase
         }
 
         var config = new SparkFlexConfig();
-        config.idleMode(IdleMode.kCoast).smartCurrentLimit(Constants.Shooter.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(Constants.General.MOTOR_VOLTAGE);
+        config.idleMode(IdleMode.kCoast).smartCurrentLimit(ShooterConstants.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
 
         config.inverted(false);
-        config.closedLoop.p(Constants.Shooter.FLYWHEEL_KP).d(Constants.Shooter.FLYWHEEL_KD);
-        config.closedLoop.feedForward.kS(Constants.Shooter.FLYWHEEL_KS).kV(Constants.Shooter.FLYWHEEL_KV).kA(Constants.Shooter.FLYWHEEL_KA);
+        config.closedLoop.p(ShooterConstants.FLYWHEEL_KP).d(ShooterConstants.FLYWHEEL_KD);
+        config.closedLoop.feedForward.kS(ShooterConstants.FLYWHEEL_KS).kV(ShooterConstants.FLYWHEEL_KV).kA(ShooterConstants.FLYWHEEL_KA);
         _leadMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         config.follow(_leadMotor, true);
@@ -75,7 +77,7 @@ public class ShooterFlywheel extends SubsystemBase
     @Override
     public void simulationPeriodic()
     {
-        _leadMotorSim.iterate(getVelocity(), RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
+        _leadMotorSim.iterate(getVelocity(), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
     }
 
     public void setVelocity(double rpm)
@@ -95,7 +97,7 @@ public class ShooterFlywheel extends SubsystemBase
         if (_velocityTarget <= 0) return true;
 
         double error = Math.abs(getVelocity() - _velocityTarget);
-        return error <= _velocityTarget * Constants.Shooter.FLYWHEEL_TOLERANCE;
+        return error <= _velocityTarget * ShooterConstants.FLYWHEEL_TOLERANCE;
     }
 
     public double getVelocity()
