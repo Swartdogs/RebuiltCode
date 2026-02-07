@@ -5,26 +5,29 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.AnalogPotentiometer;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.AnalogInputSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+
 @Logged
 public class Hood extends SubsystemBase
 {
-    /**
-     * Enumerates positions of Shoot, Pass and, Undefined. A private constructor is
-     * used to give an Angle to each enumeration
-     *
-     * @param angle The angle for each action, obtained from constants, undefined
-     *              though is null.
-     */
     public enum HoodPosition
     {
         Shoot(ShooterConstants.HOOD_SHOOT_ANGLE), Pass(ShooterConstants.HOOD_PASS_ANGLE), Undefined(null);
@@ -36,17 +39,6 @@ public class Hood extends SubsystemBase
             _angle = angle;
         }
 
-        /**
-         * Returns true if the angle is null for simulation purposes. Otherwise, returns
-         * if the double absolute difference is less than the tolerance.
-         *
-         * @param  angle Takes in the current angle desired as an angle (intended to be
-         *               used with the enumerated angle values, once more per
-         *               constants).
-         *
-         * @return       If the absolute difference between target and current angle
-         *               exceed tolerance is true.
-         */
         public boolean atPosition(Angle angle)
         {
             if (_angle == null) return true;
