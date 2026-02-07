@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -20,7 +21,7 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 
 import frc.robot.Constants;
-import frc.robot.util.GameState;
+import frc.robot.util.Utilities;
 import limelight.Limelight;
 import limelight.networktables.LimelightData;
 
@@ -33,19 +34,20 @@ public class ShooterTurret
     }
 
     private final TalonFX         _turretMotor;
-    private final PositionVoltage _positionRequest = new PositionVoltage(0).withSlot(0);
+    private final PositionVoltage _positionRequest        = new PositionVoltage(0).withSlot(0);
     private final Limelight       _limelight;
     private final TalonFXSimState _turretMotorSim;
     private final DCMotorSim      _motorSimModel;
     @Logged
-    private TurretState           _state           = TurretState.Off;
+    private TurretState           _state                  = TurretState.Off;
     @Logged
-    private double                _angle           = 0.0;
+    private double                _angle                  = 0.0;
     @Logged
-    private double                _tx              = 0.0;
+    private double                _targetHorizontalOffset = 0.0;
     @Logged
-    private boolean               _hasTarget       = false;
-    private Double                _angleSetpoint   = null;
+    private boolean               _hasTarget              = false;
+    @Logged
+    private double                _angleSetpoint          = Double.NaN;
 
     public ShooterTurret()
     {
@@ -64,9 +66,7 @@ public class ShooterTurret
         slot0Configs.kI = Constants.Shooter.TURRET_KI;
         slot0Configs.kD = Constants.Shooter.TURRET_KD;
 
-        _turretMotor.getConfigurator().apply(currentConfig);
-        _turretMotor.getConfigurator().apply(outputConfig);
-        _turretMotor.getConfigurator().apply(slot0Configs);
+        _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0Configs));
 
         _limelight = new Limelight(Constants.Shooter.LIMELIGHT_NAME);
 
@@ -79,31 +79,33 @@ public class ShooterTurret
         {
             _turretMotorSim = _turretMotor.getSimState();
 
-            var gearbox = DCMotor.getKrakenX60Foc(1);
+            var gearbox = DCMotor.getKrakenX44Foc(1);
             _motorSimModel = new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.001, Constants.Shooter.TURRET_GEAR_RATIO), gearbox);
         }
     }
 
     public void periodic()
     {
+        // TODO: Consider configuring Phoenix 6 sensor/gear ratio so the reported
+        // position is in mechanism degrees.
         _angle = _turretMotor.getPosition().getValueAsDouble() * 360.0 / Constants.Shooter.TURRET_GEAR_RATIO;
 
-        _limelight.getSettings().withArilTagIdFilter(GameState.getOurHubTagIds()).save();
+        _limelight.getSettings().withArilTagIdFilter(Utilities.getOurHubTagIds()).save();
 
         LimelightData data = _limelight.getData();
-        _hasTarget = data.targetData.getTargetStatus();
-        _tx        = data.targetData.getHorizontalOffset();
+        _hasTarget              = data.targetData.getTargetStatus();
+        _targetHorizontalOffset = data.targetData.getHorizontalOffset();
 
         switch (_state)
         {
             case Off:
-                _angleSetpoint = null;
+                _angleSetpoint = Double.NaN;
                 break;
 
             case Track:
                 if (_hasTarget)
                 {
-                    _angleSetpoint = _angle + _tx;
+                    _angleSetpoint = _angle + _targetHorizontalOffset;
                 }
                 else
                 {
@@ -117,7 +119,7 @@ public class ShooterTurret
                 break;
         }
 
-        if (_angleSetpoint != null)
+        if (!Double.isNaN(_angleSetpoint))
         {
             double clampedSetpoint = MathUtil.clamp(_angleSetpoint, Constants.Shooter.TURRET_MIN_ANGLE, Constants.Shooter.TURRET_MAX_ANGLE);
             double targetRotations = clampedSetpoint * Constants.Shooter.TURRET_GEAR_RATIO / 360.0;
@@ -153,7 +155,7 @@ public class ShooterTurret
 
     public boolean atSetpoint()
     {
-        if (_angleSetpoint == null) return true;
+        if (Double.isNaN(_angleSetpoint)) return true;
         return Math.abs(_angle - _angleSetpoint) <= Constants.Shooter.TURRET_TOLERANCE;
     }
 
@@ -167,9 +169,9 @@ public class ShooterTurret
         return _angle;
     }
 
-    public double getTX()
+    public double getTargetHorizontalOffset()
     {
-        return _tx;
+        return _targetHorizontalOffset;
     }
 
     public double getDistanceToTarget()
@@ -180,6 +182,6 @@ public class ShooterTurret
         }
 
         var targetPose = _limelight.getData().targetData.getCameraToTarget();
-        return targetPose.getTranslation().getNorm();
+        return targetPose.getTranslation().toTranslation2d().getNorm();
     }
 }

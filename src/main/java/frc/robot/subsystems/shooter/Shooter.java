@@ -5,37 +5,61 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
-import frc.robot.util.GameState;
+import frc.robot.util.Utilities;
 
 @Logged
 public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, HubInactive, Tracking, Ready
+        Idle, Preparing, Ready, Firing
+    }
+
+    public enum ShotMode
+    {
+        Shoot, Pass
     }
 
     public Command getAimCmd()
     {
         return startEnd(() ->
         {
-            double distance = _turret.getDistanceToTarget();
-            _flywheel.setVelocity(Constants.Shooter.getFlywheelSpeedForDistance(distance));
-            _hood.setAngle(Constants.Shooter.getHoodAngleForDistance(distance));
+            _mode = ShotMode.Shoot;
+            setState(ShooterState.Preparing);
         }, () ->
         {
-            _flywheel.stop();
-            _hood.stop();
+            setState(ShooterState.Idle);
         });
+    }
+
+    public Command getPrepareCmd()
+    {
+        return runOnce(() ->
+        {
+            _mode = ShotMode.Shoot;
+            setState(ShooterState.Preparing);
+        });
+    }
+
+    public Command getPreparePassCmd(double flywheelRpm, double hoodAngleDeg)
+    {
+        return runOnce(() ->
+        {
+            _mode = ShotMode.Pass;
+            _passFlywheelRpm = flywheelRpm;
+            _passHoodAngleDeg = hoodAngleDeg;
+            setState(ShooterState.Preparing);
+        });
+    }
+
+    public Command getFireCmd()
+    {
+        return runOnce(() -> setState(ShooterState.Firing));
     }
 
     public Command getStopCmd()
     {
-        return runOnce(() ->
-        {
-            _flywheel.stop();
-            _hood.stop();
-        });
+        return runOnce(() -> setState(ShooterState.Idle));
     }
 
     private final ShooterFlywheel _flywheel;
@@ -44,7 +68,13 @@ public class Shooter extends SubsystemBase
     @Logged
     private ShooterState          _state     = ShooterState.Idle;
     @Logged
-    private boolean               _hasTarget = false;
+    private ShotMode              _mode      = ShotMode.Shoot;
+    @Logged
+    private double                _lastDistanceMeters = 0.0;
+    @Logged
+    private double                _passFlywheelRpm    = 0.0;
+    @Logged
+    private double                _passHoodAngleDeg   = 0.0;
 
     public Shooter()
     {
@@ -60,18 +90,8 @@ public class Shooter extends SubsystemBase
         _hood.periodic();
         _turret.periodic();
 
-        if (_turret.hasTarget())
-        {
-            _turret.setState(ShooterTurret.TurretState.Track);
-        }
-        else
-        {
-            _turret.setState(ShooterTurret.TurretState.Off);
-        }
-
-        _hasTarget = _turret.hasTarget();
-
         updateState();
+        applySetpoints();
     }
 
     @Override
@@ -84,46 +104,71 @@ public class Shooter extends SubsystemBase
 
     private void updateState()
     {
-        if (!GameState.isHubActive())
+        switch (_state)
         {
-            _state = ShooterState.HubInactive;
+            case Preparing:
+                if (isReadyInternal())
+                {
+                    _state = ShooterState.Ready;
+                }
+                break;
+
+            case Ready:
+                if (!isReadyInternal())
+                {
+                    _state = ShooterState.Preparing;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void applySetpoints()
+    {
+        if (_state == ShooterState.Idle)
+        {
+            _flywheel.stop();
+            _hood.stop();
+            _turret.setState(ShooterTurret.TurretState.Off);
             return;
         }
 
-        if (_flywheel.getVelocity() <= 0)
+        if (_mode == ShotMode.Shoot)
         {
+            _turret.setState(ShooterTurret.TurretState.Track);
             if (_turret.hasTarget())
             {
-                _state = ShooterState.Tracking;
+                _lastDistanceMeters = _turret.getDistanceToTarget();
             }
-            else
-            {
-                _state = ShooterState.Idle;
-            }
-        }
-        else if (_flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint())
-        {
-            _state = ShooterState.Ready;
+
+            double distance = _lastDistanceMeters;
+            _flywheel.setVelocity(Constants.Shooter.getFlywheelSpeedForDistance(distance));
+            _hood.setAngle(Constants.Shooter.getHoodAngleForDistance(distance));
         }
         else
         {
-            _state = ShooterState.Tracking;
+            _turret.setState(ShooterTurret.TurretState.Pass);
+            _flywheel.setVelocity(_passFlywheelRpm);
+            _hood.setAngle(_passHoodAngleDeg);
         }
     }
 
-    public boolean isReady()
+    public void setState(ShooterState state)
     {
-        return _state == ShooterState.Ready;
-    }
+        if (state == ShooterState.Preparing && _mode == ShotMode.Shoot && !Utilities.isHubActive())
+        {
+            _state = ShooterState.Idle;
+            return;
+        }
 
-    public boolean isHubActive()
-    {
-        return GameState.isHubActive();
-    }
+        if (state == ShooterState.Firing && _state != ShooterState.Ready)
+        {
+            return;
+        }
 
-    public boolean hasTarget()
-    {
-        return _hasTarget;
+        _state = state;
     }
 
     public ShooterState getState()
@@ -131,13 +176,28 @@ public class Shooter extends SubsystemBase
         return _state;
     }
 
+    public boolean isFlywheelAtSpeed()
+    {
+        return _flywheel.atSpeed();
+    }
+
+    public boolean isHoodAtSetpoint()
+    {
+        return _hood.atSetpoint();
+    }
+
+    public boolean isTurretAtSetpoint()
+    {
+        return _turret.atSetpoint();
+    }
+
     public double getDistanceToTarget()
     {
         return _turret.getDistanceToTarget();
     }
 
-    public boolean atSetpoint()
+    private boolean isReadyInternal()
     {
-        return _turret.atSetpoint();
+        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint();
     }
 }

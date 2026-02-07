@@ -97,6 +97,11 @@ public class RobotContainer
 >>>>>>> d183c15 (Simulatable intake. Still need to fix math and switch to units library)
 >>>>>>> 885d8f4 (WIP intake simulation)
 
+        // Temporary shooter bindings (adjust later).
+        _joystick.x().onTrue(_shooter.getFireCmd());
+        _joystick.y().whileTrue(_shooter.getPreparePassCmd(Constants.Shooter.PASS_FLYWHEEL_RPM, Constants.Shooter.PASS_HOOD_ANGLE_DEG));
+        _joystick.leftStick().onTrue(_shooter.getStopCmd());
+
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 

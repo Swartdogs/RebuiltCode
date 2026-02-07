@@ -1,22 +1,21 @@
 package frc.robot.subsystems.intake;
 
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.EncoderConfig;
-import com.revrobotics.spark.config.LimitSwitchConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.LimitSwitchConfig.Behavior;
-import com.revrobotics.spark.config.LimitSwitchConfig.Type;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.ResetMode;
-import com.revrobotics.sim.SparkFlexSim;
-
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
+import com.revrobotics.sim.SparkFlexSim;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.EncoderConfig;
+import com.revrobotics.spark.config.LimitSwitchConfig;
+import com.revrobotics.spark.config.LimitSwitchConfig.Behavior;
+import com.revrobotics.spark.config.LimitSwitchConfig.Type;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkFlexConfig;
 
 import static edu.wpi.first.units.Units.Volts;
 
@@ -28,8 +27,6 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import edu.wpi.first.wpilibj.simulation.LinearSystemSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -42,14 +39,9 @@ import frc.robot.Constants.IntakeConstants;
 @Logged
 public class Intake extends SubsystemBase
 {
-    public enum RollerState
+    public enum IntakeState
     {
         Off, Forward, Reverse
-    }
-
-    public enum ExtendState
-    {
-        Extended, Retracted, InTransit
     }
 
     /************
@@ -63,7 +55,7 @@ public class Intake extends SubsystemBase
 
     public Command extend(boolean waitForExtend)
     {
-        return runOnce(() -> setExtendState(ExtendState.Extended)).andThen(Commands.waitUntil(() -> !waitForExtend || (getExtendState() == ExtendState.Extended)));
+        return runOnce(() -> setExtended(true)).andThen(Commands.waitUntil(() -> !waitForExtend || isExtended()));
     }
 
     public Command retract()
@@ -73,22 +65,22 @@ public class Intake extends SubsystemBase
 
     public Command retract(boolean waitForRetract)
     {
-        return runOnce(() -> setExtendState(ExtendState.Retracted)).andThen(Commands.waitUntil(() -> !waitForRetract || (getExtendState() == ExtendState.Retracted)));
+        return runOnce(() -> setExtended(false)).andThen(Commands.waitUntil(() -> !waitForRetract || !isExtended()));
     }
 
     public Command startRollers()
     {
-        return runOnce(() -> setRollerState(RollerState.Forward)).andThen(Commands.idle(this)).finallyDo(() -> setRollerState(RollerState.Off)).onlyIf(() -> getExtendState() == ExtendState.Extended);
+        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
     }
 
     public Command reverseRollers()
     {
-        return runOnce(() -> setRollerState(RollerState.Reverse)).andThen(Commands.idle(this)).finallyDo(() -> setRollerState(RollerState.Off)).onlyIf(() -> getExtendState() == ExtendState.Extended);
+        return startEnd(() -> setIntakeState(IntakeState.Reverse), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
     }
 
     public Command stopRollers()
     {
-        return runOnce(() -> setRollerState(RollerState.Off));
+        return runOnce(() -> setIntakeState(IntakeState.Off));
     }
 
     /*************
@@ -101,11 +93,10 @@ public class Intake extends SubsystemBase
     private final SparkFlexSim _intakeMotorSim;
     private final UsbCamera    _camera;
     private final DCMotor      _neoVortex;
-    private final DCMotorSim   _extensionMotorSimGearbox;
     @Logged
-    private RollerState        _rollerState                   = RollerState.Off;
+    private IntakeState        _intakeState                   = IntakeState.Off;
     @Logged
-    private ExtendState        _extendState                   = ExtendState.Retracted;
+    private boolean            _extended                      = false;
     @Logged
     private Voltage            _intakeMotorVoltage            = Volts.of(0.0);
     @Logged
@@ -116,6 +107,7 @@ public class Intake extends SubsystemBase
     private boolean            _retractedLimitSwitchTriggered = false;
     @Logged
     private boolean            _extendedLimitSwitchTriggered  = false;
+    private boolean            _targetExtended                = false;
 
     public Intake()
     {
@@ -141,18 +133,16 @@ public class Intake extends SubsystemBase
             _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
             _camera.setResolution(Constants.Intake.CAMERA_WIDTH, Constants.Intake.CAMERA_HEIGHT);
             _camera.setFPS(Constants.Intake.CAMERA_FPS);
-            _intakeMotorSim           = null;
-            _extensionMotorSim        = null;
-            _neoVortex                = null;
-            _extensionMotorSimGearbox = null;
+            _intakeMotorSim    = null;
+            _extensionMotorSim = null;
+            _neoVortex         = null;
         }
         else
         {
-            _camera                   = null;
-            _neoVortex                = DCMotor.getNeoVortex(1);
-            _extensionMotorSimGearbox = null;
-            _intakeMotorSim           = new SparkFlexSim(_intakeMotor, _neoVortex);
-            _extensionMotorSim        = new SparkFlexSim(_extensionMotor, _neoVortex);
+            _camera            = null;
+            _neoVortex         = DCMotor.getNeoVortex(1);
+            _intakeMotorSim    = new SparkFlexSim(_intakeMotor, _neoVortex);
+            _extensionMotorSim = new SparkFlexSim(_extensionMotor, _neoVortex);
         }
     }
 
@@ -167,28 +157,42 @@ public class Intake extends SubsystemBase
 
         if (_retractedLimitSwitchTriggered)
         {
-            _extendState = ExtendState.Retracted;
+            _extended = false;
         }
         else if (_extendedLimitSwitchTriggered)
         {
-            _extendState = ExtendState.Extended;
+            _extended = true;
         }
-        else
+
+        if (_targetExtended && _extendedLimitSwitchTriggered)
         {
-            _extendState = ExtendState.InTransit;
+            setExtensionVoltage(0.0);
+        }
+        else if (!_targetExtended && _retractedLimitSwitchTriggered)
+        {
+            setExtensionVoltage(0.0);
+        }
+
+        if (!_extended && _intakeState != IntakeState.Off)
+        {
+            setIntakeState(IntakeState.Off);
         }
     }
 
     @Override
     public void simulationPeriodic()
     {
+        if (_extensionMotorSim == null || _intakeMotorSim == null || _neoVortex == null) return;
+
         _extensionMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
         _intakeMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
 
-        _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
+        double freeSpeedRpm = RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM);
+        _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * freeSpeedRpm, RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
+        _intakeMotorSim.iterate(_intakeMotorSim.getAppliedOutput() * freeSpeedRpm, RoboRioSim.getVInVoltage(), Constants.General.LOOP_PERIOD_SECS);
 
-        double position       = _extensionMotorSim.getPosition();
-        double output         = _extensionMotorSim.getAppliedOutput();
+        double  position       = _extensionMotorSim.getPosition();
+        double  output         = _extensionMotorSim.getAppliedOutput();
         boolean forwardPressed = position >= Constants.Intake.EXTENSION_MAX_POSITION;
         boolean reversePressed = position <= Constants.Intake.EXTENSION_MIN_POSITION;
 
@@ -201,11 +205,16 @@ public class Intake extends SubsystemBase
         }
     }
 
-    public void setRollerState(RollerState state)
+    public void setIntakeState(IntakeState state)
     {
-        _rollerState = state;
+        if (state != IntakeState.Off && !isExtended())
+        {
+            state = IntakeState.Off;
+        }
 
-        var volts = switch (_rollerState)
+        _intakeState = state;
+
+        var volts = switch (_intakeState)
         {
             case Forward -> Constants.Intake.INTAKE_VOLTS;
             case Reverse -> Constants.Intake.REVERSE_VOLTS;
@@ -220,32 +229,44 @@ public class Intake extends SubsystemBase
         }
     }
 
-    public RollerState getIntakeState()
+    public IntakeState getIntakeState()
     {
-        return _rollerState;
+        return _intakeState;
     }
 
-    public void setExtendState(ExtendState state)
+    public void setExtended(boolean extended)
     {
-        if (state == ExtendState.InTransit) return;
+        _targetExtended = extended;
 
-        var volts = switch (state)
+        if (extended && _extendedLimitSwitchTriggered)
         {
-            case Extended -> Constants.Intake.EXTEND_VOLTS;
-            case Retracted -> Constants.Intake.RETRACT_VOLTS;
-            default -> 0.0;
-        };
+            _extended = true;
+            setExtensionVoltage(0.0);
+            return;
+        }
 
+        if (!extended && _retractedLimitSwitchTriggered)
+        {
+            _extended = false;
+            setExtensionVoltage(0.0);
+            return;
+        }
+
+        setExtensionVoltage(extended ? Constants.Intake.EXTEND_VOLTS : Constants.Intake.RETRACT_VOLTS);
+    }
+
+    public boolean isExtended()
+    {
+        return _extended;
+    }
+
+    private void setExtensionVoltage(double volts)
+    {
         _extensionMotor.setVoltage(volts);
 
-        if (RobotBase.isSimulation())
+        if (RobotBase.isSimulation() && _extensionMotorSim != null)
         {
             _extensionMotorSim.setAppliedOutput(volts / Constants.General.MOTOR_VOLTAGE);
         }
-    }
-
-    public ExtendState getExtendState()
-    {
-        return _extendState;
     }
 }
