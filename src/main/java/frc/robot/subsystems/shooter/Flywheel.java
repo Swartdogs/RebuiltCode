@@ -1,6 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
@@ -16,6 +17,8 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -33,6 +36,7 @@ public class Flywheel extends SubsystemBase
     private final SparkSim                  _leadMotorSim;
     private AngularVelocity                 _velocity;
     private AngularVelocity                 _targetVelocity;
+    private Voltage                         _flywheelVoltage;
 
     public Flywheel()
     {
@@ -59,8 +63,9 @@ public class Flywheel extends SubsystemBase
         _closedLoopController = _leadMotor.getClosedLoopController();
         _flywheelEncoder      = _leadMotor.getEncoder();
 
-        _velocity       = RPM.zero();
-        _targetVelocity = RPM.zero();
+        _velocity        = RPM.zero();
+        _targetVelocity  = null;
+        _flywheelVoltage = Volts.zero();
 
         if (RobotBase.isReal())
         {
@@ -77,33 +82,38 @@ public class Flywheel extends SubsystemBase
     @Override
     public void periodic()
     {
-        _velocity = RPM.of(_flywheelEncoder.getVelocity());
+        _velocity        = RPM.of(_flywheelEncoder.getVelocity());
+        _flywheelVoltage = Volts.of(_leadMotor.getAppliedOutput() * _leadMotor.getBusVoltage());
     }
 
     @Override
     public void simulationPeriodic()
     {
+        if (_leadMotorSim == null) return;
         _leadMotorSim.iterate(getVelocity().in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
     }
 
     public void setVelocity(AngularVelocity targetVelocity)
     {
+        if (_targetVelocity == null)
+        {
+            stop();
+            return;
+        }
         _targetVelocity = targetVelocity;
         _closedLoopController.setSetpoint(_targetVelocity.in(RPM), ControlType.kVelocity, ClosedLoopSlot.kSlot0);
     }
 
     public void stop()
     {
-        _targetVelocity = RPM.zero();
-        _leadMotor.setVoltage(0);
+        _targetVelocity = null;
+        _leadMotor.setVoltage(0.0);
     }
 
     public boolean atSpeed()
     {
-        if (_targetVelocity.in(RPM) <= 0) return true;
-
-        double error = Math.abs(getVelocity().in(RPM) - _targetVelocity.in(RPM));
-        return error <= _targetVelocity.in(RPM) * ShooterConstants.FLYWHEEL_TOLERANCE;
+        if (null == _targetVelocity) return true;
+        return getVelocity().isNear(_targetVelocity, ShooterConstants.FLYWHEEL_TOLERANCE);
     }
 
     public AngularVelocity getVelocity()
