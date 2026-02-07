@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
@@ -9,7 +11,6 @@ import com.revrobotics.spark.SparkSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
@@ -25,6 +26,7 @@ public class Feeder extends SubsystemBase
 {
     private final SparkFlex _feederMotor;
     private final SparkSim  _feederMotorSim;
+    private final DCMotor   _neoVortex;
     @Logged
     private Voltage         _feederMotorVoltage = Volts.of(0.0);
 
@@ -36,13 +38,16 @@ public class Feeder extends SubsystemBase
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(ShooterConstants.FEEDER_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
 
         _feederMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
         if (RobotBase.isReal())
         {
             _feederMotorSim = null;
+            _neoVortex      = null;
         }
         else
         {
-            _feederMotorSim = new SparkSim(_feederMotor, DCMotor.getNeoVortex(1));
+            _neoVortex      = DCMotor.getNeoVortex(1);
+            _feederMotorSim = new SparkSim(_feederMotor, _neoVortex);
         }
     }
 
@@ -54,7 +59,8 @@ public class Feeder extends SubsystemBase
     public void simulationPeriodic()
     {
         if (_feederMotorSim == null) return;
-        _feederMotorSim.iterate(_feederMotor.getEncoder().getVelocity(), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+        double simulatedVelocityRpm = _feederMotor.getAppliedOutput() * RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM);
+        _feederMotorSim.iterate(simulatedVelocityRpm, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
     }
 
     public void set(boolean on)
