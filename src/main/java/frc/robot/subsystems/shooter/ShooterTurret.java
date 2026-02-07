@@ -92,7 +92,7 @@ public class ShooterTurret
         // position is in mechanism degrees.
         _angle = _turretMotor.getPosition().getValueAsDouble() * 360.0 / ShooterConstants.TURRET_GEAR_RATIO;
 
-        _limelight.getSettings().withAprilTagIdFilter(Utilities.getOurHubTagIds()).save(); // TODO: Update vendor deps, then do a simple rewrite to fix this
+        _limelight.getSettings().withAprilTagIdFilter(Utilities.getOurHubTagIds()).save();
 
         LimelightData data = _limelight.getData();
         _hasTarget              = data.targetData.getTargetStatus();

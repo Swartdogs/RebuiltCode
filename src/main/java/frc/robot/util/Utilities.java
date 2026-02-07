@@ -1,5 +1,7 @@
 package frc.robot.util;
 
+import java.util.List;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
@@ -80,7 +82,7 @@ public final class Utilities
      * Get the HUB AprilTag IDs for our alliance. Use these IDs to filter Limelight
      * detections for shooting. We shoot at OUR OWN hub (not opponent's).
      */
-    public static int[] getOurHubTagIds()
+    public static List<Integer> getOurHubTagIds()
     {
         var alliance = DriverStation.getAlliance();
         if (alliance.isEmpty()) return ShooterConstants.ALL_HUB_TAG_IDS;
