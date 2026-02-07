@@ -1,8 +1,5 @@
 package frc.robot.util;
 
-import java.util.List;
-import java.util.stream.Stream;
-
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
@@ -18,12 +15,11 @@ import frc.robot.Constants.ShooterConstants;
  */
 public final class Utilities
 {
-    private static final double       kTransitionShiftEndTimeSecs = 130.0; // 2:10
-    private static final double       kShift1EndTimeSecs          = 105.0; // 1:45
-    private static final double       kShift2EndTimeSecs          = 80.0;  // 1:20
-    private static final double       kShift3EndTimeSecs          = 55.0;  // 0:55
-    private static final double       kShift4EndTimeSecs          = 30.0;  // 0:30
-    private static final List<Double> kAllHubTagIds               = Stream.concat(ShooterConstants.RED_HUB_TAG_IDS.stream(), ShooterConstants.BLUE_HUB_TAG_IDS.stream()).toList();
+    private static final double kTransitionShiftEndTimeSecs = 130.0; // 2:10
+    private static final double kShift1EndTimeSecs          = 105.0; // 1:45
+    private static final double kShift2EndTimeSecs          = 80.0;  // 1:20
+    private static final double kShift3EndTimeSecs          = 55.0;  // 0:55
+    private static final double kShift4EndTimeSecs          = 30.0;  // 0:30
 
     private Utilities()
     {
@@ -84,10 +80,10 @@ public final class Utilities
      * Get the HUB AprilTag IDs for our alliance. Use these IDs to filter Limelight
      * detections for shooting. We shoot at OUR OWN hub (not opponent's).
      */
-    public static List<Double> getOurHubTagIds()
+    public static int[] getOurHubTagIds()
     {
         var alliance = DriverStation.getAlliance();
-        if (alliance.isEmpty()) return kAllHubTagIds;
+        if (alliance.isEmpty()) return ShooterConstants.ALL_HUB_TAG_IDS;
         if (isRedAlliance())
         {
             return ShooterConstants.RED_HUB_TAG_IDS;

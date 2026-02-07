@@ -93,8 +93,9 @@ public final class Constants
         public static final double                      TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
         public static final double                      TURRET_TOLERANCE     = 2.0;   // degrees
         public static final String                      LIMELIGHT_NAME       = "limelight-shooter";
-        public static final List<Double>                BLUE_HUB_TAG_IDS     = List.of(2.0, 3.0, 4.0, 5.0);
-        public static final List<Double>                RED_HUB_TAG_IDS      = List.of(18.0, 19.0, 20.0, 21.0);
+        public static final int[]                       BLUE_HUB_TAG_IDS     = { 2, 3, 4, 5 };
+        public static final int[]                       RED_HUB_TAG_IDS      = { 18, 19, 20, 21 };
+        public static final int[]                       ALL_HUB_TAG_IDS      = { 2, 3, 4, 5, 18, 19, 20, 21 };
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
         private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE     = InterpolatingDoubleTreeMap
