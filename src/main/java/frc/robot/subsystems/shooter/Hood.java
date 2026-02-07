@@ -15,7 +15,6 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.AIOConstants;
@@ -31,7 +30,7 @@ public class Hood
     {
         Shoot(ShooterConstants.HOOD_SHOOT_ANGLE), Pass(ShooterConstants.HOOD_PASS_ANGLE), Undefined(null);
 
-        private Angle _targetAngle;
+        private final Angle _targetAngle;
 
         private HoodPosition(Angle angle)
         {
@@ -105,7 +104,7 @@ public class Hood
 
     public void simulationPeriodic()
     {
-        if (_hoodMotor == null) return;
+        if (_hoodSensorSim == null) return;
         _simAngle += _hoodMotor.get() * ShooterConstants.HOOD_SIM_MAX_SPEED * GeneralConstants.LOOP_PERIOD_SECS;
         _simAngle  = MathUtil.clamp(_simAngle, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
 
@@ -115,13 +114,12 @@ public class Hood
     public void stop()
     {
         setHoodPosition(HoodPosition.Undefined);
-        _hoodMotor.setVoltage(0.0);
-        atSetPoint();
     }
 
     public void setHoodPosition(HoodPosition hoodPosition)
     {
         if (hoodPosition == null) hoodPosition = HoodPosition.Undefined;
+        _hoodPosition = hoodPosition;
         Angle targetAngle = hoodPosition.getTargetAngle();
         if (targetAngle == null)
         {
@@ -135,9 +133,9 @@ public class Hood
 
     }
 
-    private boolean atSetPoint()
+    public boolean atSetpoint()
     {
-        if (_hoodMotor == null) return true;
+        if (_hoodSetpoint == null) return true;
         return _hoodAngle.isNear(_hoodSetpoint, ShooterConstants.HOOD_TOLERANCE);
     }
 
