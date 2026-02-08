@@ -6,36 +6,56 @@ import static edu.wpi.first.units.Units.Volts;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkSim;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
 
+@Logged
 public class Flywheel extends SubsystemBase
 {
+    public Command stopFlywheel()
+    {
+        return runOnce(this::stop);
+    }
+
+    public Command setFlywheelVelocity(AngularVelocity velocity)
+    {
+        return runOnce(() -> setVelocity(velocity));
+    }
+
     private final SparkFlex                 _leadMotor;
     private final SparkFlex                 _followMotor;
     private final SparkClosedLoopController _closedLoopController;
+    private final FlywheelSim               _flywheelSim;
     private final RelativeEncoder           _flywheelEncoder;
-    private final SparkSim                  _leadMotorSim;
-    private AngularVelocity                 _velocity;
-    private AngularVelocity                 _targetVelocity;
-    private Voltage                         _flywheelVoltage;
+    private final SparkFlexSim              _leadMotorSim;
+    @Logged
+    private AngularVelocity                 _velocity        = RPM.zero();
+    @Logged
+    private AngularVelocity                 _targetVelocity  = RPM.zero();
+    @Logged
+    private Voltage                         _flywheelVoltage = Volts.zero();
 
     public Flywheel()
     {
@@ -49,9 +69,7 @@ public class Flywheel extends SubsystemBase
         }
 
         var config = new SparkFlexConfig();
-        config.idleMode(IdleMode.kCoast).smartCurrentLimit(ShooterConstants.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
-
-        config.inverted(false);
+        config.inverted(false).idleMode(IdleMode.kCoast).smartCurrentLimit(ShooterConstants.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
         config.closedLoop.p(ShooterConstants.FLYWHEEL_KP).d(ShooterConstants.FLYWHEEL_KD);
         config.closedLoop.feedForward.kS(ShooterConstants.FLYWHEEL_KS).kV(ShooterConstants.FLYWHEEL_KV).kA(ShooterConstants.FLYWHEEL_KA);
         _leadMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -62,34 +80,38 @@ public class Flywheel extends SubsystemBase
         _closedLoopController = _leadMotor.getClosedLoopController();
         _flywheelEncoder      = _leadMotor.getEncoder();
 
-        _velocity        = RPM.zero();
-        _targetVelocity  = null;
-        _flywheelVoltage = Volts.zero();
-
         if (RobotBase.isReal())
         {
             _leadMotor.setCANTimeout(0);
             _followMotor.setCANTimeout(0);
             _leadMotorSim = null;
+            _flywheelSim  = null;
         }
         else
         {
-            _leadMotorSim = new SparkSim(_leadMotor, DCMotor.getNeoVortex(2));
+            var gearbox = DCMotor.getNeoVortex(2);
+            _leadMotorSim = new SparkFlexSim(_leadMotor, DCMotor.getNeoVortex(2));
+            _flywheelSim  = new FlywheelSim(LinearSystemId.createFlywheelSystem(gearbox, 0.001, 1), gearbox);
         }
     }
 
     @Override
     public void periodic()
     {
+        double appliedOutput = _leadMotor.getAppliedOutput();
+        double busVoltage    = _leadMotor.getBusVoltage();
         _velocity        = RPM.of(_flywheelEncoder.getVelocity());
-        _flywheelVoltage = Volts.of(_leadMotor.getAppliedOutput() * _leadMotor.getBusVoltage());
+        _flywheelVoltage = Volts.of(appliedOutput * busVoltage);
     }
 
     @Override
     public void simulationPeriodic()
     {
-        if (_leadMotorSim == null) return;
-        _leadMotorSim.iterate(getVelocity().in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+        _flywheelSim.setInputVoltage(_flywheelVoltage.in(Volts));
+        _flywheelSim.update(GeneralConstants.LOOP_PERIOD_SECS);
+        var velocity = _flywheelSim.getAngularVelocity();
+        _leadMotorSim.getRelativeEncoderSim().setVelocity(velocity.in(RPM));
+        _leadMotorSim.iterate(velocity.in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
     }
 
     public void setVelocity(AngularVelocity targetVelocity)
@@ -105,13 +127,13 @@ public class Flywheel extends SubsystemBase
 
     public void stop()
     {
-        _targetVelocity = null;
+        _targetVelocity = RPM.zero();
         _leadMotor.setVoltage(0.0);
     }
 
     public boolean atSpeed()
     {
-        if (null == _targetVelocity) return true;
+        if (_targetVelocity == RPM.zero()) return true;
         return getVelocity().isNear(_targetVelocity, ShooterConstants.FLYWHEEL_TOLERANCE);
     }
 
