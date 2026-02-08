@@ -19,7 +19,7 @@ This repo is team-owned, only team members should contribute.
 Coordination is done via slack and in-person, alongside the team project board.
 
 1. Create a branch off `main` or the current branch for team focus, as relevant.
-2. Implement code.
+2. Implement code or other changes, usually alongside others.
 3. Open a pull request and request review from mentors and peers.
 
 Write commits in the format of "if committed this code will do ___". 
