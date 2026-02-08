@@ -5,8 +5,8 @@ This repository contains the robot code for Team 525 (Swartdogs) for the Rebuilt
 ## Testing and simulation
 
 - Using Epilogue for logging.
-- Using AdvantageScope to test most robot code off-robot.
-- Using PathPlanner and Choreo for robot pathplanning.
+- Using AdvantageScope to test values with simulation before in the real world.
+- Using PathPlanner and Choreo for pathplanning.
 
 
 ## Dependencies
