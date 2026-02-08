@@ -27,7 +27,7 @@ Write commits in the format of "if committed this code will do ___".
 ## Troubleshooting
 
 - If deploy fails, confirm the RoboRIO and Driver Station are on the same network and that the RoboRIO IP resolves.
-- Check WPILib tools and driver station versions for compatibility.
-- Check with mentors 
+- Check WPILib tools to ensure the right dependencies are being used.
+- Check with mentors.
 - Inspect `robot.log` or console output for stack traces.
 - Review WPILib documentation.
