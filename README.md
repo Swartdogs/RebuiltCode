@@ -16,7 +16,7 @@ This project depends on WPILib and vendor libraries for motor controllers and se
 ## Workflow
 
 This repo is team-owned, only team members should contribute.
-Cordination is done via slack and in-person, alongside the team project board.
+Coordination is done via slack and in-person, alongside the team project board.
 
 1. Create a branch off `main` or the current branch in use.
 2. Implement code.
