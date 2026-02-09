@@ -18,7 +18,7 @@ This project depends on WPILib and vendor libraries for motor controllers and se
 This repo is team-owned, only team members should contribute.
 Coordination is done via slack and in-person, alongside the team project board.
 
-1. Create a branch off `main` or the current branch for team focus, as relevant.
+1. Create a branch off `main` or the current branch for team focus, as relevant. Name said brach based upon what is being worked on, like ``flywheel-sim`` for flywheel simulation.
 2. Implement code or other changes, usually alongside others.
 3. Open a pull request and request review from mentors and peers.
 
