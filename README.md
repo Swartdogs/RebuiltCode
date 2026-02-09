@@ -10,8 +10,9 @@ This repository contains the robot code for Team 525 (Swartdogs) for the Rebuilt
 
 
 ## Dependencies
-Java 17.
-This project depends on WPILib and vendor libraries for motor controllers and sensors. See `build.gradle`/`CMakeLists.txt` for exact dependency versions. For reference and examples, review WPILib: https://github.com/wpilibsuite/allwpilib
+- Java Development Kit (JDK) 17.
+  - Note that the JRE is insufficient; the full JDK is required
+- This project depends on WPILib and vendor libraries for motor controllers and sensors. See `build.gradle`/`CMakeLists.txt` for exact dependency versions. For reference and examples, review WPILib: https://github.com/wpilibsuite/allwpilib
 
 ## Workflow
 
