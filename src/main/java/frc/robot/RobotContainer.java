@@ -22,7 +22,9 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.shooter.Hood;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Hood.HoodPosition;
 
 @Logged
 public class RobotContainer
@@ -37,6 +39,7 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter();
+    private final Hood                           _hood       = new Hood();
 
     public RobotContainer()
     {
@@ -83,6 +86,9 @@ public class RobotContainer
         _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM, ShooterConstants.HOOD_PASS_ANGLE.in(Degrees)));
         _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
+        _joystick.povUp().onTrue(_hood.getSetPositionCmd(HoodPosition.Shoot));
+        _joystick.povDown().onTrue(_hood.getSetPositionCmd(HoodPosition.Pass));
+        _joystick.povRight().onTrue(_hood.getStopCmd());
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 

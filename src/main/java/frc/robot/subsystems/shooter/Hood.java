@@ -11,6 +11,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.AnalogInputSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.measure.Angle;
@@ -24,7 +26,7 @@ import frc.robot.Constants.ShooterConstants;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
 @Logged
-public class Hood
+public class Hood extends SubsystemBase
 {
     public enum HoodPosition
     {
@@ -48,7 +50,6 @@ public class Hood
     private final PIDController       _pidController;
     private double                    _simAngle;
     private final AnalogInputSim      _hoodSensorSim;
-    private final AnalogInput         _hoodSensorInput;
     @Logged
     private Voltage                   _hoodMotorVoltage;
     @Logged
@@ -60,9 +61,11 @@ public class Hood
 
     public Hood()
     {
+        AnalogInput hoodSensorInput;
+
         _hoodMotor        = new WPI_VictorSPX(CANConstants.HOOD_MOTOR);
-        _hoodSensorInput  = new AnalogInput(AIOConstants.HOOD_POTENTIOMETER);
-        _hoodSensor       = new AnalogPotentiometer(_hoodSensorInput, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
+        hoodSensorInput   = new AnalogInput(AIOConstants.HOOD_POTENTIOMETER);
+        _hoodSensor       = new AnalogPotentiometer(hoodSensorInput, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
         _hoodMotorVoltage = Volts.of(0.0);
         _hoodAngle        = Degrees.of(0.0);
         _hoodPosition     = HoodPosition.Undefined;
@@ -81,11 +84,12 @@ public class Hood
         }
         else
         {
-            _hoodSensorSim = new AnalogInputSim(_hoodSensorInput);
+            _hoodSensorSim = new AnalogInputSim(hoodSensorInput);
             updateSimSensorVoltage();
         }
     }
 
+    @Override
     public void periodic()
     {
         _hoodMotorVoltage = Volts.of(_hoodMotor.getMotorOutputVoltage());
@@ -102,6 +106,7 @@ public class Hood
         }
     }
 
+    @Override
     public void simulationPeriodic()
     {
         if (_hoodSensorSim == null) return;
@@ -150,5 +155,15 @@ public class Hood
     public HoodPosition getHoodPosition()
     {
         return _hoodPosition;
+    }
+
+    public Command getSetPositionCmd(HoodPosition hoodPosition)
+    {
+        return runOnce(() -> setHoodPosition(hoodPosition));
+    }
+
+    public Command getStopCmd()
+    {
+        return runOnce(this::stop);
     }
 }
