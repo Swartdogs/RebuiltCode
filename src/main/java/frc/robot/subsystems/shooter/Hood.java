@@ -19,6 +19,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 
 import frc.robot.Constants.GeneralConstants;
+import frc.robot.Robot;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -49,6 +50,8 @@ public class Hood extends SubsystemBase
     private final AnalogPotentiometer _hoodSensor;
     private final PIDController       _pidController;
     private double                    _simAngle;
+    @Logged
+    private double                    _simMotorCmd;
     private final AnalogInputSim      _hoodSensorSim;
     @Logged
     private Voltage                   _hoodMotorVoltage;
@@ -58,6 +61,8 @@ public class Hood extends SubsystemBase
     private HoodPosition              _hoodPosition;
     @Logged
     private Angle                     _hoodSetpoint;
+    @Logged
+    private boolean                   _hasSetpoint;
 
     public Hood()
     {
@@ -66,13 +71,16 @@ public class Hood extends SubsystemBase
         _hoodMotor        = new WPI_VictorSPX(CANConstants.HOOD_MOTOR);
         hoodSensorInput   = new AnalogInput(AIOConstants.HOOD_POTENTIOMETER);
         _hoodSensor       = new AnalogPotentiometer(hoodSensorInput, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
-        _hoodMotorVoltage = Volts.of(0.0);
-        _hoodAngle        = Degrees.of(0.0);
+        _hoodMotorVoltage = Volts.zero();
+        _hoodAngle        = Degrees.zero();
         _hoodPosition     = HoodPosition.Undefined;
         _pidController    = new PIDController(ShooterConstants.HOOD_KP, ShooterConstants.HOOD_KI, ShooterConstants.HOOD_KD);
         _pidController.setTolerance(ShooterConstants.HOOD_TOLERANCE.in(Degrees));
-        _hoodSetpoint = null;
+        _hoodSetpoint = Degrees.zero();
+        _hasSetpoint  = false;
         _simAngle     = ShooterConstants.HOOD_PASS_ANGLE.in(Degrees);
+
+        _simMotorCmd = 0.0;
 
         if (RobotBase.isReal())
         {
@@ -95,14 +103,14 @@ public class Hood extends SubsystemBase
         _hoodMotorVoltage = Volts.of(_hoodMotor.getMotorOutputVoltage());
         _hoodAngle        = Degrees.of(_hoodSensor.get());
 
-        if (_hoodSetpoint != null)
+        if (_hasSetpoint)
         {
             double voltageOutput = _pidController.calculate(_hoodAngle.in(Degrees), _hoodSetpoint.in(Degrees));
-            _hoodMotor.setVoltage(MathUtil.clamp(voltageOutput, -GeneralConstants.MOTOR_VOLTAGE, GeneralConstants.MOTOR_VOLTAGE));
+            setHoodMotorVoltage(Volts.of(voltageOutput));
         }
         else
         {
-            _hoodMotor.setVoltage(0.0);
+            setHoodMotorVoltage(Volts.zero());
         }
     }
 
@@ -110,7 +118,7 @@ public class Hood extends SubsystemBase
     public void simulationPeriodic()
     {
         if (_hoodSensorSim == null) return;
-        _simAngle += _hoodMotor.get() * ShooterConstants.HOOD_SIM_MAX_SPEED * GeneralConstants.LOOP_PERIOD_SECS;
+        _simAngle += _simMotorCmd * ShooterConstants.HOOD_SIM_MAX_SPEED * GeneralConstants.LOOP_PERIOD_SECS;
         _simAngle  = MathUtil.clamp(_simAngle, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
 
         updateSimSensorVoltage();
@@ -121,26 +129,38 @@ public class Hood extends SubsystemBase
         setHoodPosition(HoodPosition.Undefined);
     }
 
+    public void setHoodMotorVoltage(Voltage voltage)
+    {
+        double clampedVoltage = MathUtil.clamp(voltage.in(Volts), -GeneralConstants.MOTOR_VOLTAGE, GeneralConstants.MOTOR_VOLTAGE);
+        _hoodMotor.setVoltage(clampedVoltage);
+
+        if (RobotBase.isSimulation())
+        {
+            _simMotorCmd = clampedVoltage;
+        }
+    }
+
     public void setHoodPosition(HoodPosition hoodPosition)
     {
-        if (hoodPosition == null) hoodPosition = HoodPosition.Undefined;
+        // if (hoodPosition == null) hoodPosition = HoodPosition.Undefined;
         _hoodPosition = hoodPosition;
         Angle targetAngle = hoodPosition.getTargetAngle();
         if (targetAngle == null)
         {
-            _hoodSetpoint = null;
-            _hoodMotor.setVoltage(0.0);
+            _hasSetpoint = false;
+            setHoodMotorVoltage(Volts.zero());
             return;
         }
         double degreesClamped = MathUtil.clamp(targetAngle.in(Degrees), ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hoodSetpoint = Degrees.of(degreesClamped);
+        _hasSetpoint  = true;
         _pidController.setSetpoint(degreesClamped);
 
     }
 
     public boolean atSetpoint()
     {
-        if (_hoodSetpoint == null) return true;
+        if (!_hasSetpoint) return true;
         return _hoodAngle.isNear(_hoodSetpoint, ShooterConstants.HOOD_TOLERANCE);
     }
 

@@ -38,8 +38,8 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter();
     private final Hood                           _hood       = new Hood();
+    private final Shooter                        _shooter    = new Shooter(_hood);
 
     public RobotContainer()
     {

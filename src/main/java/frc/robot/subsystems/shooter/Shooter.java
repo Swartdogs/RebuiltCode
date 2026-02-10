@@ -135,7 +135,7 @@ public class Shooter extends SubsystemBase
         if (_state == ShooterState.Idle)
         {
             _flywheel.stop();
-            _hood.stop();
+            // _hood.stop();
             _turret.setState(ShooterTurret.TurretState.Off);
             _feeder.set(false);
             return;
@@ -151,13 +151,13 @@ public class Shooter extends SubsystemBase
 
             double distance = _lastDistanceMeters;
             _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
-            _hood.getSetPositionCmd(HoodPosition.Shoot);
+            _hood.setHoodPosition(HoodPosition.Shoot);
         }
         else
         {
             _turret.setState(ShooterTurret.TurretState.Pass);
             _flywheel.setVelocity(_passFlywheelRpm);
-            _hood.getSetPositionCmd(HoodPosition.Pass);
+            _hood.setHoodPosition(HoodPosition.Pass);
         }
 
         _feeder.set(_state == ShooterState.Firing);
