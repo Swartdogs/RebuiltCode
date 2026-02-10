@@ -37,6 +37,3 @@ jobs:
     # Runs a single command using the runners shell
     - name: Compile and run tests on robot code (Build)
       run: ./gradlew build --build-cache
-    #Publish the artifacts locally
-    - name: Publish Artifacts
-      uses: ./gradlew publish
