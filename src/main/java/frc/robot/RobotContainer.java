@@ -4,6 +4,9 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
+import static edu.wpi.first.units.Units.RPM;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -38,6 +41,7 @@ public class RobotContainer
     // private final Shooter _shooter = new Shooter();
     private final Feeder _feeder = new Feeder();
     private final Shooter                        _shooter    = new Shooter();
+    private final Flywheel _flywheel = new Flywheel();
 
     public RobotContainer()
     {
@@ -80,6 +84,7 @@ public class RobotContainer
         _joystick.rightStick().onTrue(_feeder.getstopCmd());
         _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
         _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
+
         // _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());  // TODO
 
         // Temporary shooter bindings (adjust later).
@@ -88,10 +93,11 @@ public class RobotContainer
         // ShooterConstants.PASS_HOOD_ANGLE_DEG));
         // _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
-        // Temporary shooter bindings (adjust later).
-        _joystick.x().onTrue(_shooter.getFireCmd());
-        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM, ShooterConstants.PASS_HOOD_ANGLE_DEG));
-        _joystick.leftStick().onTrue(_shooter.getStopCmd());
+        // 2000, 4000, 6000, stop
+        _joystick.povLeft().onTrue(_flywheel.setFlywheelVelocity(RPM.of(2000)));
+        _joystick.povUp().onTrue(_flywheel.setFlywheelVelocity(RPM.of(4000)));
+        _joystick.povRight().onTrue(_flywheel.setFlywheelVelocity(RPM.of(6000)));
+        _joystick.povDown().onTrue(_flywheel.stopFlywheel());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

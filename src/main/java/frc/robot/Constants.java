@@ -157,7 +157,7 @@ public final class Constants
         // TODO: Tune these values with testing!
         public static double getFlywheelSpeedForDistanceX(double meters)
         {
-            return FLYWHEEL_SPEED_TABLE.get(meters);
+            return RPM.of(FLYWHEEL_SPEED_TABLE.get(meters));
         }
 
         public static double getHoodAngleForDistance(double meters)

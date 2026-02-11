@@ -7,15 +7,12 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
-<<<<<<< HEAD
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 
 import frc.robot.util.Utilities;
 import frc.robot.Constants;
 import frc.robot.util.GameState;
-=======
 import frc.robot.util.Utilities;
->>>>>>> 2f7e1d3 (Add ShooterFeeder class and integrate into Shooter subsystem)
 
 @Logged
 public class Shooter extends SubsystemBase
@@ -183,7 +180,7 @@ public class Shooter extends SubsystemBase
         else
         {
             _turret.setState(ShooterTurret.TurretState.Pass);
-            _flywheel.setVelocity(_passFlywheelRpm);
+            _flywheel.setVelocity(_passFlywheelVelocity);
             _hood.setAngle(_passHoodAngleDeg);
         }
 
