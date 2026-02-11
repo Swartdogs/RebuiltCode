@@ -7,5 +7,5 @@ public class Shooter extends SubsystemBase
     public enum ShooterState
     {
         Off, Ready, Firing
-    }
+    
 }
