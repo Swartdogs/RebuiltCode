@@ -3,6 +3,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
@@ -22,6 +23,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.generated.TunerConstants;
 
 public final class Constants
@@ -124,9 +126,9 @@ public final class Constants
         public static final double FEEDER_VOLTAGE       = 6;
 
         // TODO: Tune these values with testing!
-        public static double getFlywheelSpeedForDistance(double meters)
+        public static AngularVelocity getFlywheelSpeedForDistance(double meters)
         {
-            return FLYWHEEL_SPEED_TABLE.get(meters);
+            return RPM.of(FLYWHEEL_SPEED_TABLE.get(meters));
         }
 
         public static double getHoodAngleForDistance(double meters)
