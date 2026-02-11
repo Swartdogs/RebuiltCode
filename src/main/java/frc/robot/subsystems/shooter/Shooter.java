@@ -133,7 +133,7 @@ public class Shooter extends SubsystemBase
         if (_state == ShooterState.Idle)
         {
             _flywheel.stop();
-            // _hood.stop();
+            _hood.stop();
             _turret.setState(ShooterTurret.TurretState.Off);
             _feeder.set(false);
             return;

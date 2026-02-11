@@ -110,6 +110,7 @@ public class Robot extends TimedRobot
     public void simulationInit()
     {
         RoboRioSim.setVInVoltage(GeneralConstants.MOTOR_VOLTAGE);
+        RoboRioSim.setUserVoltage5V(GeneralConstants.SENSOR_VOLTAGE);
     }
 
     @Override

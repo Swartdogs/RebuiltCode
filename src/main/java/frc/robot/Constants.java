@@ -34,7 +34,7 @@ public final class Constants
         public static final int FEEDER_MOTOR    = 25; // TODO: Confirm CAN ID
     }
 
-    public static class AIOConstants
+    public static class DIOConstants
     {
         public static final int HOOD_POTENTIOMETER = 1; // TODO: Confirm AIO port wiring
     }
@@ -61,8 +61,8 @@ public final class Constants
     public static class GeneralConstants
     {
         public static final double LOOP_PERIOD_SECS = 0.02;
-        public static final double MOTOR_VOLTAGE    = 12.0; // TODO: This should likely be Voltage type, but easier to make it a double for
-                                                            // now.
+        public static final double MOTOR_VOLTAGE    = 12.0;
+        public static final double SENSOR_VOLTAGE   = 5.0;
     }
 
     public static class ShooterConstants
