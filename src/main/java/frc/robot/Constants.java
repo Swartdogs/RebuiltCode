@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.Inches;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -13,6 +15,8 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.generated.TunerConstants;
 
 public final class Constants
@@ -23,11 +27,13 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE          = 20;
-        public static final int FLYWHEEL_LEAD   = 21;
-        public static final int FLYWHEEL_FOLLOW = 22;
-        public static final int CLIMBER_EXTEND  = 26; 
-        public static final int CLIMBER_ROTATE  = 27; 
+        public static final int INTAKE           = 20;
+        public static final int FLYWHEEL_LEAD    = 21;
+        public static final int FLYWHEEL_FOLLOW  = 22;
+        public static final int CLIMBER_EXTEND   = 26;
+        public static final int INTAKE_EXTEND    = 27;
+        public static final int CLIMBER_ROTATE   = 28;
+        public static final int INTAKE_EXTENSION = 0;
     }
 
     public static class DriveConstants
@@ -39,14 +45,19 @@ public final class Constants
 
     public static class IntakeConstants
     {
-        public static final double INTAKE_VOLTS        = 8.0;
-        public static final double REVERSE_VOLTS       = -4.0;
-        public static final int    CURRENT_LIMIT       = 40;
-        public static final int    CAMERA_DEVICE_INDEX = 0;
-        public static final String CAMERA_NAME         = "IntakeCam";
-        public static final int    CAMERA_WIDTH        = 320;
-        public static final int    CAMERA_HEIGHT       = 240;
-        public static final int    CAMERA_FPS          = 15;
+        public static final Voltage  INTAKE_VOLTS                = Volts.of(8.0);
+        public static final Voltage  REVERSE_VOLTS               = Volts.of(-4.0);
+        public static final int      CURRENT_LIMIT               = 40;
+        public static final int      CAMERA_DEVICE_INDEX         = 0;
+        public static final String   CAMERA_NAME                 = "IntakeCam";
+        public static final int      CAMERA_WIDTH                = 320;
+        public static final int      CAMERA_HEIGHT               = 240;
+        public static final int      CAMERA_FPS                  = 15;
+        public static final double   EXTENSION_CONVERSION_FACTOR = 0;
+        public static final Distance EXTENSION_MAX_POSITION      = Inches.of(0.0);
+        public static final Distance EXTENSION_MIN_POSITION      = Inches.of(0.0);
+        public static final Voltage  EXTEND_OUTPUT               = Volts.zero();
+        public static final Voltage  RETRACT_VOLTS               = Volts.zero();
     }
 
     public static class GeneralConstants
@@ -96,12 +107,13 @@ public final class Constants
 
     public static class ClimberConstants
     {
-        public static final double L1_ROTATION          = 39.0; // TODO
-        public static final double L3_ROTATION          = 180.0; // TODO
-        public static final double EXTENSION_THRESHOLD  = 0.0; // TODO
-        public static final double RETRACTION_THRESHOLD = 0.0; // TODO
-        public static final double EXTEND_OUTPUT        = 1.0; // TODO: duty cycle
-        public static final double ROTATE_OUTPUT        = 1.0; // TODO: duty cycle
-        public static final double ROTATION_TOLERANCE   = 2.0; // TODO
+        public static final double  L1_ROTATION          = 39.0; // TODO
+        public static final double  L3_ROTATION          = 180.0; // TODO
+        public static final double  EXTENSION_THRESHOLD  = 0.0; // TODO
+        public static final double  RETRACTION_THRESHOLD = 0.0; // TODO
+        public static final Voltage EXTEND_OUTPUT        = Volts.of(1.0); // TODO: duty cycle
+        public static final Voltage RETRACT_VOLTAGE      = Volts.of(-1.0); // TODO: will be -extendoutput
+        public static final double  ROTATE_OUTPUT        = 1.0; // TODO: duty cycle
+        public static final double  ROTATION_TOLERANCE   = 2.0; // TODO
     }
 }
