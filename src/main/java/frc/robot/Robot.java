@@ -8,8 +8,10 @@ import com.ctre.phoenix6.HootAutoReplay;
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.GeneralConstants;
 
 @Logged
 public class Robot extends TimedRobot
@@ -102,6 +104,12 @@ public class Robot extends TimedRobot
     @Override
     public void testExit()
     {
+    }
+
+    @Override
+    public void simulationInit()
+    {
+        RoboRioSim.setVInVoltage(GeneralConstants.MOTOR_VOLTAGE);
     }
 
     @Override
