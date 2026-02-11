@@ -1,6 +1,9 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
@@ -44,9 +47,9 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _mode             = ShootMode.Pass;
-            _passFlywheelRpm  = flywheelRpm;
-            _passHoodAngleDeg = hoodAngleDeg;
+            _mode                 = ShootMode.Pass;
+            _passFlywheelVelocity = RPM.of(flywheelRpm);
+            _passHoodAngleDeg     = hoodAngleDeg;
             setState(ShooterState.Preparing);
         });
     }
@@ -61,24 +64,24 @@ public class Shooter extends SubsystemBase
         return runOnce(() -> setState(ShooterState.Idle));
     }
 
-    private final ShooterFlywheel _flywheel;
-    private final ShooterHood     _hood;
-    private final ShooterTurret   _turret;
-    private final ShooterFeeder   _feeder;
+    private final Flywheel      _flywheel;
+    private final ShooterHood   _hood;
+    private final ShooterTurret _turret;
+    private final ShooterFeeder _feeder;
     @Logged
-    private ShooterState          _state              = ShooterState.Idle;
+    private ShooterState        _state                = ShooterState.Idle;
     @Logged
-    private ShootMode             _mode               = ShootMode.Shoot;
+    private ShootMode           _mode                 = ShootMode.Shoot;
     @Logged
-    private double                _lastDistanceMeters = 0.0;
+    private double              _lastDistanceMeters   = 0.0;
     @Logged
-    private double                _passFlywheelRpm    = 0.0;
+    private AngularVelocity     _passFlywheelVelocity = RPM.zero();
     @Logged
-    private double                _passHoodAngleDeg   = 0.0;
+    private double              _passHoodAngleDeg     = 0.0;
 
     public Shooter()
     {
-        _flywheel = new ShooterFlywheel();
+        _flywheel = new Flywheel();
         _hood     = new ShooterHood();
         _turret   = new ShooterTurret();
         _feeder   = new ShooterFeeder();
@@ -153,7 +156,7 @@ public class Shooter extends SubsystemBase
         else
         {
             _turret.setState(ShooterTurret.TurretState.Pass);
-            _flywheel.setVelocity(_passFlywheelRpm);
+            _flywheel.setVelocity(_passFlywheelVelocity);
             _hood.setAngle(_passHoodAngleDeg);
         }
 

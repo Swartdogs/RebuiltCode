@@ -16,7 +16,6 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -98,10 +97,8 @@ public class Flywheel extends SubsystemBase
     @Override
     public void periodic()
     {
-        double appliedOutput = _leadMotor.getAppliedOutput();
-        double busVoltage    = _leadMotor.getBusVoltage();
         _velocity        = RPM.of(_flywheelEncoder.getVelocity());
-        _flywheelVoltage = Volts.of(appliedOutput * busVoltage);
+        _flywheelVoltage = Volts.of(_leadMotor.getAppliedOutput() * _leadMotor.getBusVoltage());
     }
 
     @Override
@@ -109,9 +106,9 @@ public class Flywheel extends SubsystemBase
     {
         _flywheelSim.setInputVoltage(_flywheelVoltage.in(Volts));
         _flywheelSim.update(GeneralConstants.LOOP_PERIOD_SECS);
-        var velocity = _flywheelSim.getAngularVelocity();
-        _leadMotorSim.getRelativeEncoderSim().setVelocity(velocity.in(RPM));
-        _leadMotorSim.iterate(velocity.in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+        var velocity = _flywheelSim.getAngularVelocity().in(RPM);
+        _leadMotorSim.getRelativeEncoderSim().setVelocity(velocity);
+        _leadMotorSim.iterate(velocity, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
     }
 
     public void setVelocity(AngularVelocity targetVelocity)
