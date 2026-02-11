@@ -4,6 +4,9 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
+import static edu.wpi.first.units.Units.RPM;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -20,6 +23,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Feeder;
+import frc.robot.subsystems.shooter.Flywheel;
 import frc.robot.subsystems.shooter.Shooter;
 
 @Logged
@@ -34,7 +38,8 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter();
+    // private final Shooter _shooter = new Shooter();
+    private final Flywheel _flywheel = new Flywheel();
 
     public RobotContainer()
     {

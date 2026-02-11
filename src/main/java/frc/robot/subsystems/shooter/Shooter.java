@@ -159,7 +159,7 @@ public class Shooter extends SubsystemBase
         else
         {
             _turret.setState(ShooterTurret.TurretState.Pass);
-            _flywheel.setVelocity(_passFlywheelRpm);
+            _flywheel.setVelocity(_passFlywheelVelocity);
             _hood.setAngle(_passHoodAngleDeg);
         }
 
