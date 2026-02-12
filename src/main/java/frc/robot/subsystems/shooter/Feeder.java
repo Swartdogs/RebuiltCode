@@ -47,7 +47,7 @@ public class Feeder extends SubsystemBase
     {
         _feederMotor = new SparkFlex(CANConstants.FEEDER_MOTOR, MotorType.kBrushless);
 
-        var config = new SparkFlexConfig();
+        SparkFlexConfig config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(ShooterConstants.FEEDER_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
 
         _feederMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -70,12 +70,12 @@ public class Feeder extends SubsystemBase
 
     public void set(boolean on)
     {
-        var volts = on ? ShooterConstants.FEEDER_VOLTAGE : 0.0;
-        _feederMotor.setVoltage(volts);
+        Voltage targetVoltage = on ? Volts.of(ShooterConstants.FEEDER_VOLTAGE) : Volts.zero();
+        _feederMotor.setVoltage(targetVoltage.in(Volts));
 
         if (RobotBase.isSimulation())
         {
-            _feederMotorSim.setAppliedOutput(volts / RoboRioSim.getVInVoltage());;
+            _feederMotorSim.setAppliedOutput(targetVoltage.in(Volts) / RoboRioSim.getVInVoltage());;
         }
     }
 }
