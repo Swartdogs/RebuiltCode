@@ -48,7 +48,7 @@ public class Hood extends SubsystemBase
     private final DutyCycleEncoder    _hoodSensor;
     private final DutyCycleEncoderSim _hoodSensorSim;
     private final PIDController       _pidController;
-    private double                   _simAngleDeg;
+    private double                    _simAngleDeg;
     @Logged
     private Voltage                   _hoodMotorVoltage;
     @Logged
@@ -63,7 +63,8 @@ public class Hood extends SubsystemBase
     public Hood()
     {
         _hoodMotor        = new WPI_VictorSPX(CANConstants.HOOD_MOTOR);
-        _hoodSensor       = new DutyCycleEncoder(DIOConstants.HOOD_ENCODER, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);        _pidController    = new PIDController(ShooterConstants.HOOD_KP, ShooterConstants.HOOD_KI, ShooterConstants.HOOD_KD);
+        _hoodSensor       = new DutyCycleEncoder(DIOConstants.HOOD_ENCODER, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
+        _pidController    = new PIDController(ShooterConstants.HOOD_KP, ShooterConstants.HOOD_KI, ShooterConstants.HOOD_KD);
         _hoodMotorVoltage = Volts.zero();
         _hoodAngle        = Degrees.zero();
         _hoodPosition     = HoodPosition.Undefined;
@@ -107,7 +108,7 @@ public class Hood extends SubsystemBase
     {
         double motorFraction = _hoodMotor.getMotorOutputVoltage() / GeneralConstants.MOTOR_VOLTAGE;
         _simAngleDeg += motorFraction * ShooterConstants.HOOD_SIM_MAX_SPEED * GeneralConstants.LOOP_PERIOD_SECS;
-        _simAngleDeg = MathUtil.clamp(_simAngleDeg, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
+        _simAngleDeg  = MathUtil.clamp(_simAngleDeg, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hoodSensorSim.set(_simAngleDeg);
     }
 
@@ -132,7 +133,7 @@ public class Hood extends SubsystemBase
             stop();
             return;
         }
-        Angle targetAngle = hoodPosition.getTargetAngle();
+        Angle  targetAngle    = hoodPosition.getTargetAngle();
         double degreesClamped = MathUtil.clamp(targetAngle.in(Degrees), ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hoodSetpoint = Degrees.of(degreesClamped);
         _hasSetpoint  = true;
