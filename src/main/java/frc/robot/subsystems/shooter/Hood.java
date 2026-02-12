@@ -120,6 +120,8 @@ public class Hood extends SubsystemBase
     @Override
     public void simulationPeriodic()
     {
+        //TODO: use a calculation based on motor type and gearbox rather than a "max speed" constant. It'll make it play more realistically in the simulator compared to real life.
+        //Per: https://github.com/Swartdogs/RebuiltCode/pull/31#discussion_r2790669776
     }
 
     public void stop()
