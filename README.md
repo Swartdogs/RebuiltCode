@@ -26,7 +26,7 @@ This repo is team-owned, only team members should contribute.
 2. Implement code or other changes, usually alongside others.
 3. Open a pull request and request review from mentors and peers.
 
-Write commits in the format of "this code does ___". 
+Write commits in the format of "this commit did ___". 
 
 ## Troubleshooting
 
