@@ -1,13 +1,11 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.RPM;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
+import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkSim;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -16,6 +14,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
@@ -24,11 +23,25 @@ import frc.robot.Constants.ShooterConstants;
 @Logged
 public class Feeder extends SubsystemBase
 {
-    private final SparkFlex _feederMotor;
-    private final SparkSim  _feederMotorSim;
-    private final DCMotor   _neoVortex;
+    private final SparkFlex    _feederMotor;
+    private final SparkFlexSim _feederMotorSim;
     @Logged
-    private Voltage         _feederMotorVoltage = Volts.of(0.0);
+    private Voltage            _feederMotorVoltage = Volts.of(0.0);
+
+    private Command setCommands(boolean on)
+    {
+        return startEnd(() -> set(on), () -> set(false));
+    }
+
+    public Command getForwardCmd()
+    {
+        return setCommands(true);
+    }
+
+    public Command getstopCmd()
+    {
+        return runOnce(() -> set(false));
+    }
 
     public Feeder()
     {
@@ -42,29 +55,27 @@ public class Feeder extends SubsystemBase
         if (RobotBase.isReal())
         {
             _feederMotorSim = null;
-            _neoVortex      = null;
         }
         else
         {
-            _neoVortex      = DCMotor.getNeoVortex(1);
-            _feederMotorSim = new SparkSim(_feederMotor, _neoVortex);
+            _feederMotorSim = new SparkFlexSim(_feederMotor, DCMotor.getNeoVortex(1));
         }
     }
 
+    @Override
     public void periodic()
     {
         _feederMotorVoltage = Volts.of(_feederMotor.getAppliedOutput() * _feederMotor.getBusVoltage());
     }
 
-    public void simulationPeriodic()
-    {
-        if (_feederMotorSim == null) return;
-        double simulatedVelocityRpm = _feederMotor.getAppliedOutput() * RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM);
-        _feederMotorSim.iterate(simulatedVelocityRpm, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
-    }
-
     public void set(boolean on)
     {
-        _feederMotor.setVoltage(on ? ShooterConstants.FEEDER_VOLTAGE : 0.0);
+        var volts = on ? ShooterConstants.FEEDER_VOLTAGE : 0.0;
+        _feederMotor.setVoltage(volts);
+
+        if (RobotBase.isSimulation())
+        {
+            _feederMotorSim.setAppliedOutput(volts / RoboRioSim.getVInVoltage());;
+        }
     }
 }

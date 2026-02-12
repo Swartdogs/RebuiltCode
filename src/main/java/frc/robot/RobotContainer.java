@@ -15,11 +15,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Feeder;
 
 @Logged
 public class RobotContainer
@@ -33,7 +32,7 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter();
+    private final Feeder                         _feeder     = new Feeder();
 
     public RobotContainer()
     {
@@ -73,12 +72,16 @@ public class RobotContainer
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
         _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
         _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
-        _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());
+        // _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());
 
-        // Temporary shooter bindings (adjust later).
-        _joystick.x().onTrue(_shooter.getFireCmd());
-        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM, ShooterConstants.PASS_HOOD_ANGLE_DEG));
-        _joystick.leftStick().onTrue(_shooter.getStopCmd());
+        // // Temporary shooter bindings (adjust later).
+        // _joystick.x().onTrue(_shooter.getFireCmd());
+        // _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM,
+        // ShooterConstants.PASS_HOOD_ANGLE_DEG));
+        // _joystick.leftStick().onTrue(_shooter.getStopCmd());
+
+        _joystick.x().whileTrue(_feeder.getForwardCmd());
+        _joystick.leftStick().onTrue(_feeder.getstopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
