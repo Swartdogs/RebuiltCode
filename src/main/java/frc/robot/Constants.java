@@ -36,7 +36,7 @@ public final class Constants
 
     public static class DIOConstants
     {
-        public static final int HOOD_POTENTIOMETER = 1; // TODO: Confirm AIO port wiring
+        public static final int HOOD_ENCODER = 1; // TODO: Confirm AIO port wiring
     }
 
     public static class DriveConstants
@@ -84,7 +84,7 @@ public final class Constants
         public static final double HOOD_MIN_ANGLE     = 0.0;   // TODO: Confirm min angle (degrees)
         public static final double HOOD_MAX_ANGLE     = 45.0;  // TODO: Confirm max angle (degrees)
         public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
-        public static final Angle  HOOD_SHOOT_ANGLE   = Degrees.of(50); // TODO: Find the degree needed to shoot from.
+        public static final Angle  HOOD_SHOOT_ANGLE   = Degrees.of(30); // TODO: Find the degree needed to shoot from.
         public static final Angle  HOOD_PASS_ANGLE    = Degrees.of(30); // TODO: Find the degree to pass from.
         public static final Angle  HOOD_TOLERANCE     = Degrees.of(2);
 

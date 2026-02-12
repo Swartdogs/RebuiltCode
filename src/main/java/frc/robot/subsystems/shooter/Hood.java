@@ -5,23 +5,19 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.AnalogPotentiometer;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.math.MathUsageId;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.AnalogInputSim;
-import edu.wpi.first.wpilibj.simulation.DutyCycleEncoderSim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.DutyCycleEncoderSim;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.epilogue.Logged;
 
 import frc.robot.Constants.GeneralConstants;
-import frc.robot.Robot;
 import frc.robot.Constants.DIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -52,6 +48,7 @@ public class Hood extends SubsystemBase
     private final DutyCycleEncoder    _hoodSensor;
     private final DutyCycleEncoderSim _hoodSensorSim;
     private final PIDController       _pidController;
+    private double                   _simAngleDeg;
     @Logged
     private Voltage                   _hoodMotorVoltage;
     @Logged
@@ -66,13 +63,13 @@ public class Hood extends SubsystemBase
     public Hood()
     {
         _hoodMotor        = new WPI_VictorSPX(CANConstants.HOOD_MOTOR);
-        _hoodSensor       = new DutyCycleEncoder(DIOConstants.HOOD_POTENTIOMETER, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);
-        _pidController    = new PIDController(ShooterConstants.HOOD_KP, ShooterConstants.HOOD_KI, ShooterConstants.HOOD_KD);
+        _hoodSensor       = new DutyCycleEncoder(DIOConstants.HOOD_ENCODER, ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MIN_ANGLE);        _pidController    = new PIDController(ShooterConstants.HOOD_KP, ShooterConstants.HOOD_KI, ShooterConstants.HOOD_KD);
         _hoodMotorVoltage = Volts.zero();
         _hoodAngle        = Degrees.zero();
         _hoodPosition     = HoodPosition.Undefined;
         _hoodSetpoint     = Degrees.zero();
         _hasSetpoint      = false;
+        _simAngleDeg      = ShooterConstants.HOOD_PASS_ANGLE.in(Degrees);
 
         _pidController.setTolerance(ShooterConstants.HOOD_TOLERANCE.in(Degrees));
 
@@ -103,27 +100,15 @@ public class Hood extends SubsystemBase
         }
 
         setHoodMotorVoltage(voltageOutput);
-
-        for (var position : HoodPosition.values())
-        {
-
-            if (position.getTargetAngle() == null || _hoodAngle.isNear(position.getTargetAngle(), ShooterConstants.HOOD_TOLERANCE))
-            {
-                _hoodPosition = position;
-                break;
-            }
-
-        }
-
     }
 
     @Override
     public void simulationPeriodic()
     {
-        // TODO: use a calculation based on motor type and gearbox rather than a "max
-        // speed" constant. It'll make it play more realistically in the simulator
-        // compared to real life.
-        // Per: https://github.com/Swartdogs/RebuiltCode/pull/31#discussion_r2790669776
+        double motorFraction = _hoodMotor.getMotorOutputVoltage() / GeneralConstants.MOTOR_VOLTAGE;
+        _simAngleDeg += motorFraction * ShooterConstants.HOOD_SIM_MAX_SPEED * GeneralConstants.LOOP_PERIOD_SECS;
+        _simAngleDeg = MathUtil.clamp(_simAngleDeg, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
+        _hoodSensorSim.set(_simAngleDeg);
     }
 
     public void stop()
@@ -141,12 +126,13 @@ public class Hood extends SubsystemBase
     public void setHoodPosition(HoodPosition hoodPosition)
     {
         _hoodPosition = hoodPosition;
-        Angle targetAngle = hoodPosition.getTargetAngle();
-        if (targetAngle == null)
+
+        if (hoodPosition == HoodPosition.Undefined)
         {
             stop();
             return;
         }
+        Angle targetAngle = hoodPosition.getTargetAngle();
         double degreesClamped = MathUtil.clamp(targetAngle.in(Degrees), ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hoodSetpoint = Degrees.of(degreesClamped);
         _hasSetpoint  = true;
