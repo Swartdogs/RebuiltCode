@@ -49,8 +49,8 @@ public class Hood extends SubsystemBase
     }
 
     private final WPI_VictorSPX       _hoodMotor;
-    private final DutyCycleEncoder _hoodSensor;
-    private final DutyCycleEncoderSim      _hoodSensorSim;
+    private final DutyCycleEncoder    _hoodSensor;
+    private final DutyCycleEncoderSim _hoodSensorSim;
     private final PIDController       _pidController;
     @Logged
     private Voltage                   _hoodMotorVoltage;
@@ -71,11 +71,11 @@ public class Hood extends SubsystemBase
         _hoodMotorVoltage = Volts.zero();
         _hoodAngle        = Degrees.zero();
         _hoodPosition     = HoodPosition.Undefined;
-        _hoodSetpoint = Degrees.zero();
-        _hasSetpoint  = false;
-   
+        _hoodSetpoint     = Degrees.zero();
+        _hasSetpoint      = false;
+
         _pidController.setTolerance(ShooterConstants.HOOD_TOLERANCE.in(Degrees));
-        
+
         if (RobotBase.isReal())
         {
             _hoodMotor.configFactoryDefault();
@@ -103,15 +103,16 @@ public class Hood extends SubsystemBase
         }
 
         setHoodMotorVoltage(voltageOutput);
-        
-        for(var position : HoodPosition.values()){
-            
-        if(position.getTargetAngle() == null || _hoodAngle.isNear(position.getTargetAngle(), ShooterConstants.HOOD_TOLERANCE))
+
+        for (var position : HoodPosition.values())
         {
-            _hoodPosition = position;
-            break;
-        }
-        
+
+            if (position.getTargetAngle() == null || _hoodAngle.isNear(position.getTargetAngle(), ShooterConstants.HOOD_TOLERANCE))
+            {
+                _hoodPosition = position;
+                break;
+            }
+
         }
 
     }
