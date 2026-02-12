@@ -12,7 +12,7 @@ This repository contains the robot code for Team 525 (Swartdogs) for the Rebuilt
 ## Dependencies
 - Recommended: 
   - [WPILib 2026.2.1 Release](https://github.com/wpilibsuite/allwpilib/releases/tag/v2026.2.1)
-- Alternative Minimal Install (Unsupported, Lacks Vendor dependency management):
+- Alternative Minimal Install (Unsupported, lacks vendor dependency management):
   - [Java Development Kit (JDK) 17.](https://adoptium.net/temurin/releases?version=17)
     - Note that the JRE is insufficient; the full JDK is required.
   - [WPILib VsCode Extension](https://marketplace.visualstudio.com/items?itemName=wpilibsuite.vscode-wpilib)
