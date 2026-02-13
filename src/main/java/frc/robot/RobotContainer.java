@@ -4,9 +4,6 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-
-import static edu.wpi.first.units.Units.RPM;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -18,12 +15,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.shooter.Flywheel;
-import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Feeder;
 
 @Logged
 public class RobotContainer
@@ -38,7 +33,7 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     // private final Shooter _shooter = new Shooter();
-    private final Flywheel _flywheel = new Flywheel();
+    private final Feeder _feeder = new Feeder();
 
     public RobotContainer()
     {
@@ -86,11 +81,8 @@ public class RobotContainer
         // ShooterConstants.PASS_HOOD_ANGLE_DEG));
         // _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
-        // 2000, 4000, 6000, stop
-        _joystick.povLeft().onTrue(_flywheel.setFlywheelVelocity(RPM.of(2000)));
-        _joystick.povUp().onTrue(_flywheel.setFlywheelVelocity(RPM.of(4000)));
-        _joystick.povRight().onTrue(_flywheel.setFlywheelVelocity(RPM.of(6000)));
-        _joystick.povDown().onTrue(_flywheel.stopFlywheel());
+        _joystick.povUp().whileTrue(_feeder.getForwardCmd());
+        _joystick.rightStick().onTrue(_feeder.getstopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
