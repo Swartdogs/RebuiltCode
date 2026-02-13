@@ -67,7 +67,7 @@ public class Shooter extends SubsystemBase
     private final Flywheel      _flywheel;
     private final Hood          _hood;
     private final ShooterTurret _turret;
-    private final ShooterFeeder _feeder;
+    private final Feeder _feeder;
     @Logged
     private ShooterState        _state                = ShooterState.Idle;
     @Logged
@@ -84,12 +84,13 @@ public class Shooter extends SubsystemBase
         _flywheel = new Flywheel();
         _hood     = new Hood();
         _turret   = new ShooterTurret();
-        _feeder   = new ShooterFeeder();
+        _feeder   = new Feeder();
     }
 
     @Override
     public void periodic()
     {
+        _hood.periodic();
         _flywheel.periodic();
         _turret.periodic();
         _feeder.periodic();
@@ -101,8 +102,10 @@ public class Shooter extends SubsystemBase
     @Override
     public void simulationPeriodic()
     {
+        _hood.simulationPeriodic();
         _flywheel.simulationPeriodic();
         _turret.simulationPeriodic();
+        _feeder.simulationPeriodic();
     }
 
     private void updateState()
