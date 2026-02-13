@@ -1,13 +1,15 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
-import edu.wpi.first.math.MathUsageId;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
@@ -31,16 +33,11 @@ public class Hood extends SubsystemBase
     {
         Shoot(ShooterConstants.HOOD_SHOOT_ANGLE), Pass(ShooterConstants.HOOD_PASS_ANGLE), Undefined(null);
 
-        private final Angle _targetAngle;
+        public final Angle targetAngle;
 
         private HoodPosition(Angle angle)
         {
-            _targetAngle = angle;
-        }
-
-        private Angle getTargetAngle()
-        {
-            return _targetAngle;
+            targetAngle = angle;
         }
     }
 
@@ -48,6 +45,7 @@ public class Hood extends SubsystemBase
     private final DutyCycleEncoder    _hoodSensor;
     private final DutyCycleEncoderSim _hoodSensorSim;
     private final PIDController       _pidController;
+    private final DCMotor             _motorModel;
     private double                    _simAngleDeg;
     @Logged
     private Voltage                   _hoodMotorVoltage;
@@ -80,11 +78,12 @@ public class Hood extends SubsystemBase
             _hoodMotor.setNeutralMode(NeutralMode.Brake);
             _hoodMotor.setInverted(false); // TODO: Check direction
             _hoodSensorSim = null;
-
+            _motorModel    = null;
         }
         else
         {
             _hoodSensorSim = new DutyCycleEncoderSim(_hoodSensor);
+            _motorModel    = GeneralConstants.WINDOW_MOTOR;
         }
     }
 
@@ -101,13 +100,22 @@ public class Hood extends SubsystemBase
         }
 
         setHoodMotorVoltage(voltageOutput);
+
+        for (var position : HoodPosition.values())
+        {
+            if (position.targetAngle == null || _hoodAngle.isNear(position.targetAngle, ShooterConstants.HOOD_TOLERANCE))
+            {
+                _hoodPosition = position;
+                break;
+            }
+        }
     }
 
     @Override
     public void simulationPeriodic()
     {
-        double motorFraction = _hoodMotor.getMotorOutputVoltage() / GeneralConstants.MOTOR_VOLTAGE;
-        _simAngleDeg += motorFraction * ShooterConstants.HOOD_SIM_MAX_SPEED * GeneralConstants.LOOP_PERIOD_SECS;
+        double percentOutput = _hoodMotor.getMotorOutputVoltage() / GeneralConstants.MOTOR_VOLTAGE;
+        _simAngleDeg += percentOutput * RadiansPerSecond.of(_motorModel.freeSpeedRadPerSec).in(DegreesPerSecond) * ShooterConstants.HOOD_GEAR_RATIO * GeneralConstants.LOOP_PERIOD_SECS;
         _simAngleDeg  = MathUtil.clamp(_simAngleDeg, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hoodSensorSim.set(_simAngleDeg);
     }
@@ -126,14 +134,13 @@ public class Hood extends SubsystemBase
 
     public void setHoodPosition(HoodPosition hoodPosition)
     {
-        _hoodPosition = hoodPosition;
-
         if (hoodPosition == HoodPosition.Undefined)
         {
             stop();
             return;
         }
-        Angle  targetAngle    = hoodPosition.getTargetAngle();
+
+        Angle  targetAngle    = hoodPosition.targetAngle;
         double degreesClamped = MathUtil.clamp(targetAngle.in(Degrees), ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hoodSetpoint = Degrees.of(degreesClamped);
         _hasSetpoint  = true;
@@ -142,8 +149,7 @@ public class Hood extends SubsystemBase
 
     public boolean atSetpoint()
     {
-        if (!_hasSetpoint) return true;
-        return _hoodAngle.isNear(_hoodSetpoint, ShooterConstants.HOOD_TOLERANCE);
+        return _hasSetpoint && _hoodAngle.isNear(_hoodSetpoint, ShooterConstants.HOOD_TOLERANCE);
     }
 
     public HoodPosition getHoodPosition()

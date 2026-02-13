@@ -14,6 +14,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.generated.TunerConstants;
@@ -60,9 +61,10 @@ public final class Constants
 
     public static class GeneralConstants
     {
-        public static final double LOOP_PERIOD_SECS = 0.02;
-        public static final double MOTOR_VOLTAGE    = 12.0;
-        public static final double SENSOR_VOLTAGE   = 5.0;
+        public static final double  LOOP_PERIOD_SECS = 0.02;
+        public static final double  MOTOR_VOLTAGE    = 12.0;
+        public static final double  SENSOR_VOLTAGE   = 5.0;
+        public static final DCMotor WINDOW_MOTOR     = new DCMotor(GeneralConstants.MOTOR_VOLTAGE, 9.2, 16.3, 1.6, RPM.of(90).in(RadiansPerSecond), 1);
     }
 
     public static class ShooterConstants
@@ -78,15 +80,15 @@ public final class Constants
         public static final double PASS_FLYWHEEL_RPM      = 3000.0; // TODO: Tune
 
         // Hood (VictorSPX with analog potentiometer)
-        public static final double HOOD_KP            = 0.016; // TODO: Tune
-        public static final double HOOD_KI            = 0.001; // TODO: Tune
-        public static final double HOOD_KD            = 0.0;   // TODO: Tune
-        public static final double HOOD_MIN_ANGLE     = 0.0;   // TODO: Confirm min angle (degrees)
-        public static final double HOOD_MAX_ANGLE     = 45.0;  // TODO: Confirm max angle (degrees)
-        public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
-        public static final Angle  HOOD_SHOOT_ANGLE   = Degrees.of(30); // TODO: Find the degree needed to shoot from.
-        public static final Angle  HOOD_PASS_ANGLE    = Degrees.of(30); // TODO: Find the degree to pass from.
-        public static final Angle  HOOD_TOLERANCE     = Degrees.of(2);
+        public static final double HOOD_KP          = 3.0; // TODO: Tune
+        public static final double HOOD_KI          = 0.0;   // TODO: Tune
+        public static final double HOOD_KD          = 0.0;   // TODO: Tune
+        public static final double HOOD_MIN_ANGLE   = 0.0;   // TODO: Confirm min angle (degrees)
+        public static final double HOOD_MAX_ANGLE   = 90.0;  // TODO: Confirm max angle (degrees)
+        public static final double HOOD_GEAR_RATIO  = 1.0 / 12.0;
+        public static final Angle  HOOD_SHOOT_ANGLE = Degrees.of(90); // TODO: Find the degree needed to shoot from.
+        public static final Angle  HOOD_PASS_ANGLE  = Degrees.of(78); // TODO: Find the degree to pass from.
+        public static final Angle  HOOD_TOLERANCE   = Degrees.of(2);
 
         // Turret
         public static final double                      TURRET_CURRENT_LIMIT = 40.0;
