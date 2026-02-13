@@ -107,7 +107,6 @@ public final class Constants
 
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
         public static final double PASS_FLYWHEEL_RPM      = 3000.0; // TODO: Tune
-        public static final double PASS_HOOD_ANGLE_DEG    = 20.0;   // TODO: Tune
 
         // Hood (VictorSPX with analog potentiometer)
         public static final int    HOOD_ANALOG_INPUT = 0;     // AIO port for potentiometer
@@ -122,6 +121,7 @@ public final class Constants
         public static final Angle  HOOD_TOLERANCE   = Degrees.of(2);
         public static final double HOOD_RAW_MIN      = 1035;  // TODO: Calibrate - analog value at min angle
         public static final double HOOD_RAW_MAX      = 335;   // TODO: Calibrate - analog value at max angle
+        public static final double PASS_HOOD_ANGLE_DEG    = 20.0;   // TODO: Tune
         public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
 
         // Turret

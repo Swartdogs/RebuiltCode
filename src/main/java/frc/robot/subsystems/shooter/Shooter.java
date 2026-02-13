@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
+import frc.robot.util.Utilities;
 
 import frc.robot.util.Utilities;
 import frc.robot.Constants;
@@ -74,6 +75,7 @@ public class Shooter extends SubsystemBase
         return runOnce(() -> setState(ShooterState.Idle));
     }
 
+
     private final Flywheel      _flywheel;
     private final Hood          _hood;
     private final ShooterTurret _turret;
@@ -96,7 +98,7 @@ public class Shooter extends SubsystemBase
         _flywheel = new Flywheel();
         _hood     = new Hood();
         _turret   = new ShooterTurret();
-        _feeder   = new Feeder();
+        _feeder   = new ShooterFeeder();
     }
 
     @Override
@@ -180,7 +182,7 @@ public class Shooter extends SubsystemBase
         else
         {
             _turret.setState(ShooterTurret.TurretState.Pass);
-            _flywheel.setVelocity(_passFlywheelVelocity);
+            _flywheel.setVelocity(_passFlywheelRpm);
             _hood.setAngle(_passHoodAngleDeg);
         }
 
