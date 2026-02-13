@@ -92,8 +92,8 @@ public class Shooter extends SubsystemBase
     @Override
     public void periodic()
     {
-        _flywheel.periodic();
         _hood.periodic();
+        _flywheel.periodic();
         _turret.periodic();
         _feeder.periodic();
 
@@ -154,13 +154,13 @@ public class Shooter extends SubsystemBase
 
             double distance = _lastDistanceMeters;
             _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
-            _hood.setAngle(ShooterConstants.getHoodAngleForDistance(distance));
+            _hood.setHoodPosition(HoodPosition.Shoot);
         }
         else
         {
             _turret.setState(ShooterTurret.TurretState.Pass);
             _flywheel.setVelocity(_passFlywheelVelocity);
-            _hood.setAngle(_passHoodAngleDeg);
+            _hood.setHoodPosition(HoodPosition.Pass);
         }
 
         _feeder.set(_state == ShooterState.Firing);
