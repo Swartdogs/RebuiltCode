@@ -75,7 +75,7 @@ public class Feeder extends SubsystemBase
 
         if (RobotBase.isSimulation())
         {
-            _feederMotorSim.setAppliedOutput(targetVoltage.in(Volts) / RoboRioSim.getVInVoltage());;
+            _feederMotorSim.setAppliedOutput(targetVoltage.in(Volts) / RoboRioSim.getVInVoltage());
         }
     }
 }

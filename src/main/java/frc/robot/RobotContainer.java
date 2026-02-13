@@ -33,7 +33,7 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     // private final Shooter _shooter = new Shooter();
-    private final Feeder                         _feeder     = new Feeder();
+    private final Feeder _feeder = new Feeder();
 
     public RobotContainer()
     {
@@ -81,7 +81,7 @@ public class RobotContainer
         // _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
         _joystick.povUp().whileTrue(_feeder.getForwardCmd());
-        _joystick.povDown().onTrue(_feeder.getstopCmd());
+        _joystick.rightStick().onTrue(_feeder.getstopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
