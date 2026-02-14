@@ -102,6 +102,7 @@ public class Intake extends ExtensionMotor
     @Override
     public void simulationPeriodic()
     {
+        super.simulationPeriodic();
         _intakeMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
 
         double freeSpeedRpm = RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM);

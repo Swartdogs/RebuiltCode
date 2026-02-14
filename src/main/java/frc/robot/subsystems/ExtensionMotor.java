@@ -1,10 +1,13 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
+import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLimitSwitch;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -12,14 +15,21 @@ import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.SimulationConstants;
 
 @Logged
 public class ExtensionMotor extends SubsystemBase
@@ -27,8 +37,10 @@ public class ExtensionMotor extends SubsystemBase
     private final SparkFlex        _extendMotor;
     private final SparkLimitSwitch _outLimitSwitch;
     private final SparkLimitSwitch _inLimitSwitch;
+    private final SparkFlexSim     _extensionMotorSim;
     private final Voltage          _extendOutput;
     private final Voltage          _retractVolts;
+    private final DCMotor          _neoVortexx;
     @Logged
     private Distance               _currentExtension   = Inches.zero();
     @Logged
@@ -60,6 +72,16 @@ public class ExtensionMotor extends SubsystemBase
         _extendMotor.setVoltage(Volts.zero());
 
         _limitSwitchAlert = new Alert("Both in and out limit switches are triggered for motor CAN ID " + CANID + ".", Alert.AlertType.kWarning);
+        if (RobotBase.isReal())
+        {
+            _neoVortexx        = null;
+            _extensionMotorSim = null;
+        }
+        else
+        {
+            _neoVortexx        = DCMotor.getNeoVortex(1);
+            _extensionMotorSim = new SparkFlexSim(_extendMotor, _neoVortexx);
+        }
     }
 
     @Override
@@ -71,6 +93,26 @@ public class ExtensionMotor extends SubsystemBase
         _limitSwitchAlert.set(_outSwitchTriggered && _inSwitchTriggered);
 
         _currentExtension = Inches.of(_extendMotor.getEncoder().getPosition());
+    }
+
+    @Override
+    public void simulationPeriodic()
+    {
+        _extensionMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+        _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * RadiansPerSecond.of(_neoVortexx.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+
+        Distance position       = Inches.of(_extensionMotorSim.getPosition());
+        double   output         = _extensionMotorSim.getAppliedOutput();
+        boolean  forwardPressed = position.gte(SimulationConstants.EXTENDED_DISTANCE);
+        boolean  reversePressed = position.lte(SimulationConstants.RETRACTED_DISTANCE);
+
+        _extensionMotorSim.getForwardLimitSwitchSim().setPressed(forwardPressed);
+        _extensionMotorSim.getReverseLimitSwitchSim().setPressed(reversePressed);
+
+        if ((forwardPressed && output > 0) || (reversePressed && output < 0))
+        {
+            _extensionMotorSim.setAppliedOutput(0);
+        }
     }
 
     public void extend(boolean finalState)

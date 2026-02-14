@@ -122,4 +122,10 @@ public final class Constants
         public static final double  ROTATE_OUTPUT        = 1.0; // TODO: duty cycle
         public static final double  ROTATION_TOLERANCE   = 2.0; // TODO
     }
+
+    public static class SimulationConstants
+    {
+        public static final Distance EXTENDED_DISTANCE  = Inches.of(10);
+        public static final Distance RETRACTED_DISTANCE = Inches.of(10);
+    }
 }
