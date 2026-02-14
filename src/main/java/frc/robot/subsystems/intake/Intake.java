@@ -102,7 +102,7 @@ public class Intake extends SubsystemBase
     public Intake()
     {
         _intakeMotor    = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
-        _extensionMotor = new ExtensionMotor(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_OUTPUT, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_MIN_POSITION, IntakeConstants.EXTENSION_MAX_POSITION);
+        _extensionMotor = new ExtensionMotor(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_OUTPUT, IntakeConstants.RETRACT_VOLTS);
 
         var config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
