@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.Constants.DriveConstants;
@@ -31,7 +30,6 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    private final Climber                        _climb      = new Climber();
 
     public RobotContainer()
     {
@@ -69,8 +67,8 @@ public class RobotContainer
 
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-        _joystick.rightBumper().whileTrue(_intake.extend()); // TODO
-        _joystick.rightTrigger().whileTrue(_intake.retract()); // TODO
+        //_joystick.rightBumper().whileTrue(_intake.extend()); // TODO
+        //_joystick.rightTrigger().whileTrue(_intake.retract()); // TODO
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

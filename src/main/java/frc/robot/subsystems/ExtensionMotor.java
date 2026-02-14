@@ -30,14 +30,14 @@ public class ExtensionMotor extends SubsystemBase
     private final Voltage          _extendOutput;
     private final Voltage          _retractVolts;
     @Logged
-    private Distance               _currentExtension = Inches.zero();
+    private Distance               _currentExtension   = Inches.zero();
     @Logged
-    private Voltage                _motorVoltage = Volts.zero();
+    private Voltage                _motorVoltage       = Volts.zero();
     @Logged
     private boolean                _outSwitchTriggered = false;
     @Logged
-    private boolean                _inSwitchTriggered = false;
-    private Alert _limitSwitchAlert; 
+    private boolean                _inSwitchTriggered  = false;
+    private Alert                  _limitSwitchAlert;
 
     public ExtensionMotor(int CANID, Voltage extendOutput, Voltage retractVolts, double extensionConversionFactor)
     {
@@ -59,7 +59,7 @@ public class ExtensionMotor extends SubsystemBase
 
         _extendMotor.setVoltage(Volts.zero());
 
-        _limitSwitchAlert = new Alert("Both in and out limit switches are triggered for motor CAN ID " + CANID + ".", Alert.AlertType.kWarning); 
+        _limitSwitchAlert = new Alert("Both in and out limit switches are triggered for motor CAN ID " + CANID + ".", Alert.AlertType.kWarning);
     }
 
     @Override
