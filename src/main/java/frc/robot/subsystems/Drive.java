@@ -340,6 +340,9 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
                 _poseEstimatorLeft  = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2);
                 _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG2);
+
+                _limelightLeft.getSettings().withCameraOffset(VisionConstants.LEFT_CAMERA_OFFSET).save();
+                _limelightRight.getSettings().withCameraOffset(VisionConstants.RIGHT_CAMERA_OFFSET).save();
             }
             else
             {

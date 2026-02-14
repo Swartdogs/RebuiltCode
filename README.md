@@ -10,7 +10,7 @@ This repository contains the robot code for Team 525 (Swartdogs) for the Rebuilt
 
 
 ## Dependencies
-- Recommended: 
+- Recommended:
   - [WPILib 2026.2.1 Release](https://github.com/wpilibsuite/allwpilib/releases/tag/v2026.2.1)
 - Alternative minimal install for viewing only; (Unsupported, lacks vendor dependency management):
   - [Java Development Kit (JDK) 17.](https://adoptium.net/temurin/releases?version=17)
@@ -26,7 +26,7 @@ This repo is team-owned, only team members should contribute.
 2. Implement code or other changes, usually alongside others.
 3. Open a pull request and request review from mentors and peers.
 
-Write commits in the format of "this commit did ___". 
+Write commits in the format of "this commit did ___".
 
 ## Troubleshooting
 
