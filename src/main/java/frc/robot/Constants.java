@@ -6,10 +6,6 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
-import static edu.wpi.first.units.Units.Inches;
-
-import java.util.List;
-import java.util.Map;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -38,7 +34,6 @@ public final class Constants
         public static final int CLIMBER_ROTATE   = 28;
         public static final int HOOD_MOTOR      = 23;
         public static final int TURRET_MOTOR    = 24;
-        public static final int INTAKE_EXTENSION = 21;
     }
 
     public static class AIOConstants
@@ -63,11 +58,11 @@ public final class Constants
         public static final int      CAMERA_WIDTH                = 320;
         public static final int      CAMERA_HEIGHT               = 240;
         public static final int      CAMERA_FPS                  = 15;
-        public static final double   EXTENSION_CONVERSION_FACTOR = 0;
+        public static final double   EXTENSION_CONVERSION_FACTOR = 1;
         public static final Distance EXTENSION_MAX_POSITION      = Inches.of(0.0);
         public static final Distance EXTENSION_MIN_POSITION      = Inches.of(0.0);
-        public static final Voltage  EXTEND_OUTPUT               = Volts.zero();
-        public static final Voltage  RETRACT_VOLTS               = Volts.zero();
+        public static final Voltage  EXTEND_VOLTS               = Volts.of(6.7);
+        public static final Voltage  RETRACT_VOLTS               = Volts.of(-6.9);
     }
 
     public static class GeneralConstants
