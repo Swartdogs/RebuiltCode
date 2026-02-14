@@ -59,8 +59,8 @@ public final class Constants
         public static final int      CAMERA_HEIGHT               = 240;
         public static final int      CAMERA_FPS                  = 15;
         public static final double   EXTENSION_CONVERSION_FACTOR = 1;
-        public static final Distance EXTENSION_MAX_POSITION      = Inches.of(0.0);
-        public static final Distance EXTENSION_MIN_POSITION      = Inches.of(0.0);
+        public static final double EXTENSION_MAX_POSITION      = 10.;
+        public static final double EXTENSION_MIN_POSITION      = 0.;
         public static final Voltage  EXTEND_VOLTS                = Volts.of(6.7);
         public static final Voltage  RETRACT_VOLTS               = Volts.of(-6.9);
     }
@@ -126,6 +126,6 @@ public final class Constants
     public static class SimulationConstants
     {
         public static final Distance EXTENDED_DISTANCE  = Inches.of(10);
-        public static final Distance RETRACTED_DISTANCE = Inches.of(10);
+        public static final Distance RETRACTED_DISTANCE = Inches.of(0);
     }
 }
