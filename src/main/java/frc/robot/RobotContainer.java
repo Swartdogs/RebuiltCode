@@ -17,6 +17,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.Constants.DriveConstants;
 
 public class RobotContainer
 {
@@ -66,8 +67,8 @@ public class RobotContainer
 
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-        _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
-        _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
+        //_joystick.rightBumper().whileTrue(_intake.extend()); // TODO
+        //_joystick.rightTrigger().whileTrue(_intake.retract()); // TODO
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

@@ -7,6 +7,8 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.PersistMode;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
@@ -84,7 +86,7 @@ public class Intake extends SubsystemBase
         {
             case Forward -> IntakeConstants.INTAKE_VOLTS;
             case Reverse -> IntakeConstants.REVERSE_VOLTS;
-            case Off -> 0;
+            case Off -> Volts.zero();
         });
 
         _intakeState = state;
