@@ -12,7 +12,7 @@ import frc.robot.generated.TunerConstants;
 
 public final class Constants
 {
-    public static class CAN
+    public static class CANConstants
     {
         /*
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
@@ -23,14 +23,14 @@ public final class Constants
         public static final int FLYWHEEL_FOLLOW = 22;
     }
 
-    public static class Drive
+    public static class DriveConstants
     {
         public static final double MAX_SPEED        = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
         public static final double MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
         public static final double DEADBAND         = 0.05;
     }
 
-    public static class Intake
+    public static class IntakeConstants
     {
         public static final double INTAKE_VOLTS        = 8.0;
         public static final double REVERSE_VOLTS       = -4.0;
@@ -42,13 +42,13 @@ public final class Constants
         public static final int    CAMERA_FPS          = 15;
     }
 
-    public static class General
+    public static class GeneralConstants
     {
         public static final double LOOP_PERIOD_SECS = 0.02;
         public static final double MOTOR_VOLTAGE    = 12.0;
     }
 
-    public static class Shooter
+    public static class ShooterConstants
     {
         public static final double FLYWHEEL_KP            = 0.0001; // TODO: Tune
         public static final double FLYWHEEL_KD            = 0.0;
@@ -59,7 +59,7 @@ public final class Constants
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
     }
 
-    public static class Vision
+    public static class VisionConstants
     {
         public static final String         LEFT_CAMERA_NAME    = "limelight-left";
         public static final String         RIGHT_CAMERA_NAME   = "limelight-right";
