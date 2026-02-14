@@ -61,9 +61,9 @@ public class Intake extends ExtensionMotor
     private final UsbCamera    _camera;
     private final DCMotor      _neoVortex;
     @Logged
-    private IntakeState        _intakeState                   = IntakeState.Off;
+    private IntakeState        _intakeState        = IntakeState.Off;
     @Logged
-    private Voltage            _intakeMotorVoltage            = Volts.of(0.0);
+    private Voltage            _intakeMotorVoltage = Volts.of(0.0);
 
     public Intake()
     {
@@ -81,12 +81,13 @@ public class Intake extends ExtensionMotor
             _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
             _camera.setResolution(IntakeConstants.CAMERA_WIDTH, IntakeConstants.CAMERA_HEIGHT);
             _camera.setFPS(IntakeConstants.CAMERA_FPS);
-            _neoVortex = null;
-            _intakeMotorSim =null;
+            _neoVortex      = null;
+            _intakeMotorSim = null;
         }
-        else{
-            _camera = null;
-            _neoVortex = DCMotor.getNeoVortex(1);
+        else
+        {
+            _camera         = null;
+            _neoVortex      = DCMotor.getNeoVortex(1);
             _intakeMotorSim = new SparkFlexSim(_intakeMotor, _neoVortex);
         }
     }
@@ -95,7 +96,7 @@ public class Intake extends ExtensionMotor
     public void periodic()
     {
         super.periodic();
-        _intakeMotorVoltage            = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
+        _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
     }
 
     @Override

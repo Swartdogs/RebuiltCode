@@ -26,12 +26,12 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE           = 20;
-        public static final int FLYWHEEL_LEAD    = 21;
-        public static final int FLYWHEEL_FOLLOW  = 22;
-        public static final int CLIMBER_EXTEND   = 26;
-        public static final int INTAKE_EXTEND    = 27;
-        public static final int CLIMBER_ROTATE   = 28;
+        public static final int INTAKE          = 20;
+        public static final int FLYWHEEL_LEAD   = 21;
+        public static final int FLYWHEEL_FOLLOW = 22;
+        public static final int CLIMBER_EXTEND  = 26;
+        public static final int INTAKE_EXTEND   = 27;
+        public static final int CLIMBER_ROTATE  = 28;
         public static final int HOOD_MOTOR      = 23;
         public static final int TURRET_MOTOR    = 24;
     }
@@ -61,7 +61,7 @@ public final class Constants
         public static final double   EXTENSION_CONVERSION_FACTOR = 1;
         public static final Distance EXTENSION_MAX_POSITION      = Inches.of(0.0);
         public static final Distance EXTENSION_MIN_POSITION      = Inches.of(0.0);
-        public static final Voltage  EXTEND_VOLTS               = Volts.of(6.7);
+        public static final Voltage  EXTEND_VOLTS                = Volts.of(6.7);
         public static final Voltage  RETRACT_VOLTS               = Volts.of(-6.9);
     }
 

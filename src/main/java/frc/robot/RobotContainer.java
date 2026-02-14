@@ -18,7 +18,6 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.Constants.DriveConstants;
 
 @Logged
 public class RobotContainer
@@ -69,8 +68,8 @@ public class RobotContainer
 
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-        //_joystick.rightBumper().whileTrue(_intake.extend()); // TODO
-        //_joystick.rightTrigger().whileTrue(_intake.retract()); // TODO
+        // _joystick.rightBumper().whileTrue(_intake.extend()); // TODO
+        // _joystick.rightTrigger().whileTrue(_intake.retract()); // TODO
 
         // Hold left trigger to "lock" rollers on
         _joystick.povUp().and(_joystick.leftTrigger()).onTrue(_intake.startRollers());
@@ -81,8 +80,8 @@ public class RobotContainer
         _joystick.povDown().and(_joystick.leftTrigger().negate()).whileTrue(_intake.reverseRollers());
 
         // Extend and retract
-        _joystick.povLeft().onTrue(_intake.extend());
-        _joystick.povRight().onTrue(_intake.retract());
+        _joystick.povLeft().onTrue(_intake.getExtendCmd());
+        _joystick.povRight().onTrue(_intake.getRetractCmd());
 
         // Left stick stops the rollers if they're running
         _joystick.leftStick().onTrue(_intake.stopRollers());
