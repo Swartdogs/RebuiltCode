@@ -50,19 +50,19 @@ public final class Constants
 
     public static class IntakeConstants
     {
-        public static final Voltage  INTAKE_VOLTS                = Volts.of(8.0);
-        public static final Voltage  REVERSE_VOLTS               = Volts.of(-4.0);
-        public static final int      CURRENT_LIMIT               = 40;
-        public static final int      CAMERA_DEVICE_INDEX         = 0;
-        public static final String   CAMERA_NAME                 = "IntakeCam";
-        public static final int      CAMERA_WIDTH                = 320;
-        public static final int      CAMERA_HEIGHT               = 240;
-        public static final int      CAMERA_FPS                  = 15;
-        public static final double   EXTENSION_CONVERSION_FACTOR = 1;
-        public static final double EXTENSION_MAX_POSITION      = 10.;
-        public static final double EXTENSION_MIN_POSITION      = 0.;
-        public static final Voltage  EXTEND_VOLTS                = Volts.of(6.7);
-        public static final Voltage  RETRACT_VOLTS               = Volts.of(-6.9);
+        public static final Voltage INTAKE_VOLTS                = Volts.of(8.0);
+        public static final Voltage REVERSE_VOLTS               = Volts.of(-4.0);
+        public static final int     CURRENT_LIMIT               = 40;
+        public static final int     CAMERA_DEVICE_INDEX         = 0;
+        public static final String  CAMERA_NAME                 = "IntakeCam";
+        public static final int     CAMERA_WIDTH                = 320;
+        public static final int     CAMERA_HEIGHT               = 240;
+        public static final int     CAMERA_FPS                  = 15;
+        public static final double  EXTENSION_CONVERSION_FACTOR = 1;
+        public static final double  EXTENSION_MAX_POSITION      = 10.;
+        public static final double  EXTENSION_MIN_POSITION      = 0.;
+        public static final Voltage EXTEND_VOLTS                = Volts.of(6.7);
+        public static final Voltage RETRACT_VOLTS               = Volts.of(-6.9);
     }
 
     public static class GeneralConstants
