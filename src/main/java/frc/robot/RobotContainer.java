@@ -78,8 +78,8 @@ public class RobotContainer
 
         _joystick.povUp().whileTrue(_feeder.getForwardCmd());
         _joystick.rightStick().onTrue(_feeder.getstopCmd());
-        _joystick.rightBumper().whileTrue(_intake.getForwardCmd());
-        _joystick.rightTrigger().whileTrue(_intake.getReverseCmd());
+        _joystick.rightBumper().whileTrue(_intake.startRollers());
+        _joystick.rightTrigger().whileTrue(_intake.reverseRollers());
 
         // _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());  // TODO
 

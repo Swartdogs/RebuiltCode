@@ -11,12 +11,6 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.List;
 import java.util.Map;
 
-import java.util.List;
-import java.util.Map;
-
-import java.util.List;
-import java.util.Map;
-
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 
@@ -32,7 +26,6 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Angle;
 import frc.robot.generated.TunerConstants;
 
 public final class Constants
@@ -108,7 +101,6 @@ public final class Constants
 
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
 
-        public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
         public static final double PASS_FLYWHEEL_RPM      = 3000.0; // TODO: Tune
 
         // Hood (VictorSPX with analog potentiometer)
@@ -158,10 +150,6 @@ public final class Constants
         }
 
         // TODO: Tune these values with testing!
-        public static double getFlywheelSpeedForDistanceX(double meters)
-        {
-            return RPM.of(FLYWHEEL_SPEED_TABLE.get(meters));
-        }
 
         public static double getHoodAngleForDistance(double meters)
         {
