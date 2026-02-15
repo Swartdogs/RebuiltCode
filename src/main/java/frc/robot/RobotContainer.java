@@ -3,6 +3,8 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -30,7 +32,7 @@ public class RobotContainer
     private final SwerveRequest.FieldCentric     drive       = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake       = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt    point       = new SwerveRequest.PointWheelsAt();
-    private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED);
+    private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();

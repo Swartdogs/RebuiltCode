@@ -1,7 +1,10 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
@@ -68,10 +71,11 @@ public class Intake extends ExtensionMotor
     public Intake()
     {
         super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR);
+
         _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
         var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
         _intakeMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -106,7 +110,7 @@ public class Intake extends ExtensionMotor
         _intakeMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
 
         double freeSpeedRpm = RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM);
-        _intakeMotorSim.iterate(_intakeMotorSim.getAppliedOutput() * freeSpeedRpm, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+        _intakeMotorSim.iterate(_intakeMotorSim.getAppliedOutput() * freeSpeedRpm, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
     }
 
     public void setIntakeState(IntakeState state)
@@ -129,7 +133,7 @@ public class Intake extends ExtensionMotor
 
         if (RobotBase.isSimulation())
         {
-            _intakeMotorSim.setAppliedOutput(volts.in(Volts) / GeneralConstants.MOTOR_VOLTAGE);
+            _intakeMotorSim.setAppliedOutput(volts.div(GeneralConstants.MOTOR_VOLTAGE).in(Value));
         }
     }
 

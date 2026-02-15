@@ -1,8 +1,11 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Rotation;
+import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
@@ -20,7 +23,10 @@ import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -51,7 +57,7 @@ public class ExtensionMotor extends SubsystemBase
     private boolean                _inSwitchTriggered  = false;
     private Alert                  _limitSwitchAlert;
 
-    public ExtensionMotor(int CANID, Voltage extendOutput, Voltage retractVolts, double extensionConversionFactor)
+    public ExtensionMotor(int CANID, Voltage extendOutput, Voltage retractVolts, Per<DistanceUnit, AngleUnit> extensionConversionFactor)
     {
         // refer to the following url for more hardware info:
         // https://docs.revrobotics.com/brushless/spark-flex/spark-flex-feature-description/data-port
@@ -63,15 +69,15 @@ public class ExtensionMotor extends SubsystemBase
         _retractVolts   = retractVolts;
 
         var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
         var encoderConfig = new EncoderConfig();
-        encoderConfig.positionConversionFactor(extensionConversionFactor);
+        encoderConfig.positionConversionFactor(extensionConversionFactor.in(Inches.per(Rotation)));
 
         _extendMotor.setVoltage(Volts.zero());
         var limitSwitchConfig = new LimitSwitchConfig();
-        limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION).forwardLimitSwitchTriggerBehavior(Behavior.kKeepMovingMotorAndSetPosition)
-                .reverseLimitSwitchType(Type.kNormallyOpen).reverseLimitSwitchPosition(IntakeConstants.EXTENSION_MIN_POSITION).reverseLimitSwitchTriggerBehavior(Behavior.kStopMovingMotorAndSetPosition);
+        limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION.in(Inches)).forwardLimitSwitchTriggerBehavior(Behavior.kKeepMovingMotorAndSetPosition)
+                .reverseLimitSwitchType(Type.kNormallyOpen).reverseLimitSwitchPosition(IntakeConstants.EXTENSION_MIN_POSITION.in(Inches)).reverseLimitSwitchTriggerBehavior(Behavior.kStopMovingMotorAndSetPosition);
 
         _extendMotor.configure(config.apply(encoderConfig).apply(limitSwitchConfig), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -103,7 +109,7 @@ public class ExtensionMotor extends SubsystemBase
     public void simulationPeriodic()
     {
         _extensionMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
-        _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * RadiansPerSecond.of(_neoVortexx.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+        _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * RadiansPerSecond.of(_neoVortexx.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
 
         Distance position       = Inches.of(_extensionMotorSim.getPosition());
         double   output         = _extensionMotorSim.getAppliedOutput();
