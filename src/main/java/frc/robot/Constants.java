@@ -6,7 +6,6 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
-import static edu.wpi.first.units.Units.Inches;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -27,13 +26,19 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE           = 20;
-        public static final int FLYWHEEL_LEAD    = 21;
-        public static final int FLYWHEEL_FOLLOW  = 22;
-        public static final int CLIMBER_EXTEND   = 26;
-        public static final int INTAKE_EXTEND    = 27;
-        public static final int CLIMBER_ROTATE   = 28;
-        public static final int INTAKE_EXTENSION = 0;
+        public static final int INTAKE          = 20;
+        public static final int FLYWHEEL_LEAD   = 21;
+        public static final int FLYWHEEL_FOLLOW = 22;
+        public static final int CLIMBER_EXTEND  = 26;
+        public static final int INTAKE_EXTEND   = 27;
+        public static final int CLIMBER_ROTATE  = 28;
+        public static final int HOOD_MOTOR      = 23;
+        public static final int TURRET_MOTOR    = 24;
+    }
+
+    public static class AIOConstants
+    {
+        public static final int HOOD_POTENTIOMETER = 0; // TODO: Confirm AIO port wiring
     }
 
     public static class DriveConstants
@@ -53,11 +58,11 @@ public final class Constants
         public static final int      CAMERA_WIDTH                = 320;
         public static final int      CAMERA_HEIGHT               = 240;
         public static final int      CAMERA_FPS                  = 15;
-        public static final double   EXTENSION_CONVERSION_FACTOR = 0;
-        public static final Distance EXTENSION_MAX_POSITION      = Inches.of(0.0);
-        public static final Distance EXTENSION_MIN_POSITION      = Inches.of(0.0);
-        public static final Voltage  EXTEND_OUTPUT               = Volts.zero();
-        public static final Voltage  RETRACT_VOLTS               = Volts.zero();
+        public static final double   EXTENSION_CONVERSION_FACTOR = 1;
+        public static final double EXTENSION_MAX_POSITION      = 10.;
+        public static final double EXTENSION_MIN_POSITION      = 0.;
+        public static final Voltage  EXTEND_VOLTS                = Volts.of(6.7);
+        public static final Voltage  RETRACT_VOLTS               = Volts.of(-6.9);
     }
 
     public static class GeneralConstants
@@ -69,9 +74,10 @@ public final class Constants
     public static class ShooterConstants
     {
         public static final double FLYWHEEL_KP            = 0.0001; // TODO: Tune
+        public static final double FLYWHEEL_KI            = 0.0;    // TODO: Tune
         public static final double FLYWHEEL_KD            = 0.0;
         public static final double FLYWHEEL_KS            = 0.0;            // TODO: Tune - static friction voltage
-        public static final double FLYWHEEL_KV            = 12.0 / 6784.0;  // Volts / NEO Vortex free speed RPM
+        public static final double FLYWHEEL_KV            = 12.0 / 6784.0; // Volts / RPM
         public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
         public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
@@ -115,5 +121,11 @@ public final class Constants
         public static final Voltage RETRACT_VOLTAGE      = Volts.of(-1.0); // TODO: will be -extendoutput
         public static final double  ROTATE_OUTPUT        = 1.0; // TODO: duty cycle
         public static final double  ROTATION_TOLERANCE   = 2.0; // TODO
+    }
+
+    public static class SimulationConstants
+    {
+        public static final Distance EXTENDED_DISTANCE  = Inches.of(10);
+        public static final Distance RETRACTED_DISTANCE = Inches.of(0);
     }
 }

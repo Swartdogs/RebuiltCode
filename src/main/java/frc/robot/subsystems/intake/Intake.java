@@ -1,63 +1,73 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
+import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.ResetMode;
-import com.revrobotics.PersistMode;
-
-import static edu.wpi.first.units.Units.Volts;
+import com.revrobotics.spark.config.SparkFlexConfig;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.subsystems.ExtensionMotor;
 
 @Logged
-public class Intake extends SubsystemBase
+public class Intake extends ExtensionMotor
 {
     public enum IntakeState
     {
-        Forward, Off, Reverse
+        Off, Forward, Reverse
     }
 
-    private Command setCommand(IntakeState state)
+    /************
+     * COMMANDS *
+     ************/
+
+    public Command startRollers()
     {
-        return startEnd(() -> set(state), () -> set(IntakeState.Off));
+        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
     }
 
-    public Command getForwardCmd()
+    public Command reverseRollers()
     {
-        return setCommand(IntakeState.Forward);
+        return startEnd(() -> setIntakeState(IntakeState.Reverse), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
     }
 
-    public Command getReverseCmd()
+    public Command stopRollers()
     {
-        return setCommand(IntakeState.Reverse);
+        return runOnce(() -> setIntakeState(IntakeState.Off));
     }
 
-    public Command getOffCmd()
-    {
-        return runOnce(() -> set(IntakeState.Off));
-    }
-
-    private final SparkFlex _intakeMotor;
-    private UsbCamera       _camera;
+    /*************
+     * SUBSYSTEM *
+     *************/
+    private final SparkFlex    _intakeMotor;
+    private final SparkFlexSim _intakeMotorSim;
+    private final UsbCamera    _camera;
+    private final DCMotor      _neoVortex;
     @Logged
-    private double          _motorVoltage = 0.0;
+    private IntakeState        _intakeState        = IntakeState.Off;
     @Logged
-    private IntakeState     _intakeState  = IntakeState.Off;
+    private Voltage            _intakeMotorVoltage = Volts.of(0.0);
 
     public Intake()
     {
+        super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR);
         _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
         var config = new SparkFlexConfig();
@@ -71,24 +81,60 @@ public class Intake extends SubsystemBase
             _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
             _camera.setResolution(IntakeConstants.CAMERA_WIDTH, IntakeConstants.CAMERA_HEIGHT);
             _camera.setFPS(IntakeConstants.CAMERA_FPS);
+            _neoVortex      = null;
+            _intakeMotorSim = null;
+        }
+        else
+        {
+            _camera         = null;
+            _neoVortex      = DCMotor.getNeoVortex(1);
+            _intakeMotorSim = new SparkFlexSim(_intakeMotor, _neoVortex);
         }
     }
 
     @Override
     public void periodic()
     {
-        _motorVoltage = _intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage();
+        super.periodic();
+        _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
     }
 
-    public void set(IntakeState state)
+    @Override
+    public void simulationPeriodic()
     {
-        _intakeMotor.setVoltage(switch (state)
+        super.simulationPeriodic();
+        _intakeMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+
+        double freeSpeedRpm = RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM);
+        _intakeMotorSim.iterate(_intakeMotorSim.getAppliedOutput() * freeSpeedRpm, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+    }
+
+    public void setIntakeState(IntakeState state)
+    {
+        if (state != IntakeState.Off && !isExtended())
+        {
+            state = IntakeState.Off;
+        }
+
+        _intakeState = state;
+
+        var volts = switch (_intakeState)
         {
             case Forward -> IntakeConstants.INTAKE_VOLTS;
             case Reverse -> IntakeConstants.REVERSE_VOLTS;
             case Off -> Volts.zero();
-        });
+        };
 
-        _intakeState = state;
+        _intakeMotor.setVoltage(volts);
+
+        if (RobotBase.isSimulation())
+        {
+            _intakeMotorSim.setAppliedOutput(volts.in(Volts) / GeneralConstants.MOTOR_VOLTAGE);
+        }
+    }
+
+    public IntakeState getIntakeState()
+    {
+        return _intakeState;
     }
 }
