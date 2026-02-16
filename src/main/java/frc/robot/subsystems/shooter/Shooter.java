@@ -8,12 +8,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
-import frc.robot.util.Utilities;
-
-import frc.robot.util.Utilities;
-import frc.robot.Constants;
-import frc.robot.util.GameState;
-import frc.robot.util.Utilities;
 
 @Logged
 public class Shooter extends SubsystemBase
@@ -28,17 +22,13 @@ public class Shooter extends SubsystemBase
         Shoot, Pass
     }
 
-    public enum ShootMode
-    {
-        Shoot, Pass
-    }
-
     public Command getAimCmd()
     {
         return startEnd(() ->
+        {
             double distance = _turret.getDistanceToTarget();
-            _flywheel.setVelocity(Constants.Shooter.getFlywheelSpeedForDistance(distance));
-            _hood.setAngle(Constants.Shooter.getHoodAngleForDistance(distance));
+            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
+            _hood.setHoodPosition(Hood.HoodPosition.Shoot);
         }, () ->
         {
             setState(ShooterState.Idle);
@@ -75,30 +65,29 @@ public class Shooter extends SubsystemBase
         return runOnce(() -> setState(ShooterState.Idle));
     }
 
-
-    private final Flywheel      _flywheel;
-    private final Hood          _hood;
-    private final ShooterTurret _turret;
-    private final Feeder _feeder;
+    private final Flywheel  _flywheel;
+    private final Hood      _hood;
+    private final Turret    _turret;
+    private final Feeder    _feeder;
     @Logged
-    private ShooterState        _state                = ShooterState.Idle;
+    private ShooterState    _state                = ShooterState.Idle;
     @Logged
-    private ShootMode           _mode                 = ShootMode.Shoot;
+    private ShootMode       _mode                 = ShootMode.Shoot;
     @Logged
-    private double              _lastDistanceMeters   = 0.0;
+    private double          _lastDistanceMeters   = 0.0;
     @Logged
-    private AngularVelocity     _passFlywheelVelocity = RPM.zero();
+    private AngularVelocity _passFlywheelVelocity = RPM.zero();
     @Logged
-    private double              _passHoodAngleDeg     = 0.0;
+    private double          _passHoodAngleDeg     = 0.0;
     @Logged
-    private boolean               _hasTarget = false;
+    private boolean         _hasTarget            = false;
 
     public Shooter()
     {
         _flywheel = new Flywheel();
         _hood     = new Hood();
-        _turret   = new ShooterTurret();
-        _feeder   = new ShooterFeeder();
+        _turret   = new Turret(null);
+        _feeder   = new Feeder();
     }
 
     @Override
@@ -114,11 +103,11 @@ public class Shooter extends SubsystemBase
 
         if (_turret.hasTarget())
         {
-            _turret.setState(ShooterTurret.TurretState.Track);
+            _turret.setTurretState(Turret.TurretState.Track);
         }
         else
         {
-            _turret.setState(ShooterTurret.TurretState.Off);
+            _turret.setTurretState(Turret.TurretState.Idle);
         }
 
         _hasTarget = _turret.hasTarget();
@@ -162,47 +151,14 @@ public class Shooter extends SubsystemBase
         {
             _flywheel.stop();
             _hood.stop();
-            _turret.setState(ShooterTurret.TurretState.Off);
+            _turret.setTurretState(Turret.TurretState.Idle);
             _feeder.set(false);
             return;
         }
 
         if (_mode == ShootMode.Shoot)
         {
-            _turret.setState(ShooterTurret.TurretState.Track);
-            if (_turret.hasTarget())
-            {
-                _lastDistanceMeters = _turret.getDistanceToTarget();
-            }
-
-            double distance = _lastDistanceMeters;
-            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
-            _hood.setAngle(ShooterConstants.getHoodAngleForDistance(distance));
-        }
-        else
-        {
-            _turret.setState(ShooterTurret.TurretState.Pass);
-            _flywheel.setVelocity(_passFlywheelRpm);
-            _hood.setAngle(_passHoodAngleDeg);
-        }
-
-        _feeder.set(_state == ShooterState.Firing);
-    }
-
-    private void applySetpoints()
-    {
-        if (_state == ShooterState.Idle)
-        {
-            _flywheel.stop();
-            _hood.stop();
-            _turret.setState(ShooterTurret.TurretState.Off);
-            _feeder.set(false);
-            return;
-        }
-
-        if (_mode == ShootMode.Shoot)
-        {
-            _turret.setState(ShooterTurret.TurretState.Track);
+            _turret.setTurretState(Turret.TurretState.Track);
             if (_turret.hasTarget())
             {
                 _lastDistanceMeters = _turret.getDistanceToTarget();
@@ -214,7 +170,7 @@ public class Shooter extends SubsystemBase
         }
         else
         {
-            _turret.setState(ShooterTurret.TurretState.Pass);
+            _turret.setTurretState(Turret.TurretState.Pass);
             _flywheel.setVelocity(_passFlywheelVelocity);
             _hood.setHoodPosition(HoodPosition.Pass);
         }
@@ -276,7 +232,7 @@ public class Shooter extends SubsystemBase
 
     public boolean isTurretAtSetpoint()
     {
-        return _turret.atSetpoint();
+        return _turret.isLinedUp();
     }
 
     public double getDistanceToTarget()
@@ -286,11 +242,11 @@ public class Shooter extends SubsystemBase
 
     private boolean isReadyInternal()
     {
-        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint();
+        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.isLinedUp();
     }
 
     public boolean atSetpoint()
     {
-        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.atSetpoint();
+        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.isLinedUp();
     }
 }

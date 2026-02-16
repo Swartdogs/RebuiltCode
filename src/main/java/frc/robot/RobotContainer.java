@@ -20,7 +20,6 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Feeder;
-import frc.robot.subsystems.shooter.Flywheel;
 import frc.robot.subsystems.shooter.Shooter;
 
 @Logged
@@ -36,8 +35,8 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     // private final Shooter _shooter = new Shooter();
-    private final Feeder _feeder = new Feeder();
-    private final Shooter                        _shooter    = new Shooter();
+    private final Feeder  _feeder  = new Feeder();
+    private final Shooter _shooter = new Shooter();
 
     public RobotContainer()
     {
@@ -81,7 +80,7 @@ public class RobotContainer
         _joystick.rightBumper().whileTrue(_intake.startRollers());
         _joystick.rightTrigger().whileTrue(_intake.reverseRollers());
 
-        // _joystick.leftTrigger().whileTrue(_shooter.getAimCmd());  // TODO
+        // _joystick.leftTrigger().whileTrue(_shooter.getAimCmd()); // TODO
 
         // Temporary shooter bindings (adjust later).
         // _joystick.x().onTrue(_shooter.getFireCmd());

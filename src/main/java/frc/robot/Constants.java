@@ -43,17 +43,19 @@ public final class Constants
         public static final int INTAKE_EXTEND    = 27;
         public static final int CLIMBER_ROTATE   = 28;
         public static final int INTAKE_EXTENSION = 0;
-        public static final int HOOD_MOTOR      = 23;
-        public static final int TURRET_MOTOR = 24;
-        public static final int FEEDER_MOTOR    = 25; // TODO: Confirm CAN ID
+        public static final int HOOD_MOTOR       = 23;
+        public static final int TURRET_MOTOR     = 24;
+        public static final int FEEDER_MOTOR     = 25; // TODO: Confirm CAN ID
     }
 
     public static class AIOConstants
     {
+        public static final int TURRET_POTENTIOMETER = 0; // TODO
+    }
 
+    public static class DIOConstants
+    {
         public static final int HOOD_ENCODER = 1; // TODO: Confirm AIO port wiring
-        public static final int HOOD_POTENTIOMETER = 0; // TODO: Confirm AIO port wiring
-        public static final int TURRET_POTENTIOMETER = 0; // TODO 
     }
 
     public static class DriveConstants
@@ -98,26 +100,24 @@ public final class Constants
         public static final double FLYWHEEL_KV            = 12.0 / 6784.0; // Volts / RPM
         public static final double FLYWHEEL_KA            = 0.0;            // TODO: Tune - acceleration voltage
         public static final double FLYWHEEL_TOLERANCE     = 0.15; // 15% tolerance for atSpeed()
-
         public static final int    FLYWHEEL_CURRENT_LIMIT = 60;
-
         public static final double PASS_FLYWHEEL_RPM      = 3000.0; // TODO: Tune
 
         // Hood (VictorSPX with analog potentiometer)
-        public static final int    HOOD_ANALOG_INPUT = 0;     // AIO port for potentiometer
-        public static final double HOOD_KP           = 0.016; // From Sidewinder
-        public static final double HOOD_KI           = 0.001; // From Sidewinder
-        public static final double HOOD_KD          = 0.0;   // TODO: Tune
-        public static final double HOOD_MIN_ANGLE   = 0.0;   // TODO: Confirm min angle (degrees)
-        public static final double HOOD_MAX_ANGLE   = 90.0;  // TODO: Confirm max angle (degrees)
-        public static final double HOOD_GEAR_RATIO  = 1.0 / 12.0;
-        public static final Angle  HOOD_SHOOT_ANGLE = Degrees.of(90); // TODO: Find the degree needed to shoot from.
-        public static final Angle  HOOD_PASS_ANGLE  = Degrees.of(78); // TODO: Find the degree to pass from.
-        public static final Angle  HOOD_TOLERANCE   = Degrees.of(2);
-        public static final double HOOD_RAW_MIN      = 1035;  // TODO: Calibrate - analog value at min angle
-        public static final double HOOD_RAW_MAX      = 335;   // TODO: Calibrate - analog value at max angle
-        public static final double PASS_HOOD_ANGLE_DEG    = 20.0;   // TODO: Tune
-        public static final double HOOD_SIM_MAX_SPEED = 45.0; // TODO: compute from motor free speed and hood gear ratio
+        public static final int    HOOD_ANALOG_INPUT   = 0;     // AIO port for potentiometer
+        public static final double HOOD_KP             = 0.016; // From Sidewinder
+        public static final double HOOD_KI             = 0.001; // From Sidewinder
+        public static final double HOOD_KD             = 0.0;   // TODO: Tune
+        public static final double HOOD_MIN_ANGLE      = 0.0;   // TODO: Confirm min angle (degrees)
+        public static final double HOOD_MAX_ANGLE      = 90.0;  // TODO: Confirm max angle (degrees)
+        public static final double HOOD_GEAR_RATIO     = 1.0 / 12.0;
+        public static final Angle  HOOD_SHOOT_ANGLE    = Degrees.of(90); // TODO: Find the degree needed to shoot from.
+        public static final Angle  HOOD_PASS_ANGLE     = Degrees.of(78); // TODO: Find the degree to pass from.
+        public static final Angle  HOOD_TOLERANCE      = Degrees.of(2);
+        public static final double HOOD_RAW_MIN        = 1035;  // TODO: Calibrate - analog value at min angle
+        public static final double HOOD_RAW_MAX        = 335;   // TODO: Calibrate - analog value at max angle
+        public static final double PASS_HOOD_ANGLE_DEG = 20.0;   // TODO: Tune
+        public static final double HOOD_SIM_MAX_SPEED  = 45.0; // TODO: compute from motor free speed and hood gear ratio
 
         // Turret
         public static final double                      TURRET_CURRENT_LIMIT = 40.0;
@@ -135,9 +135,8 @@ public final class Constants
                 .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
         private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE     = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 20.0), Map.entry(2.0, 15.0), Map.entry(3.5, 22.0), Map.entry(5.0, 30.0), Map.entry(6.5, 38.0), Map.entry(7.0, 45.0));
-
-        public static final List<Double> BLUE_HUB_TAG_IDS = List.of(2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 10.0, 11.0);
-        public static final List<Double> RED_HUB_TAG_IDS  = List.of(18.0, 19.0, 20.0, 21.0, 24.0, 25.0, 26.0, 27.0);
+        public static final List<Integer>               BLUE_HUB_TAG_IDS     = List.of(2, 3, 4, 5, 8, 9, 10, 11);
+        public static final List<Integer>               RED_HUB_TAG_IDS      = List.of(18, 19, 20, 21, 24, 25, 26, 27);
 
         // Feeder
         public static final int    FEEDER_CURRENT_LIMIT = 60;
