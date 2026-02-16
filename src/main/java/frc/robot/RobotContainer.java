@@ -4,12 +4,12 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -23,6 +23,7 @@ import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Feeder;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.util.MeasureUtil;
 
 @Logged
 public class RobotContainer
@@ -52,9 +53,9 @@ public class RobotContainer
         _drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 _drivetrain.applyRequest(
-                        () -> drive.withVelocityX(MathUtil.applyDeadband(-_joystick.getLeftY() * DriveConstants.MAX_SPEED, DriveConstants.DEADBAND)) // Drive forward with negative Y (forward)
-                                .withVelocityY(MathUtil.applyDeadband(-_joystick.getLeftX() * DriveConstants.MAX_SPEED, DriveConstants.DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(-_joystick.getRightX() * DriveConstants.MAX_ANGULAR_RATE) // Drive counterclockwise with negative X (left)
+                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_joystick.getLeftY())), DriveConstants.DEADBAND))// Drive forward with negative Y (forward)
+                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_joystick.getLeftX())), DriveConstants.DEADBAND)) // Drive left with negative X (left)
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_joystick.getRightX())), DriveConstants.DEADBAND)) // Drive counterclockwise with negative X (left)
                 )
         );
 
@@ -95,7 +96,7 @@ public class RobotContainer
 
         // Temporary shooter bindings (adjust later).
         _joystick.x().onTrue(_shooter.getFireCmd());
-        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM, ShooterConstants.PASS_HOOD_ANGLE_DEG));
+        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_VELOCITY, ShooterConstants.PASS_HOOD_ANGLE));
         _joystick.leftStick().onTrue(_shooter.getStopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);

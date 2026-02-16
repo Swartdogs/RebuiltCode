@@ -1,6 +1,10 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
@@ -68,9 +72,9 @@ public class Flywheel extends SubsystemBase
         }
 
         var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kCoast).smartCurrentLimit(ShooterConstants.FLYWHEEL_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kCoast).smartCurrentLimit((int)ShooterConstants.FLYWHEEL_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
         config.closedLoop.p(ShooterConstants.FLYWHEEL_KP).d(ShooterConstants.FLYWHEEL_KD);
-        config.closedLoop.feedForward.kS(ShooterConstants.FLYWHEEL_KS).kV(ShooterConstants.FLYWHEEL_KV).kA(ShooterConstants.FLYWHEEL_KA);
+        config.closedLoop.feedForward.kS(ShooterConstants.FLYWHEEL_KS.in(Volts)).kV(ShooterConstants.FLYWHEEL_KV.in(Volts.per(RPM))).kA(ShooterConstants.FLYWHEEL_KA.in(Volts.per(RotationsPerSecondPerSecond)));
         _leadMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         config.follow(_leadMotor, true);
@@ -105,10 +109,10 @@ public class Flywheel extends SubsystemBase
     public void simulationPeriodic()
     {
         _flywheelSim.setInputVoltage(_flywheelVoltage.in(Volts));
-        _flywheelSim.update(GeneralConstants.LOOP_PERIOD_SECS);
+        _flywheelSim.update(GeneralConstants.LOOP_PERIOD.in(Seconds));
         var velocity = _flywheelSim.getAngularVelocity().in(RPM);
         _leadMotorSim.getRelativeEncoderSim().setVelocity(velocity);
-        _leadMotorSim.iterate(velocity, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD_SECS);
+        _leadMotorSim.iterate(velocity, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
     }
 
     public void setVelocity(AngularVelocity targetVelocity)
@@ -131,7 +135,7 @@ public class Flywheel extends SubsystemBase
     public boolean atSpeed()
     {
         if (_targetVelocity == RPM.zero()) return true;
-        return getVelocity().isNear(_targetVelocity, ShooterConstants.FLYWHEEL_TOLERANCE);
+        return getVelocity().isNear(_targetVelocity, ShooterConstants.FLYWHEEL_TOLERANCE.in(Value));
     }
 
     public AngularVelocity getVelocity()

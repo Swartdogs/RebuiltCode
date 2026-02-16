@@ -407,8 +407,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 return false;
             }
 
-            PoseEstimate poseEstimate = estimate.get();
-            Distance averageTagDistance = Meters.of(poseEstimate.avgTagDist);
+            PoseEstimate poseEstimate       = estimate.get();
+            Distance     averageTagDistance = Meters.of(poseEstimate.avgTagDist);
 
             if (poseEstimate.tagCount == 0 || averageTagDistance.gt(VisionConstants.MAX_DETECTION_RANGE) || poseEstimate.timestampSeconds == lastTimestamp)
             {
@@ -428,9 +428,9 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
         private boolean isOnBump()
         {
-            var    rotation = getPigeon2().getRotation3d();
-            Angle pitch = Degrees.of(Math.abs(Math.toDegrees(rotation.getY())));
-            Angle roll  = Degrees.of(Math.abs(Math.toDegrees(rotation.getX())));
+            var   rotation = getPigeon2().getRotation3d();
+            Angle pitch    = Degrees.of(Math.abs(Math.toDegrees(rotation.getY())));
+            Angle roll     = Degrees.of(Math.abs(Math.toDegrees(rotation.getX())));
             return pitch.gt(VisionConstants.MAX_TILT_FOR_VISION) || roll.gt(VisionConstants.MAX_TILT_FOR_VISION);
         }
     }

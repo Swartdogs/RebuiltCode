@@ -100,6 +100,7 @@ public class Intake extends ExtensionMotor
     public void periodic()
     {
         super.periodic();
+
         _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
     }
 
@@ -107,10 +108,9 @@ public class Intake extends ExtensionMotor
     public void simulationPeriodic()
     {
         super.simulationPeriodic();
-        _intakeMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
 
-        double freeSpeedRpm = RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).in(RPM);
-        _intakeMotorSim.iterate(_intakeMotorSim.getAppliedOutput() * freeSpeedRpm, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
+        _intakeMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+        _intakeMotorSim.iterate(RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).times(Value.of(_intakeMotorSim.getAppliedOutput())).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
     }
 
     public void setIntakeState(IntakeState state)

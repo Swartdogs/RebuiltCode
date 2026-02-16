@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
@@ -25,6 +26,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.measure.Dimensionless;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Voltage;
@@ -111,15 +113,15 @@ public class ExtensionMotor extends SubsystemBase
         _extensionMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
         _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * RadiansPerSecond.of(_neoVortexx.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
 
-        Distance position       = Inches.of(_extensionMotorSim.getPosition());
-        double   output         = _extensionMotorSim.getAppliedOutput();
-        boolean  forwardPressed = position.gte(SimulationConstants.EXTENDED_DISTANCE);
-        boolean  reversePressed = position.lte(SimulationConstants.RETRACTED_DISTANCE);
+        Distance      position       = Inches.of(_extensionMotorSim.getPosition());
+        Dimensionless output         = Value.of(_extensionMotorSim.getAppliedOutput());
+        boolean       forwardPressed = position.gte(SimulationConstants.EXTENDED_DISTANCE);
+        boolean       reversePressed = position.lte(SimulationConstants.RETRACTED_DISTANCE);
 
         _extensionMotorSim.getForwardLimitSwitchSim().setPressed(forwardPressed);
         _extensionMotorSim.getReverseLimitSwitchSim().setPressed(reversePressed);
 
-        if ((forwardPressed && output > 0) || (reversePressed && output < 0))
+        if ((forwardPressed && output.gt(Value.zero())) || (reversePressed && output.lt(Value.zero())))
         {
             _extensionMotorSim.setAppliedOutput(0);
         }
