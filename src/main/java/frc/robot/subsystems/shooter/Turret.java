@@ -46,16 +46,16 @@ public class Turret extends SubsystemBase
         Idle, Track, Pass
     }
 
-    private final TalonFX                    _turretMotor;
-    private final TalonFXSimState            _turretMotorSim;
-    private final DCMotorSim                 _motorSimModel;
-    private final AnalogPotentiometer        _turretSensor;
-    private final AnalogInputSim             _turretSensorSim;
-    private final Limelight                  _limelight;
+    private final TalonFX              _turretMotor;
+    private final TalonFXSimState      _turretMotorSim;
+    private final DCMotorSim           _motorSimModel;
+    private final AnalogPotentiometer  _turretSensor;
+    private final AnalogInputSim       _turretSensorSim;
+    private final Limelight            _limelight;
     private Supplier<SwerveDriveState> _swerveStateSupplier;
     private SwerveDriveState           _swerveDriveState;
     private PositionVoltage            _positionRequest = new PositionVoltage(0).withSlot(0);
-    private List<Double>               _cachedTagFilter;
+    private List<Integer>              _cachedTagFilter;
     @Logged
     private Angle                      _fieldTurretAngle;
     @Logged
@@ -63,7 +63,7 @@ public class Turret extends SubsystemBase
     @Logged
     private Angle                      _turretSetpoint;
     @Logged
-    private boolean                    _hasSetpoint; 
+    private boolean                    _hasSetpoint;
     @Logged
     private Voltage                    _turretMotorVoltage;
     @Logged
@@ -92,9 +92,9 @@ public class Turret extends SubsystemBase
 
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0Configs));
         AnalogInput turretSensorInput = new AnalogInput(AIOConstants.TURRET_POTENTIOMETER);
-        _turretSensor      = new AnalogPotentiometer(turretSensorInput, ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MIN_ANGLE);
-        _positionRequest   = new PositionVoltage(0).withSlot(0);
-        _limelight         = new Limelight(ShooterConstants.LIMELIGHT_NAME);
+        _turretSensor    = new AnalogPotentiometer(turretSensorInput, ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MIN_ANGLE);
+        _positionRequest = new PositionVoltage(0).withSlot(0);
+        _limelight       = new Limelight(ShooterConstants.LIMELIGHT_NAME);
 
         _robotTurretAngle       = Degrees.of(0.0);
         _fieldTurretAngle       = Degrees.of(0.0);
@@ -103,7 +103,7 @@ public class Turret extends SubsystemBase
         _hasTarget              = false;
         _targetHorizontalOffset = Degrees.of(0.0);
         _turretSetpoint         = Degrees.zero();
-        _hasSetpoint            = false; 
+        _hasSetpoint            = false;
         _swerveStateSupplier    = (swerveStateSupplier == null) ? () -> new SwerveDriveState() : swerveStateSupplier;
         _swerveDriveState       = new SwerveDriveState();
         _cachedTagFilter        = List.of();
@@ -138,10 +138,10 @@ public class Turret extends SubsystemBase
 
         if (RobotBase.isReal())
         {
-            List<Double> desiredTags = Utilities.getOurHubTagIds();
+            List<Integer> desiredTags = Utilities.getOurHubTagIds();
             if (!_cachedTagFilter.equals(desiredTags))
             {
-                _limelight.getSettings().withArilTagIdFilter(desiredTags).save();
+                _limelight.getSettings().withAprilTagIdFilter(desiredTags).save();
                 _cachedTagFilter = List.copyOf(desiredTags);
             }
 
