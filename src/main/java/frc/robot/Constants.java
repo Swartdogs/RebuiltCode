@@ -157,7 +157,34 @@ public final class Constants
             Map.entry(6.5, 4500.0),
             Map.entry(7.0, 5000.0)
         );
+
+        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE = InterpolatingDoubleTreeMap.ofEntries
+        (
+            Map.entry(0.0, 20.0),
+            Map.entry(2.0, 15.0),
+            Map.entry(3.5, 22.0),
+            Map.entry(5.0, 30.0),
+            Map.entry(6.5, 38.0),
+            Map.entry(7.0, 45.0)
+        );
         // @formatter:on
+
+        // Pot calibration model:
+        // - MIN/MAX volts are measured at conceptual turret min/max angle.
+        // - ZERO_OFFSET shifts the conceptual 0-deg heading without changing hard
+        // limits.
+        public static final Voltage TURRET_POTENTIOMETER_MIN_VOLTS   = Volts.of(0.35);  // TODO: Calibrate pot voltage at min turret angle
+        public static final Voltage TURRET_POTENTIOMETER_MAX_VOLTS   = Volts.of(4.65);  // TODO: Calibrate pot voltage at max turret angle
+        public static final Angle   TURRET_POTENTIOMETER_ZERO_OFFSET = Degrees.of(0.0);   // TODO: Calibrate conceptual turret zero offset (degrees)
+        // Dead-zone model (robot-relative):
+        // - Center/width define forbidden cable-wrap sector.
+        // - Width <= 0 disables dead-zone routing logic.
+        public static final Angle               TURRET_DEAD_ZONE_CENTER          = Degrees.of(180.0); // degrees (robot-relative)
+        public static final Angle               TURRET_DEAD_ZONE_WIDTH           = Degrees.of(0.0);   // degrees; set > 0 once cable-wrap dead-zone is measured
+        public static final List<List<Integer>> BLUE_HUB_CENTER_OFFSET_TAG_PAIRS = List.of(List.of(18, 27), List.of(20, 19), List.of(21, 24), List.of(26, 25));
+        public static final List<List<Integer>> RED_HUB_CENTER_OFFSET_TAG_PAIRS  = List.of(List.of(2, 11), List.of(4, 3), List.of(5, 8), List.of(10, 9));
+        public static final Distance            TURRET_CL                        = Inches.of(14.0);
+        public static final Distance            TURRET_CH                        = Inches.of(23.5);
 
         // Feeder
         public static final Current FEEDER_CURRENT_LIMIT = Amps.of(60);
@@ -167,6 +194,11 @@ public final class Constants
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
         {
             return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Meters)));
+        }
+
+        public static double getHoodAngleForDistance(double meters)
+        {
+            return HOOD_ANGLE_TABLE.get(meters);
         }
     }
 

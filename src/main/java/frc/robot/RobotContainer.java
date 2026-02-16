@@ -4,7 +4,6 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -14,7 +13,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -25,7 +23,7 @@ import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.Hood.HoodPosition;
+import frc.robot.subsystems.shooter.Turret;
 import frc.robot.util.MeasureUtil;
 
 @Logged
@@ -42,9 +40,9 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
+    private final Turret                         _turret     = new Turret(_drivetrain::getState);
     private final TestOperation                  _testop     = new TestOperation();
-    // private final Turret _turret = new Turret(_drivetrain::getState);
-    private final Autos _autos = new Autos(_drivetrain);
+    private final Autos                          _autos      = new Autos(_drivetrain);
 
     public RobotContainer()
     {
@@ -60,7 +58,8 @@ public class RobotContainer
                 _drivetrain.applyRequest(
                         () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))// Drive forward with negative Y (forward)
                                 .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise with negative X (left)
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise
+                                                                                                                                                                                     // with negative X (left)
                 )
         );
 
@@ -93,17 +92,12 @@ public class RobotContainer
         // _operator.leftTrigger().onTrue(_shooter.stopCmd());
         // _operator.rightTrigger().onTrue(_shooter.fireCmd());
         // Reset the field-centric heading on left bumper press.
-        _driver.button(7).onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-        _operator.rightBumper().onTrue(_shooter.modVelocity(RPM.of(100)));
-        _operator.leftBumper().onTrue(_shooter.modVelocity(RPM.of(-100)));
-        _operator.a().onTrue(_shooter.stopCmd());
-        _operator.b().onTrue(_shooter.setVelocity(RPM.of(1000)));
-        _operator.x().onTrue(_shooter.setVelocity(RPM.of(3000)));
-        _operator.y().onTrue(_shooter.setVelocity(RPM.of(5000)));
-        _operator.rightTrigger().whileTrue(_shooter.runFeeder());
+        _operator.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
-        _drivetrain.registerTelemetry(_logger::telemeterize);
-
+        // Turret simulation bindings.
+        _operator.leftTrigger().whileTrue(_turret.getTrackCmd());
+        _operator.y().whileTrue(_turret.getPassCmd());
+        _operator.leftStick().onTrue(_turret.getIdleCmd());
     }
 
     private void configureTestBindings()
