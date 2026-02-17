@@ -10,8 +10,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.ShooterConstants;
-import frc.robot.subsystems.shooter.Hood.HoodPosition;
 
 @Logged
 public class Shooter extends SubsystemBase
@@ -26,230 +24,102 @@ public class Shooter extends SubsystemBase
         Shoot, Pass
     }
 
-    public Command getAimCmd()
-    {
-        return startEnd(() ->
-        {
-            var distance = _turret.getDistanceToTarget();
-            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
-            _hood.setHoodPosition(Hood.HoodPosition.Shoot);
-        }, () ->
-        {
-            setState(ShooterState.Idle);
-        });
-    }
-
-    public Command getPrepareCmd()
-    {
-        return runOnce(() ->
-        {
-            _mode = ShootMode.Shoot;
-            setState(ShooterState.Preparing);
-        });
-    }
-
-    public Command getPreparePassCmd(AngularVelocity flywheelVelocity, Angle hoodAngle)
-    {
-        return runOnce(() ->
-        {
-            _mode                 = ShootMode.Pass;
-            _passFlywheelVelocity = flywheelVelocity;
-            _passHoodAngle        = hoodAngle;
-            setState(ShooterState.Preparing);
-        });
-    }
-
-    public Command getFireCmd()
-    {
-        return runOnce(() -> setState(ShooterState.Firing));
-    }
-
-    public Command getStopCmd()
-    {
-        return runOnce(() -> setState(ShooterState.Idle));
-    }
-
     private final Flywheel  _flywheel;
-    private final Hood      _hood;
-    private final Turret    _turret;
     private final Feeder    _feeder;
-    @Logged
-    private ShooterState    _state                = ShooterState.Idle;
-    @Logged
-    private ShootMode       _mode                 = ShootMode.Shoot;
-    @Logged
-    private Distance        _lastDistance         = Meters.of(0.0);
-    @Logged
-    private AngularVelocity _passFlywheelVelocity = RPM.zero();
-    @Logged
-    private Angle           _passHoodAngle        = Degrees.of(0.0);
-    @Logged
-    private boolean         _hasTarget            = false;
+    private ShooterState    _state;
+    private AngularVelocity _targetVelocity;
 
     public Shooter()
     {
-        _flywheel = new Flywheel();
-        _hood     = new Hood();
-        _turret   = new Turret(null);
-        _feeder   = new Feeder();
+        _flywheel       = new Flywheel();
+        _feeder         = new Feeder();
+        _state          = ShooterState.Idle;
+        _targetVelocity = RPM.zero();
     }
 
     @Override
     public void periodic()
     {
-        _hood.periodic();
-        _flywheel.periodic();
-        _turret.periodic();
-        _feeder.periodic();
-
-        updateState();
-        applySetpoints();
-
-        if (_turret.hasTarget())
-        {
-            _turret.setTurretState(Turret.TurretState.Track);
-        }
-        else
-        {
-            _turret.setTurretState(Turret.TurretState.Idle);
-        }
-
-        _hasTarget = _turret.hasTarget();
-    }
-
-    @Override
-    public void simulationPeriodic()
-    {
-        _hood.simulationPeriodic();
-        _flywheel.simulationPeriodic();
-        _turret.simulationPeriodic();
-        _feeder.simulationPeriodic();
-    }
-
-    private void updateState()
-    {
         switch (_state)
         {
             case Preparing:
-                if (isReadyInternal())
+                _feeder.set(false);
+                _flywheel.setVelocity(_targetVelocity);
+                if (_flywheel.atSpeed())
                 {
                     _state = ShooterState.Ready;
                 }
                 break;
 
             case Ready:
-                if (!isReadyInternal())
+                _feeder.set(false);
+                _flywheel.setVelocity(_targetVelocity);
+                if (!_flywheel.atSpeed())
                 {
                     _state = ShooterState.Preparing;
                 }
                 break;
 
+            case Firing:
+                _flywheel.setVelocity(_targetVelocity);
+                _feeder.set(true);
+                break;
+            case Idle:
             default:
+                _flywheel.stop();
+                _feeder.set(false);
                 break;
         }
+        _flywheel.periodic();
+        _feeder.periodic();
     }
 
-    private void applySetpoints()
+    @Override
+    public void simulationPeriodic()
+    {
+        // Feeder has no simulation periodic
+        // _feeder.simulationPeriodic();
+        _flywheel.simulationPeriodic();
+    }
+
+    public void start(AngularVelocity velocity)
     {
         if (_state == ShooterState.Idle)
         {
-            _flywheel.stop();
-            _hood.stop();
-            _turret.setTurretState(Turret.TurretState.Idle);
-            _feeder.set(false);
-            return;
+            _state = ShooterState.Preparing;
         }
-
-        if (_mode == ShootMode.Shoot)
+        if (_state != ShooterState.Firing)
         {
-            _turret.setTurretState(Turret.TurretState.Track);
-            if (_turret.hasTarget())
-            {
-                _lastDistance = _turret.getDistanceToTarget();
-            }
-
-            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(_lastDistance));
-            _hood.setHoodPosition(HoodPosition.Shoot);
+            _targetVelocity = velocity;
         }
-        else
+    }
+
+    public void stop()
+    {
+        _state          = ShooterState.Idle;
+        _targetVelocity = RPM.of(0);
+    }
+
+    public void fire()
+    {
+        if (_state == ShooterState.Ready)
         {
-            _turret.setTurretState(Turret.TurretState.Pass);
-            _flywheel.setVelocity(_passFlywheelVelocity);
-            _hood.setHoodPosition(HoodPosition.Pass);
-        }
-
-        _feeder.set(_state == ShooterState.Firing);
-    }
-
-    public void setState(ShooterState state)
-    {
-        switch (_state)
-        {
-            case Idle:
-                if (state == ShooterState.Preparing)
-                {
-                    _state = state;
-                }
-                break;
-
-            case Preparing:
-                if (state == ShooterState.Idle)
-                {
-                    _state = state;
-                }
-                break;
-
-            case Ready:
-                if (state == ShooterState.Firing || state == ShooterState.Idle)
-                {
-                    _state = state;
-                }
-                break;
-
-            case Firing:
-                if (state == ShooterState.Idle)
-                {
-                    _state = state;
-                }
-                break;
-
-            default:
-                break;
+            _state = ShooterState.Firing;
         }
     }
 
-    public ShooterState getState()
+    public Command fireCmd()
     {
-        return _state;
+        return runOnce(this::fire);
     }
 
-    public boolean isFlywheelAtSpeed()
+    public Command stopCmd()
     {
-        return _flywheel.atSpeed();
+        return runOnce(this::stop);
     }
 
-    public boolean isHoodAtSetpoint()
+    public Command startCmd(AngularVelocity velocity)
     {
-        return _hood.atSetpoint();
-    }
-
-    public boolean isTurretAtSetpoint()
-    {
-        return _turret.isLinedUp();
-    }
-
-    public Distance getDistanceToTarget()
-    {
-        return _turret.getDistanceToTarget();
-    }
-
-    private boolean isReadyInternal()
-    {
-        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.isLinedUp();
-    }
-
-    public boolean atSetpoint()
-    {
-        return _flywheel.atSpeed() && _hood.atSetpoint() && _turret.isLinedUp();
+        return runOnce(() -> start(velocity));
     }
 }
