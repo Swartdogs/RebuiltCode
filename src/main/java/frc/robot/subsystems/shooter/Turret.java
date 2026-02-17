@@ -136,16 +136,12 @@ public class Turret extends SubsystemBase
     }
 
     /**
-     * This function executes automatically every 20 milliseconds.
-     * For the turret specifically, we need to ensure the turret
-     * is behaving according to the rules defined by the state the
-     * turret is in.
-     *
-     * If in <code>Idle</code>, the turret shouldn't rotate at all,
-     * even if the robot rotates.
-     * 
-     * If in <code>Shoot</code> or <code>Pass</code>, the turret
-     * should rotate to whatever angle is provided by the <code>
+     * This function executes automatically every 20 milliseconds. For the turret
+     * specifically, we need to ensure the turret is behaving according to the rules
+     * defined by the state the turret is in. If in <code>Idle</code>, the turret
+     * shouldn't rotate at all, even if the robot rotates. If in <code>Shoot</code>
+     * or <code>Pass</code>, the turret should rotate to whatever angle is provided
+     * by the <code>
      * TurretDirector</code> class.
      */
     @Override
@@ -182,10 +178,10 @@ public class Turret extends SubsystemBase
     }
 
     /**
-     * Any logic needed to specifically manage any hardware interactions
-     * when the robot code is executing in the simulation (for example,
-     * update the 10-turn potentiometer's angle based on how the motor
-     * driving the turret is moving) should go here.
+     * Any logic needed to specifically manage any hardware interactions when the
+     * robot code is executing in the simulation (for example, update the 10-turn
+     * potentiometer's angle based on how the motor driving the turret is moving)
+     * should go here.
      */
     @Override
     public void simulationPeriodic()
@@ -226,9 +222,8 @@ public class Turret extends SubsystemBase
     }
 
     /**
-     * Gets the current angle of the turret. Angle is given
-     * in field-relative space.
-     * 
+     * Gets the current angle of the turret. Angle is given in field-relative space.
+     *
      * @return The current angle of the turret
      */
     public Angle getAngle()
@@ -237,13 +232,11 @@ public class Turret extends SubsystemBase
     }
 
     /**
-     * Gets whether the turret is currently pointing at its
-     * desired target. The target to point at is determined
-     * by the state of the turret.
-     * 
-     * @return <code>true</code> if the turret is facing the desired
-     *         target location (or if there is no desired
-     *         location), otherwise <code>false</code>.
+     * Gets whether the turret is currently pointing at its desired target. The
+     * target to point at is determined by the state of the turret.
+     *
+     * @return <code>true</code> if the turret is facing the desired target location
+     *         (or if there is no desired location), otherwise <code>false</code>.
      */
     public boolean isLinedUp()
     {
@@ -344,9 +337,9 @@ public class Turret extends SubsystemBase
     }
 
     /**
-     * The TurretDirector is responsible for choosing a target for
-     * the robot to aim at and communicating the desired turret angle
-     * in field-relative space back to the main Turret subsystem.
+     * The TurretDirector is responsible for choosing a target for the robot to aim
+     * at and communicating the desired turret angle in field-relative space back to
+     * the main Turret subsystem.
      */
     private static class TurretDirector
     {
@@ -383,12 +376,14 @@ public class Turret extends SubsystemBase
         /**
          * Solves for robot-to-hub angle and distance using two known triangles.
          * <p>
-         * Triangle R-C-L: Robot (R), center tag (C), left tag (L). We know RC and RL from
-         * vision and CL from field drawings (TURRET_CL_METERS). Law of sines gives angle at C.
+         * Triangle R-C-L: Robot (R), center tag (C), left tag (L). We know RC and RL
+         * from vision and CL from field drawings (TURRET_CL_METERS). Law of sines gives
+         * angle at C.
          * <p>
-         * Triangle R-C-H: Hub center (H) is TURRET_CH_METERS from C (field drawing). Law of
-         * cosines gives RH (distance to hub). Law of sines gives angle at R from R→C to R→H.
-         * We add the camera-to-center-tag angle (tx) to get full robot-frame angle to hub.
+         * Triangle R-C-H: Hub center (H) is TURRET_CH_METERS from C (field drawing).
+         * Law of cosines gives RH (distance to hub). Law of sines gives angle at R from
+         * R→C to R→H. We add the camera-to-center-tag angle (tx) to get full
+         * robot-frame angle to hub.
          */
         private TriangulationResult triangulate(TagObservation centerTagObservation, TagObservation leftTagObservation)
         {
