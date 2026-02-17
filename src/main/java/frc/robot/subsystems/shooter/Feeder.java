@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.PersistMode;
@@ -48,7 +49,7 @@ public class Feeder extends SubsystemBase
         _feederMotor = new SparkFlex(CANConstants.FEEDER_MOTOR, MotorType.kBrushless);
 
         SparkFlexConfig config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(ShooterConstants.FEEDER_CURRENT_LIMIT).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE);
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)ShooterConstants.FEEDER_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
         _feederMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -70,7 +71,7 @@ public class Feeder extends SubsystemBase
 
     public void set(boolean on)
     {
-        Voltage targetVoltage = on ? Volts.of(ShooterConstants.FEEDER_VOLTAGE) : Volts.zero();
+        Voltage targetVoltage = on ? ShooterConstants.FEEDER_VOLTAGE : Volts.zero();
         _feederMotor.setVoltage(targetVoltage.in(Volts));
 
         if (RobotBase.isSimulation())

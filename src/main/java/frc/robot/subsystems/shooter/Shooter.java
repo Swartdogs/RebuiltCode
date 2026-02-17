@@ -1,9 +1,13 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
@@ -26,7 +30,7 @@ public class Shooter extends SubsystemBase
     {
         return startEnd(() ->
         {
-            double distance = _turret.getDistanceToTarget();
+            var distance = _turret.getDistanceToTarget();
             _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
             _hood.setHoodPosition(Hood.HoodPosition.Shoot);
         }, () ->
@@ -44,13 +48,13 @@ public class Shooter extends SubsystemBase
         });
     }
 
-    public Command getPreparePassCmd(double flywheelRpm, double hoodAngleDeg)
+    public Command getPreparePassCmd(AngularVelocity flywheelVelocity, Angle hoodAngle)
     {
         return runOnce(() ->
         {
             _mode                 = ShootMode.Pass;
-            _passFlywheelVelocity = RPM.of(flywheelRpm);
-            _passHoodAngleDeg     = hoodAngleDeg;
+            _passFlywheelVelocity = flywheelVelocity;
+            _passHoodAngle        = hoodAngle;
             setState(ShooterState.Preparing);
         });
     }
@@ -74,11 +78,11 @@ public class Shooter extends SubsystemBase
     @Logged
     private ShootMode       _mode                 = ShootMode.Shoot;
     @Logged
-    private double          _lastDistanceMeters   = 0.0;
+    private Distance        _lastDistance         = Meters.of(0.0);
     @Logged
     private AngularVelocity _passFlywheelVelocity = RPM.zero();
     @Logged
-    private double          _passHoodAngleDeg     = 0.0;
+    private Angle           _passHoodAngle        = Degrees.of(0.0);
     @Logged
     private boolean         _hasTarget            = false;
 
@@ -161,11 +165,10 @@ public class Shooter extends SubsystemBase
             _turret.setTurretState(Turret.TurretState.Track);
             if (_turret.hasTarget())
             {
-                _lastDistanceMeters = _turret.getDistanceToTarget();
+                _lastDistance = _turret.getDistanceToTarget();
             }
 
-            double distance = _lastDistanceMeters;
-            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
+            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(_lastDistance));
             _hood.setHoodPosition(HoodPosition.Shoot);
         }
         else
@@ -235,7 +238,7 @@ public class Shooter extends SubsystemBase
         return _turret.isLinedUp();
     }
 
-    public double getDistanceToTarget()
+    public Distance getDistanceToTarget()
     {
         return _turret.getDistanceToTarget();
     }

@@ -17,6 +17,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -405,9 +407,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 return false;
             }
 
-            PoseEstimate poseEstimate = estimate.get();
+            PoseEstimate poseEstimate       = estimate.get();
+            Distance     averageTagDistance = Meters.of(poseEstimate.avgTagDist);
 
-            if (poseEstimate.tagCount == 0 || poseEstimate.avgTagDist > VisionConstants.MAX_DETECTION_RANGE || poseEstimate.timestampSeconds == lastTimestamp)
+            if (poseEstimate.tagCount == 0 || averageTagDistance.gt(VisionConstants.MAX_DETECTION_RANGE) || poseEstimate.timestampSeconds == lastTimestamp)
             {
                 return false;
             }
@@ -419,16 +422,16 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
         private boolean isRotatingTooFast()
         {
-            double gyroRateDegPerSec = Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble());
-            return gyroRateDegPerSec > VisionConstants.MAX_ANGULAR_RATE_FOR_VISION_DEG_PER_SEC;
+            var rate = DegreesPerSecond.of(Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()));
+            return rate.gt(VisionConstants.MAX_ANGULAR_RATE_FOR_VISION);
         }
 
         private boolean isOnBump()
         {
-            var    rotation = getPigeon2().getRotation3d();
-            double pitchDeg = Math.abs(Math.toDegrees(rotation.getY()));
-            double rollDeg  = Math.abs(Math.toDegrees(rotation.getX()));
-            return pitchDeg > VisionConstants.MAX_TILT_FOR_VISION_DEG || rollDeg > VisionConstants.MAX_TILT_FOR_VISION_DEG;
+            var   rotation = getPigeon2().getRotation3d();
+            Angle pitch    = Degrees.of(Math.abs(Math.toDegrees(rotation.getY())));
+            Angle roll     = Degrees.of(Math.abs(Math.toDegrees(rotation.getX())));
+            return pitch.gt(VisionConstants.MAX_TILT_FOR_VISION) || roll.gt(VisionConstants.MAX_TILT_FOR_VISION);
         }
     }
 }

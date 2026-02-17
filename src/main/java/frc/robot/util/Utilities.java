@@ -1,8 +1,11 @@
 package frc.robot.util;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import java.util.List;
 import java.util.stream.Stream;
 
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
@@ -18,11 +21,11 @@ import frc.robot.Constants.ShooterConstants;
  */
 public final class Utilities
 {
-    private static final double        kTransitionShiftEndTimeSecs = 130.0; // 2:10
-    private static final double        kShift1EndTimeSecs          = 105.0; // 1:45
-    private static final double        kShift2EndTimeSecs          = 80.0;  // 1:20
-    private static final double        kShift3EndTimeSecs          = 55.0;  // 0:55
-    private static final double        kShift4EndTimeSecs          = 30.0;  // 0:30
+    private static final Time          kTransitionShiftEndTimeSecs = Seconds.of(130.0); // 2:10
+    private static final Time          kShift1EndTimeSecs          = Seconds.of(105.0); // 1:45
+    private static final Time          kShift2EndTimeSecs          = Seconds.of(80.0);  // 1:20
+    private static final Time          kShift3EndTimeSecs          = Seconds.of(55.0);  // 0:55
+    private static final Time          kShift4EndTimeSecs          = Seconds.of(30.0);  // 0:30
     private static final List<Integer> kAllHubTagIds               = Stream.concat(ShooterConstants.RED_HUB_TAG_IDS.stream(), ShooterConstants.BLUE_HUB_TAG_IDS.stream()).toList();
 
     private Utilities()
@@ -31,8 +34,8 @@ public final class Utilities
 
     public static boolean isHubActive()
     {
-        double timeRemaining = DriverStation.getMatchTime();
-        if (timeRemaining < 0.0)
+        var timeRemaining = Seconds.of(DriverStation.getMatchTime());
+        if (timeRemaining.lt(Seconds.zero()))
         {
             return true;
         }
@@ -95,13 +98,13 @@ public final class Utilities
         return ShooterConstants.BLUE_HUB_TAG_IDS;
     }
 
-    private static int getAllianceShift(double timeRemaining)
+    private static int getAllianceShift(Time timeRemaining)
     {
-        if (timeRemaining > kTransitionShiftEndTimeSecs) return 0; // Transition Shift
-        if (timeRemaining > kShift1EndTimeSecs) return 1;
-        if (timeRemaining > kShift2EndTimeSecs) return 2;
-        if (timeRemaining > kShift3EndTimeSecs) return 3;
-        if (timeRemaining > kShift4EndTimeSecs) return 4;
+        if (timeRemaining.gt(kTransitionShiftEndTimeSecs)) return 0; // Transition Shift
+        if (timeRemaining.gt(kShift1EndTimeSecs)) return 1;
+        if (timeRemaining.gt(kShift2EndTimeSecs)) return 2;
+        if (timeRemaining.gt(kShift3EndTimeSecs)) return 3;
+        if (timeRemaining.gt(kShift4EndTimeSecs)) return 4;
         return 5; // End Game
     }
 

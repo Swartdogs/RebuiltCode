@@ -3,6 +3,8 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.HootAutoReplay;
 
 import edu.wpi.first.epilogue.Epilogue;
@@ -109,8 +111,8 @@ public class Robot extends TimedRobot
     @Override
     public void simulationInit()
     {
-        RoboRioSim.setVInVoltage(GeneralConstants.MOTOR_VOLTAGE);
-        RoboRioSim.setUserVoltage5V(GeneralConstants.SENSOR_VOLTAGE);
+        RoboRioSim.setVInVoltage(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
+        RoboRioSim.setUserVoltage5V(GeneralConstants.SENSOR_VOLTAGE.in(Volts));
     }
 
     @Override

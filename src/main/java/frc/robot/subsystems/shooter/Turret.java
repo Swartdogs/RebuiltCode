@@ -1,7 +1,11 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
@@ -19,10 +23,10 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
@@ -35,6 +39,7 @@ import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.util.MeasureUtil;
 import frc.robot.util.Utilities;
 import limelight.Limelight;
 
@@ -78,7 +83,7 @@ public class Turret extends SubsystemBase
         // Setting up motor
         _turretMotor = new TalonFX(CANConstants.TURRET_MOTOR);
         var currentConfig = new CurrentLimitsConfigs();
-        currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT;
+        currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
         currentConfig.StatorCurrentLimitEnable = true;
 
         var outputConfig = new MotorOutputConfigs();
@@ -92,7 +97,7 @@ public class Turret extends SubsystemBase
 
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0Configs));
         AnalogInput turretSensorInput = new AnalogInput(AIOConstants.TURRET_POTENTIOMETER);
-        _turretSensor    = new AnalogPotentiometer(turretSensorInput, ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MIN_ANGLE);
+        _turretSensor    = new AnalogPotentiometer(turretSensorInput, ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE).in(Degrees), ShooterConstants.TURRET_MIN_ANGLE.in(Degrees));
         _positionRequest = new PositionVoltage(0).withSlot(0);
         _limelight       = new Limelight(ShooterConstants.LIMELIGHT_NAME);
 
@@ -119,7 +124,7 @@ public class Turret extends SubsystemBase
             _turretMotorSim  = _turretMotor.getSimState();
             _turretSensorSim = new AnalogInputSim(turretSensorInput);
             var gearbox = DCMotor.getKrakenX44(1);
-            _motorSimModel = new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.001, ShooterConstants.TURRET_GEAR_RATIO), gearbox);
+            _motorSimModel = new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.001, ShooterConstants.TURRET_GEAR_RATIO.in(Value)), gearbox);
         }
     }
 
@@ -153,7 +158,7 @@ public class Turret extends SubsystemBase
         Angle requestedSetpoint = switch (_turretState)
         {
             case Idle -> null;
-            case Track -> _hasTarget ? _robotTurretAngle.plus(_targetHorizontalOffset) : Degrees.of(ShooterConstants.TURRET_HOME_ANGLE);
+            case Track -> _hasTarget ? _robotTurretAngle.plus(_targetHorizontalOffset) : ShooterConstants.TURRET_HOME_ANGLE;
             case Pass -> ShooterConstants.TURRET_PASS_TARGET.minus(_swerveDriveState.Pose.getRotation().getMeasure());
         };
 
@@ -164,9 +169,9 @@ public class Turret extends SubsystemBase
             return;
         }
 
-        _turretSetpoint = clampToTurretLimits(requestedSetpoint);
-        double targetMotorRotations = _turretSetpoint.in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO;
-        _turretMotor.setControl(_positionRequest.withPosition(targetMotorRotations));
+        _turretSetpoint = MeasureUtil.clamp(requestedSetpoint, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
+        var target = _turretSetpoint.times(ShooterConstants.TURRET_GEAR_RATIO);
+        _turretMotor.setControl(_positionRequest.withPosition(target.in(Rotations)));
     }
 
     @Override
@@ -179,15 +184,15 @@ public class Turret extends SubsystemBase
 
         Voltage motorVoltage = _turretMotorSim.getMotorVoltageMeasure();
         _motorSimModel.setInputVoltage(motorVoltage.in(Volts));
-        _motorSimModel.update(GeneralConstants.LOOP_PERIOD_SECS);
+        _motorSimModel.update(GeneralConstants.LOOP_PERIOD.in(Seconds));
 
         _turretMotorSim.setRawRotorPosition(_motorSimModel.getAngularPosition().times(ShooterConstants.TURRET_GEAR_RATIO));
         _turretMotorSim.setRotorVelocity(_motorSimModel.getAngularVelocity().times(ShooterConstants.TURRET_GEAR_RATIO));
 
-        double mechanismAngleDeg = _motorSimModel.getAngularPosition().in(Degrees) / ShooterConstants.TURRET_GEAR_RATIO;
-        double clampedAngleDeg   = Math.max(ShooterConstants.TURRET_MIN_ANGLE, Math.min(ShooterConstants.TURRET_MAX_ANGLE, mechanismAngleDeg));
-        double normalized        = (clampedAngleDeg - ShooterConstants.TURRET_MIN_ANGLE) / (ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE);
-        _turretSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized);
+        var   mechanismAngle = _motorSimModel.getAngularPosition().div(ShooterConstants.TURRET_GEAR_RATIO);
+        Angle clamped        = MeasureUtil.clamp(mechanismAngle, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
+        var   normalized     = clamped.minus(ShooterConstants.TURRET_MIN_ANGLE).div(ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE));
+        _turretSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized.in(Value));
     }
 
     public void setTurretState(TurretState state)
@@ -210,24 +215,17 @@ public class Turret extends SubsystemBase
         if (_turretSetpoint == null) return _turretState == TurretState.Idle;
         if (_turretState == TurretState.Track && !_hasTarget) return false;
 
-        double errorDeg = Math.abs(_robotTurretAngle.in(Degrees) - _turretSetpoint.in(Degrees));
-        return errorDeg <= ShooterConstants.TURRET_TOLERANCE;
+        return _robotTurretAngle.isNear(_turretSetpoint, ShooterConstants.TURRET_TOLERANCE);
     }
 
-    public double getDistanceToTarget()
+    public Distance getDistanceToTarget()
     {
         if (RobotBase.isSimulation() || !_hasTarget)
         {
-            return 0.0;
+            return Meters.zero();
         }
 
         var targetPose = _limelight.getData().targetData.getCameraToTarget();
-        return targetPose.getTranslation().toTranslation2d().getNorm();
-    }
-
-    private static Angle clampToTurretLimits(Angle angle)
-    {
-        double clampedDegrees = MathUtil.clamp(angle.in(Degrees), ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
-        return Degrees.of(clampedDegrees);
+        return Meters.of(targetPose.getTranslation().toTranslation2d().getNorm());
     }
 }
