@@ -129,6 +129,13 @@ public final class Constants
         public static final double                      TURRET_MAX_ANGLE     = 180.0;  // degrees
         public static final double                      TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
         public static final double                      TURRET_TOLERANCE     = 2.0;   // degrees
+        public static final int                         BLUE_CENTER_TAG_ID   = 26;
+        public static final int                         BLUE_LEFT_TAG_ID     = 25;
+        public static final int                         RED_CENTER_TAG_ID    = 10;
+        public static final int                         RED_LEFT_TAG_ID      = 9;
+        public static final double                      TURRET_CL_METERS     = 0.3556; // 14.00 in from GE-26300
+                                                                                       // (https://firstfrc.blob.core.windows.net/frc2026/FieldAssets/2026-field-dimension-dwgs.pdf)
+        public static final double                      TURRET_CH_METERS     = 0.5969; // 23.50 in from GE-26300
         public static final String                      LIMELIGHT_NAME       = "limelight-shooter";
         public static final Angle                       TURRET_PASS_TARGET   = Degrees.of(180.0); // TODO: Validate in driver practice
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap
@@ -153,16 +160,6 @@ public final class Constants
         public static double getHoodAngleForDistance(double meters)
         {
             return HOOD_ANGLE_TABLE.get(meters);
-        }
-
-        public static double getHoodAngleForDistanceX(double meters)
-        {
-            if (meters <= 0) return 20.0;
-            if (meters < 2.0) return 15.0;
-            if (meters < 3.5) return 22.0;
-            if (meters < 5.0) return 30.0;
-            if (meters < 6.5) return 38.0;
-            return 45.0;
         }
     }
 
