@@ -121,16 +121,16 @@ public final class Constants
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
 
         // Hood (VictorSPX with analog potentiometer)
-        public static final double        HOOD_KP           = 3.0;
-        public static final double        HOOD_KI           = 0.0;
-        public static final double        HOOD_KD           = 0.0;   // TODO: Tune
-        public static final Angle         HOOD_MIN_ANGLE    = Degrees.of(0.0);   // TODO: Confirm min angle (degrees)
-        public static final Angle         HOOD_MAX_ANGLE    = Degrees.of(90.0);  // TODO: Confirm max angle (degrees)
-        public static final Dimensionless HOOD_GEAR_RATIO   = Value.of(1.0 / 12.0);
-        public static final Angle         HOOD_SHOOT_ANGLE  = Degrees.of(90); // TODO: Find the degree needed to shoot from.
-        public static final Angle         HOOD_PASS_ANGLE   = Degrees.of(78); // TODO: Find the degree to pass from.
-        public static final Angle         HOOD_TOLERANCE    = Degrees.of(2);
-        public static final Angle         PASS_HOOD_ANGLE   = Degrees.of(20.0);   // TODO: Tune
+        public static final double        HOOD_KP          = 3.0;
+        public static final double        HOOD_KI          = 0.0;
+        public static final double        HOOD_KD          = 0.0;   // TODO: Tune
+        public static final Angle         HOOD_MIN_ANGLE   = Degrees.of(0.0);   // TODO: Confirm min angle (degrees)
+        public static final Angle         HOOD_MAX_ANGLE   = Degrees.of(90.0);  // TODO: Confirm max angle (degrees)
+        public static final Dimensionless HOOD_GEAR_RATIO  = Value.of(1.0 / 12.0);
+        public static final Angle         HOOD_SHOOT_ANGLE = Degrees.of(90); // TODO: Find the degree needed to shoot from.
+        public static final Angle         HOOD_PASS_ANGLE  = Degrees.of(78); // TODO: Find the degree to pass from.
+        public static final Angle         HOOD_TOLERANCE   = Degrees.of(2);
+        public static final Angle         PASS_HOOD_ANGLE  = Degrees.of(20.0);   // TODO: Tune
 
         // Turret
         public static final Current       TURRET_CURRENT_LIMIT = Amps.of(40.0);

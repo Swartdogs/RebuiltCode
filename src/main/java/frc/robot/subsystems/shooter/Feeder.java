@@ -18,9 +18,9 @@ import frc.robot.Constants.ShooterConstants;
 @Logged
 public class Feeder
 {
-    private final SparkFlex    _feederMotor;
+    private final SparkFlex _feederMotor;
     @Logged
-    private Voltage            _feederMotorVoltage = Volts.of(0.0);
+    private Voltage         _feederMotorVoltage = Volts.of(0.0);
 
     public Feeder()
     {

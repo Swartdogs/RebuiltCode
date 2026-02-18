@@ -81,7 +81,8 @@ public class RobotContainer
         _joystick.povLeft().onTrue(_shooter.startCmd(RPM.of(2000)));
         _joystick.povUp().onTrue(_shooter.startCmd(RPM.of(4000)));
         _joystick.povRight().onTrue(_shooter.startCmd(RPM.of(6000)));
-        _joystick.leftBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Pass));
+
+        _joystick.leftBumper().whileTrue(_shooter.passCmd());
         _joystick.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);

@@ -1,11 +1,10 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.RPM;
-
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 
 @Logged
@@ -13,7 +12,7 @@ public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, Preparing, Ready, Firing
+        Idle, Preparing, Ready, Firing, Priming;
     }
 
     /************
@@ -45,22 +44,25 @@ public class Shooter extends SubsystemBase
         });
     }
 
+    public Command passCmd()
+    {
+        return startEnd(this::pass, this::stop);
+    }
+
     /*************
      * SUBSYSTEM *
      *************/
-    private final Flywheel  _flywheel;
-    private final Feeder    _feeder;
-    private final Hood      _hood;
-    private ShooterState    _state;
-    private AngularVelocity _targetVelocity;
+    private final Flywheel _flywheel;
+    private final Feeder   _feeder;
+    private final Hood     _hood;
+    private ShooterState   _state;
 
     public Shooter()
     {
-        _flywheel       = new Flywheel();
-        _feeder         = new Feeder();
-        _hood           = new Hood();
-        _state          = ShooterState.Idle;
-        _targetVelocity = RPM.zero();
+        _flywheel = new Flywheel();
+        _feeder   = new Feeder();
+        _hood     = new Hood();
+        _state    = ShooterState.Idle;
 
         _hood.setHoodPosition(HoodPosition.Shoot);
         _feeder.set(false);
@@ -74,16 +76,22 @@ public class Shooter extends SubsystemBase
         {
             case Preparing:
                 _feeder.set(false);
-                _flywheel.setVelocity(_targetVelocity);
-                if (_flywheel.atSpeed())
+                if (_flywheel.atSpeed() && _hood.atSetpoint())
                 {
                     _state = ShooterState.Ready;
                 }
                 break;
 
+            case Priming:
+                _feeder.set(false);
+                if (_flywheel.atSpeed() && _hood.atSetpoint())
+                {
+                    _state = ShooterState.Firing;
+                }
+                break;
+
             case Ready:
                 _feeder.set(false);
-                _flywheel.setVelocity(_targetVelocity);
                 if (!_flywheel.atSpeed())
                 {
                     _state = ShooterState.Preparing;
@@ -91,7 +99,6 @@ public class Shooter extends SubsystemBase
                 break;
 
             case Firing:
-                _flywheel.setVelocity(_targetVelocity);
                 _feeder.set(true);
                 break;
             case Idle:
@@ -119,13 +126,13 @@ public class Shooter extends SubsystemBase
             _state = ShooterState.Preparing;
         }
 
-        _targetVelocity = velocity;
+        _flywheel.setVelocity(velocity);
     }
 
     public void stop()
     {
-        _state          = ShooterState.Idle;
-        _targetVelocity = RPM.of(0);
+        _state = ShooterState.Idle;
+        _flywheel.stop();
     }
 
     public void fire()
@@ -134,5 +141,16 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Firing;
         }
+    }
+
+    public void pass()
+    {
+        if (_state != ShooterState.Firing)
+        {
+            _hood.setHoodPosition(HoodPosition.Pass);
+        }
+
+        _flywheel.setVelocity(ShooterConstants.PASS_FLYWHEEL_VELOCITY);
+        _state = ShooterState.Priming;
     }
 }
