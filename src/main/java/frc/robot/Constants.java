@@ -121,9 +121,8 @@ public final class Constants
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
 
         // Hood (VictorSPX with analog potentiometer)
-        public static final int           HOOD_ANALOG_INPUT = 0;     // AIO port for potentiometer
-        public static final double        HOOD_KP           = 3.0; // From Sidewinder
-        public static final double        HOOD_KI           = 0.0; // From Sidewinder
+        public static final double        HOOD_KP           = 3.0;
+        public static final double        HOOD_KI           = 0.0;
         public static final double        HOOD_KD           = 0.0;   // TODO: Tune
         public static final Angle         HOOD_MIN_ANGLE    = Degrees.of(0.0);   // TODO: Confirm min angle (degrees)
         public static final Angle         HOOD_MAX_ANGLE    = Degrees.of(90.0);  // TODO: Confirm max angle (degrees)
