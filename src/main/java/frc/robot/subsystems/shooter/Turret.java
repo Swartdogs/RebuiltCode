@@ -4,7 +4,9 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -82,7 +84,7 @@ public class Turret extends SubsystemBase
     @Logged
     private double                           _distanceToHubMeters;
     private TurretDirector.TagObservation    _centerTagObservation;
-    private TurretDirector.TagObservation    _leftTagObservation;
+    private TurretDirector.TagObservation    _offsetTagObservation;
     private double                           _lastWrappedRobotAngleDeg;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
@@ -102,7 +104,7 @@ public class Turret extends SubsystemBase
         _distanceToHubMeters         = 0.0;
         _cachedTagFilter             = List.of();
         _centerTagObservation        = null;
-        _leftTagObservation          = null;
+        _offsetTagObservation        = null;
         _continuousRobotAngleDeg     = 0.0;
         _continuousTurretSetpointDeg = 0.0;
         _lastWrappedRobotAngleDeg    = 0.0;
@@ -169,7 +171,7 @@ public class Turret extends SubsystemBase
 
         updateVisionData();
 
-        var                              directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _leftTagObservation);
+        var                              directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _offsetTagObservation);
         TurretDirector.TurretAimSolution aimSolution     = TurretDirector.getAimSolution(directorContext);
 
         if (!aimSolution.hasSetpoint())
@@ -293,7 +295,7 @@ public class Turret extends SubsystemBase
             _hasTarget              = false;
             _targetHorizontalOffset = Degrees.zero();
             _centerTagObservation   = null;
-            _leftTagObservation     = null;
+            _offsetTagObservation   = null;
             return;
         }
 
@@ -308,20 +310,49 @@ public class Turret extends SubsystemBase
         var targetData    = limelightData.targetData;
         _targetHorizontalOffset = Degrees.of(targetData.getHorizontalOffset());
 
-        int centerTagId = Utilities.isRedAlliance() ? ShooterConstants.RED_CENTER_TAG_ID : ShooterConstants.BLUE_CENTER_TAG_ID;
-        int leftTagId   = Utilities.isRedAlliance() ? ShooterConstants.RED_LEFT_TAG_ID : ShooterConstants.BLUE_LEFT_TAG_ID;
-
-        _centerTagObservation = null;
-        _leftTagObservation   = null;
+        boolean                                     allianceIsRed    = Utilities.isRedAlliance();
+        List<List<Integer>>                         hubPairs         = TurretDirector.getHubCenterOffsetPairs(allianceIsRed);
+        Map<Integer, TurretDirector.TagObservation> observationsById = new HashMap<>();
         for (RawFiducial fiducial : limelightData.getRawFiducials())
         {
-            if (fiducial.id == centerTagId)
+            observationsById.put(fiducial.id, new TurretDirector.TagObservation(fiducial.id, Degrees.of(fiducial.txnc), fiducial.distToRobot));
+        }
+
+        _centerTagObservation = null;
+        _offsetTagObservation = null;
+
+        double bestPairScore = Double.POSITIVE_INFINITY;
+        for (List<Integer> hubPair : hubPairs)
+        {
+            TurretDirector.TagObservation centerCandidate = observationsById.get(hubPair.get(0));
+            TurretDirector.TagObservation offsetCandidate = observationsById.get(hubPair.get(1));
+            if (centerCandidate == null || offsetCandidate == null)
             {
-                _centerTagObservation = new TurretDirector.TagObservation(fiducial.id, Degrees.of(fiducial.txnc), fiducial.distToRobot);
+                continue;
             }
-            else if (fiducial.id == leftTagId)
+
+            double pairScore = (centerCandidate.distanceMeters() + offsetCandidate.distanceMeters()) / 2.0;
+            if (pairScore < bestPairScore)
             {
-                _leftTagObservation = new TurretDirector.TagObservation(fiducial.id, Degrees.of(fiducial.txnc), fiducial.distToRobot);
+                bestPairScore         = pairScore;
+                _centerTagObservation = centerCandidate;
+                _offsetTagObservation = offsetCandidate;
+            }
+        }
+
+        if (_centerTagObservation == null)
+        {
+            double closestCenterDistance = Double.POSITIVE_INFINITY;
+            for (List<Integer> hubPair : hubPairs)
+            {
+                TurretDirector.TagObservation centerCandidate = observationsById.get(hubPair.get(0));
+                if (centerCandidate == null || centerCandidate.distanceMeters() >= closestCenterDistance)
+                {
+                    continue;
+                }
+
+                closestCenterDistance = centerCandidate.distanceMeters();
+                _centerTagObservation = centerCandidate;
             }
         }
 

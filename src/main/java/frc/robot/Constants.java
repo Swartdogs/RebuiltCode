@@ -139,22 +139,20 @@ public final class Constants
         // Dead-zone model (robot-relative):
         // - Center/width define forbidden cable-wrap sector.
         // - Width <= 0 disables dead-zone routing logic.
-        public static final double                      TURRET_DEAD_ZONE_CENTER = 180.0; // degrees (robot-relative)
-        public static final double                      TURRET_DEAD_ZONE_WIDTH  = 0.0;   // degrees; set > 0 once cable-wrap dead-zone is measured
-        public static final int                         BLUE_CENTER_TAG_ID      = 26;
-        public static final int                         BLUE_LEFT_TAG_ID        = 25;
-        public static final int                         RED_CENTER_TAG_ID       = 10;
-        public static final int                         RED_LEFT_TAG_ID         = 9;
-        public static final double                      TURRET_CL_METERS        = 0.3556; // 14.00 in
-        public static final double                      TURRET_CH_METERS        = 0.5969; // 23.50 ins
-        public static final String                      LIMELIGHT_NAME          = "limelight-shooter";
-        public static final Angle                       TURRET_PASS_TARGET      = Degrees.of(180.0); // TODO: Validate in driver practice
-        private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE    = InterpolatingDoubleTreeMap
+        public static final double                      TURRET_DEAD_ZONE_CENTER          = 180.0; // degrees (robot-relative)
+        public static final double                      TURRET_DEAD_ZONE_WIDTH           = 0.0;   // degrees; set > 0 once cable-wrap dead-zone is measured
+        public static final List<List<Integer>>         BLUE_HUB_CENTER_OFFSET_TAG_PAIRS = List.of(List.of(18, 27), List.of(20, 19), List.of(21, 24), List.of(26, 25));
+        public static final List<List<Integer>>         RED_HUB_CENTER_OFFSET_TAG_PAIRS  = List.of(List.of(2, 11), List.of(4, 3), List.of(5, 8), List.of(10, 9));
+        public static final double                      TURRET_CL_METERS                 = 0.3556; // 14.00 in
+        public static final double                      TURRET_CH_METERS                 = 0.5969; // 23.50 ins
+        public static final String                      LIMELIGHT_NAME                   = "limelight-shooter";
+        public static final Angle                       TURRET_PASS_TARGET               = Degrees.of(180.0); // TODO: Validate in driver practice
+        private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE             = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
-        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE        = InterpolatingDoubleTreeMap
+        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE                 = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 20.0), Map.entry(2.0, 15.0), Map.entry(3.5, 22.0), Map.entry(5.0, 30.0), Map.entry(6.5, 38.0), Map.entry(7.0, 45.0));
-        public static final List<Integer>               BLUE_HUB_TAG_IDS        = List.of(2, 3, 4, 5, 8, 9, 10, 11);
-        public static final List<Integer>               RED_HUB_TAG_IDS         = List.of(18, 19, 20, 21, 24, 25, 26, 27);
+        public static final List<Integer>               BLUE_HUB_TAG_IDS                 = List.of(18, 19, 20, 21, 24, 25, 26, 27);
+        public static final List<Integer>               RED_HUB_TAG_IDS                  = List.of(2, 3, 4, 5, 8, 9, 10, 11);
 
         // Feeder
         public static final int    FEEDER_CURRENT_LIMIT = 60;

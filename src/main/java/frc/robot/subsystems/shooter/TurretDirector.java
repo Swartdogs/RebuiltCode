@@ -2,6 +2,8 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Degrees;
 
+import java.util.List;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.Constants.ShooterConstants;
@@ -11,6 +13,15 @@ public final class TurretDirector
 {
     private TurretDirector()
     {
+    }
+
+    public static List<List<Integer>> getHubCenterOffsetPairs(boolean isRedAlliance)
+    {
+        if (isRedAlliance)
+        {
+            return ShooterConstants.RED_HUB_CENTER_OFFSET_TAG_PAIRS;
+        }
+        return ShooterConstants.BLUE_HUB_CENTER_OFFSET_TAG_PAIRS;
     }
 
     public static TurretAimSolution getAimSolution(DirectorContext context)
@@ -25,9 +36,9 @@ public final class TurretDirector
 
     private static TurretAimSolution getTrackSolution(DirectorContext context)
     {
-        if (context.centerTagObservation() != null && context.leftTagObservation() != null)
+        if (context.centerTagObservation() != null && context.offsetTagObservation() != null)
         {
-            TriangulationResult triangulation = triangulate(context.centerTagObservation(), context.leftTagObservation());
+            TriangulationResult triangulation = triangulate(context.centerTagObservation(), context.offsetTagObservation());
             if (triangulation.valid())
             {
                 return TurretAimSolution.of(context.currentFieldAngle().plus(Degrees.of(triangulation.relativeAngleDeg())), triangulation.distanceMeters());
@@ -46,7 +57,7 @@ public final class TurretDirector
     /**
      * Solves for robot-to-hub angle and distance using two known triangles.
      * <p>
-     * Triangle R-C-L: Robot (R), center tag (C), left tag (L). We know RC and RL
+     * Triangle R-C-O: Robot (R), center tag (C), offset tag (O). We know RC and RO
      * from vision and CL from field drawings (TURRET_CL_METERS). Law of sines gives
      * angle at C.
      * <p>
@@ -55,17 +66,17 @@ public final class TurretDirector
      * R→C to R→H. We add the camera-to-center-tag angle (tx) to get full
      * robot-frame angle to hub.
      */
-    private static TriangulationResult triangulate(TagObservation centerTagObservation, TagObservation leftTagObservation)
+    private static TriangulationResult triangulate(TagObservation centerTagObservation, TagObservation offsetTagObservation)
     {
         double rcDistanceMeters = centerTagObservation.distanceMeters();
-        double rlDistanceMeters = leftTagObservation.distanceMeters();
-        if (rcDistanceMeters <= 0.0 || rlDistanceMeters <= 0.0)
+        double roDistanceMeters = offsetTagObservation.distanceMeters();
+        if (rcDistanceMeters <= 0.0 || roDistanceMeters <= 0.0)
         {
             return TriangulationResult.invalid();
         }
 
-        double angleLrcRad = Math.toRadians(leftTagObservation.horizontalOffset().in(Degrees) - centerTagObservation.horizontalOffset().in(Degrees));
-        double sinLcr      = (rlDistanceMeters * Math.sin(angleLrcRad)) / ShooterConstants.TURRET_CL_METERS;
+        double angleLrcRad = Math.toRadians(offsetTagObservation.horizontalOffset().in(Degrees) - centerTagObservation.horizontalOffset().in(Degrees));
+        double sinLcr      = (roDistanceMeters * Math.sin(angleLrcRad)) / ShooterConstants.TURRET_CL_METERS;
         double angleLcrRad = Math.asin(MathUtil.clamp(sinLcr, -1.0, 1.0));
 
         double angleLcrPlusNinetyRad = angleLcrRad + Math.PI / 2.0;
@@ -89,7 +100,7 @@ public final class TurretDirector
         return TriangulationResult.valid(angleRhDeg, rhDistanceMeters);
     }
 
-    public record DirectorContext(TurretState turretState, Angle currentFieldAngle, Angle robotHeading, Angle horizontalOffset, boolean hasTarget, TagObservation centerTagObservation, TagObservation leftTagObservation)
+    public record DirectorContext(TurretState turretState, Angle currentFieldAngle, Angle robotHeading, Angle horizontalOffset, boolean hasTarget, TagObservation centerTagObservation, TagObservation offsetTagObservation)
     {
     }
 
