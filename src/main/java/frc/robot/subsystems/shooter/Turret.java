@@ -50,12 +50,12 @@ public class Turret extends SubsystemBase
     private final TalonFX                    _turretMotor;
     private final TalonFXSimState            _turretMotorSim;
     private final DCMotorSim                 _motorSimModel;
+    private final AnalogInput                _turretSensorInput;
     private final AnalogPotentiometer        _turretSensor;
     private final AnalogInputSim             _turretSensorSim;
     private final Limelight                  _limelight;
     private final Supplier<SwerveDriveState> _swerveStateSupplier;
     private final PositionVoltage            _positionRequest = new PositionVoltage(0).withSlot(0);
-    private final TurretDirector             _turretDirector  = new TurretDirector();
     private List<Integer>                    _cachedTagFilter;
     private final Angle                      _defaultSetpoint = Degrees.of(ShooterConstants.TURRET_HOME_ANGLE);
     private SwerveDriveState                 _swerveDriveState;
@@ -63,6 +63,10 @@ public class Turret extends SubsystemBase
     private Angle                            _fieldTurretAngle;
     @Logged
     private Angle                            _robotTurretAngle;
+    @Logged
+    private double                           _continuousRobotAngleDeg;
+    @Logged
+    private double                           _continuousTurretSetpointDeg;
     @Logged
     private Angle                            _turretSetpoint;
     @Logged
@@ -77,8 +81,9 @@ public class Turret extends SubsystemBase
     private Angle                            _targetHorizontalOffset;
     @Logged
     private double                           _distanceToHubMeters;
-    private TagObservation                   _centerTagObservation;
-    private TagObservation                   _leftTagObservation;
+    private TurretDirector.TagObservation    _centerTagObservation;
+    private TurretDirector.TagObservation    _leftTagObservation;
+    private double                           _lastWrappedRobotAngleDeg;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -86,18 +91,21 @@ public class Turret extends SubsystemBase
         _swerveStateSupplier = swerveStateSupplier;
         _swerveDriveState    = new SwerveDriveState();
 
-        _fieldTurretAngle       = Degrees.zero();
-        _robotTurretAngle       = Degrees.zero();
-        _turretSetpoint         = _defaultSetpoint;
-        _hasSetpoint            = false;
-        _turretMotorVoltage     = Volts.zero();
-        _turretState            = TurretState.Idle;
-        _hasTarget              = false;
-        _targetHorizontalOffset = Degrees.zero();
-        _distanceToHubMeters    = 0.0;
-        _cachedTagFilter        = List.of();
-        _centerTagObservation   = null;
-        _leftTagObservation     = null;
+        _fieldTurretAngle            = Degrees.zero();
+        _robotTurretAngle            = Degrees.zero();
+        _turretSetpoint              = _defaultSetpoint;
+        _hasSetpoint                 = false;
+        _turretMotorVoltage          = Volts.zero();
+        _turretState                 = TurretState.Idle;
+        _hasTarget                   = false;
+        _targetHorizontalOffset      = Degrees.zero();
+        _distanceToHubMeters         = 0.0;
+        _cachedTagFilter             = List.of();
+        _centerTagObservation        = null;
+        _leftTagObservation          = null;
+        _continuousRobotAngleDeg     = 0.0;
+        _continuousTurretSetpointDeg = 0.0;
+        _lastWrappedRobotAngleDeg    = 0.0;
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT;
@@ -114,8 +122,8 @@ public class Turret extends SubsystemBase
 
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0Configs));
 
-        AnalogInput turretSensorInput = new AnalogInput(AIOConstants.TURRET_POTENTIOMETER);
-        _turretSensor = new AnalogPotentiometer(turretSensorInput, ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MIN_ANGLE);
+        _turretSensorInput = new AnalogInput(AIOConstants.TURRET_POTENTIOMETER);
+        _turretSensor      = new AnalogPotentiometer(_turretSensorInput, getTurretPotFullRange(), getTurretPotOffset());
         syncMotorEncoderToPotentiometer();
 
         if (RobotBase.isReal())
@@ -129,7 +137,7 @@ public class Turret extends SubsystemBase
         {
             _limelight       = null;
             _turretMotorSim  = _turretMotor.getSimState();
-            _turretSensorSim = new AnalogInputSim(turretSensorInput);
+            _turretSensorSim = new AnalogInputSim(_turretSensorInput);
             var gearbox = DCMotor.getKrakenX44(1);
             _motorSimModel = new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.001, ShooterConstants.TURRET_GEAR_RATIO), gearbox);
         }
@@ -154,13 +162,15 @@ public class Turret extends SubsystemBase
         }
 
         Angle robotHeading = _swerveDriveState.Pose.getRotation().getMeasure();
-        _robotTurretAngle   = Degrees.of(_turretSensor.get());
+        _robotTurretAngle = getCalibratedRobotAngle();
+        updateContinuousRobotAngle(_robotTurretAngle.in(Degrees));
         _fieldTurretAngle   = _robotTurretAngle.plus(robotHeading);
         _turretMotorVoltage = _turretMotor.getMotorVoltage().getValue();
 
         updateVisionData();
 
-        TurretAimSolution aimSolution = _turretDirector.getAimSolution(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _leftTagObservation);
+        var                              directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _leftTagObservation);
+        TurretDirector.TurretAimSolution aimSolution     = TurretDirector.getAimSolution(directorContext);
 
         if (!aimSolution.hasSetpoint())
         {
@@ -170,10 +180,11 @@ public class Turret extends SubsystemBase
 
         _distanceToHubMeters = aimSolution.distanceToHubMeters();
         Angle requestedRobotSetpoint = clampToTurretLimits(aimSolution.fieldSetpoint().minus(robotHeading));
-        _turretSetpoint = requestedRobotSetpoint;
-        _hasSetpoint    = true;
+        _continuousTurretSetpointDeg = chooseContinuousSetpoint(requestedRobotSetpoint.in(Degrees));
+        _turretSetpoint              = Degrees.of(wrapDegrees(_continuousTurretSetpointDeg));
+        _hasSetpoint                 = true;
 
-        double targetMotorRotations = _turretSetpoint.in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO;
+        double targetMotorRotations = Degrees.of(_continuousTurretSetpointDeg).in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO;
         _turretMotor.setControl(_positionRequest.withPosition(targetMotorRotations));
     }
 
@@ -198,7 +209,8 @@ public class Turret extends SubsystemBase
         double mechanismAngleDeg = _motorSimModel.getAngularPosition().in(Degrees);
         double clampedAngleDeg   = MathUtil.clamp(mechanismAngleDeg, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
         double normalized        = (clampedAngleDeg - ShooterConstants.TURRET_MIN_ANGLE) / (ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE);
-        _turretSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized);
+        double sensorVoltage     = ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS + (normalized * (ShooterConstants.TURRET_POTENTIOMETER_MAX_VOLTS - ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS));
+        _turretSensorSim.setVoltage(sensorVoltage);
     }
 
     /**
@@ -250,7 +262,7 @@ public class Turret extends SubsystemBase
             return false;
         }
 
-        return _robotTurretAngle.isNear(_turretSetpoint, Degrees.of(ShooterConstants.TURRET_TOLERANCE));
+        return Math.abs(_continuousRobotAngleDeg - _continuousTurretSetpointDeg) <= ShooterConstants.TURRET_TOLERANCE;
     }
 
     public boolean hasTarget()
@@ -305,11 +317,11 @@ public class Turret extends SubsystemBase
         {
             if (fiducial.id == centerTagId)
             {
-                _centerTagObservation = new TagObservation(fiducial.id, Degrees.of(fiducial.txnc), fiducial.distToRobot);
+                _centerTagObservation = new TurretDirector.TagObservation(fiducial.id, Degrees.of(fiducial.txnc), fiducial.distToRobot);
             }
             else if (fiducial.id == leftTagId)
             {
-                _leftTagObservation = new TagObservation(fiducial.id, Degrees.of(fiducial.txnc), fiducial.distToRobot);
+                _leftTagObservation = new TurretDirector.TagObservation(fiducial.id, Degrees.of(fiducial.txnc), fiducial.distToRobot);
             }
         }
 
@@ -318,9 +330,10 @@ public class Turret extends SubsystemBase
 
     private void stopTurret()
     {
-        _hasSetpoint         = false;
-        _turretSetpoint      = _defaultSetpoint;
-        _distanceToHubMeters = 0.0;
+        _hasSetpoint                 = false;
+        _turretSetpoint              = _defaultSetpoint;
+        _continuousTurretSetpointDeg = _continuousRobotAngleDeg;
+        _distanceToHubMeters         = 0.0;
         _turretMotor.setVoltage(0.0);
     }
 
@@ -331,199 +344,122 @@ public class Turret extends SubsystemBase
 
     private void syncMotorEncoderToPotentiometer()
     {
-        Angle  sensorAngle    = clampToTurretLimits(Degrees.of(_turretSensor.get()));
-        double motorRotations = sensorAngle.in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO;
+        Angle sensorAngle = getCalibratedRobotAngle();
+        _robotTurretAngle            = sensorAngle;
+        _lastWrappedRobotAngleDeg    = sensorAngle.in(Degrees);
+        _continuousRobotAngleDeg     = _lastWrappedRobotAngleDeg;
+        _continuousTurretSetpointDeg = _continuousRobotAngleDeg;
+
+        double motorRotations = Degrees.of(_continuousRobotAngleDeg).in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO;
         _turretMotor.setPosition(motorRotations);
     }
 
-    /**
-     * The TurretDirector is responsible for choosing a target for the robot to aim
-     * at and communicating the desired turret angle in field-relative space back to
-     * the main Turret subsystem.
-     */
-    private static class TurretDirector
+    private Angle getCalibratedRobotAngle()
     {
-        public TurretAimSolution getAimSolution(TurretState turretState, Angle currentFieldAngle, Angle robotHeading, Angle horizontalOffset, boolean hasTarget, TagObservation centerTagObservation, TagObservation leftTagObservation)
-        {
-            return switch (turretState)
-            {
-                case Idle -> TurretAimSolution.none();
-                case Track -> getTrackSolution(currentFieldAngle, robotHeading, horizontalOffset, hasTarget, centerTagObservation, leftTagObservation);
-                case Pass -> TurretAimSolution.of(ShooterConstants.TURRET_PASS_TARGET, 0.0);
-            };
-        }
-
-        private TurretAimSolution getTrackSolution(Angle currentFieldAngle, Angle robotHeading, Angle horizontalOffset, boolean hasTarget, TagObservation centerTagObservation, TagObservation leftTagObservation)
-        {
-            if (centerTagObservation != null && leftTagObservation != null)
-            {
-                TriangulationResult triangulation = triangulate(centerTagObservation, leftTagObservation);
-                if (triangulation.valid())
-                {
-                    return TurretAimSolution.of(currentFieldAngle.plus(Degrees.of(triangulation.relativeAngleDeg())), triangulation.distanceMeters());
-                }
-            }
-
-            if (hasTarget)
-            {
-                double fallbackDistance = centerTagObservation == null ? 0.0 : centerTagObservation.distanceMeters();
-                return TurretAimSolution.of(currentFieldAngle.plus(horizontalOffset), fallbackDistance);
-            }
-
-            return TurretAimSolution.of(robotHeading.plus(Degrees.of(ShooterConstants.TURRET_HOME_ANGLE)), 0.0);
-        }
-
-        /**
-         * Solves for robot-to-hub angle and distance using two known triangles.
-         * <p>
-         * Triangle R-C-L: Robot (R), center tag (C), left tag (L). We know RC and RL
-         * from vision and CL from field drawings (TURRET_CL_METERS). Law of sines gives
-         * angle at C.
-         * <p>
-         * Triangle R-C-H: Hub center (H) is TURRET_CH_METERS from C (field drawing).
-         * Law of cosines gives RH (distance to hub). Law of sines gives angle at R from
-         * R→C to R→H. We add the camera-to-center-tag angle (tx) to get full
-         * robot-frame angle to hub.
-         */
-        private TriangulationResult triangulate(TagObservation centerTagObservation, TagObservation leftTagObservation)
-        {
-            double rcDistanceMeters = centerTagObservation.distanceMeters();
-            double rlDistanceMeters = leftTagObservation.distanceMeters();
-            if (rcDistanceMeters <= 0.0 || rlDistanceMeters <= 0.0)
-            {
-                return TriangulationResult.invalid();
-            }
-
-            double angleLrcRad = Math.toRadians(leftTagObservation.horizontalOffset().in(Degrees) - centerTagObservation.horizontalOffset().in(Degrees));
-            double sinLcr      = (rlDistanceMeters * Math.sin(angleLrcRad)) / ShooterConstants.TURRET_CL_METERS;
-            double angleLcrRad = Math.asin(MathUtil.clamp(sinLcr, -1.0, 1.0));
-
-            double angleLcrPlusNinetyRad = angleLcrRad + Math.PI / 2.0;
-            double rhSquared             = (rcDistanceMeters * rcDistanceMeters) + (ShooterConstants.TURRET_CH_METERS * ShooterConstants.TURRET_CH_METERS)
-                    - (2.0 * rcDistanceMeters * ShooterConstants.TURRET_CH_METERS * Math.cos(angleLcrPlusNinetyRad));
-            if (rhSquared <= 0.0 || !Double.isFinite(rhSquared))
-            {
-                return TriangulationResult.invalid();
-            }
-
-            double rhDistanceMeters = Math.sqrt(rhSquared);
-            double sinHrc           = (ShooterConstants.TURRET_CH_METERS * Math.sin(angleLcrPlusNinetyRad)) / rhDistanceMeters;
-            double angleHrcDeg      = Math.toDegrees(Math.asin(MathUtil.clamp(sinHrc, -1.0, 1.0)));
-
-            double angleRhDeg = angleHrcDeg + centerTagObservation.horizontalOffset().in(Degrees);
-            if (!Double.isFinite(angleRhDeg))
-            {
-                return TriangulationResult.invalid();
-            }
-
-            return TriangulationResult.valid(angleRhDeg, rhDistanceMeters);
-        }
+        return clampToTurretLimits(Degrees.of(_turretSensor.get()));
     }
 
-    private static class TurretAimSolution
+    private void updateContinuousRobotAngle(double wrappedAngleDeg)
     {
-        private final boolean _hasSetpoint;
-        private final Angle   _fieldSetpoint;
-        private final double  _distanceToHubMeters;
-
-        private TurretAimSolution(boolean hasSetpoint, Angle fieldSetpoint, double distanceToHubMeters)
-        {
-            _hasSetpoint         = hasSetpoint;
-            _fieldSetpoint       = fieldSetpoint;
-            _distanceToHubMeters = distanceToHubMeters;
-        }
-
-        public static TurretAimSolution none()
-        {
-            return new TurretAimSolution(false, Degrees.zero(), 0.0);
-        }
-
-        public static TurretAimSolution of(Angle fieldSetpoint, double distanceToHubMeters)
-        {
-            return new TurretAimSolution(true, fieldSetpoint, distanceToHubMeters);
-        }
-
-        public boolean hasSetpoint()
-        {
-            return _hasSetpoint;
-        }
-
-        public Angle fieldSetpoint()
-        {
-            return _fieldSetpoint;
-        }
-
-        public double distanceToHubMeters()
-        {
-            return _distanceToHubMeters;
-        }
+        double delta = MathUtil.inputModulus(wrappedAngleDeg - _lastWrappedRobotAngleDeg, -180.0, 180.0);
+        _continuousRobotAngleDeg  += delta;
+        _lastWrappedRobotAngleDeg  = wrappedAngleDeg;
     }
 
-    private static class TriangulationResult
+    private double chooseContinuousSetpoint(double requestedWrappedSetpointDeg)
     {
-        private final boolean _valid;
-        private final double  _relativeAngleDeg;
-        private final double  _distanceMeters;
+        requestedWrappedSetpointDeg = moveSetpointOutOfDeadZone(requestedWrappedSetpointDeg);
+        double currentWrappedDeg = wrapDegrees(_continuousRobotAngleDeg);
+        double shortestDelta     = MathUtil.inputModulus(requestedWrappedSetpointDeg - currentWrappedDeg, -180.0, 180.0);
+        double alternateDelta    = shortestDelta > 0.0 ? shortestDelta - 360.0 : shortestDelta + 360.0;
 
-        private TriangulationResult(boolean valid, double relativeAngleDeg, double distanceMeters)
+        if (!pathCrossesDeadZone(currentWrappedDeg, shortestDelta))
         {
-            _valid            = valid;
-            _relativeAngleDeg = relativeAngleDeg;
-            _distanceMeters   = distanceMeters;
+            return _continuousRobotAngleDeg + shortestDelta;
         }
 
-        public static TriangulationResult invalid()
+        if (!pathCrossesDeadZone(currentWrappedDeg, alternateDelta))
         {
-            return new TriangulationResult(false, 0.0, 0.0);
+            return _continuousRobotAngleDeg + alternateDelta;
         }
 
-        public static TriangulationResult valid(double relativeAngleDeg, double distanceMeters)
-        {
-            return new TriangulationResult(true, relativeAngleDeg, distanceMeters);
-        }
-
-        public boolean valid()
-        {
-            return _valid;
-        }
-
-        public double relativeAngleDeg()
-        {
-            return _relativeAngleDeg;
-        }
-
-        public double distanceMeters()
-        {
-            return _distanceMeters;
-        }
+        return _continuousRobotAngleDeg;
     }
 
-    private static class TagObservation
+    private double moveSetpointOutOfDeadZone(double requestedWrappedSetpointDeg)
     {
-        private final int    _id;
-        private final Angle  _horizontalOffset;
-        private final double _distanceMeters;
-
-        private TagObservation(int id, Angle horizontalOffset, double distanceMeters)
+        if (ShooterConstants.TURRET_DEAD_ZONE_WIDTH <= 0.0 || !isInDeadZone(requestedWrappedSetpointDeg))
         {
-            _id               = id;
-            _horizontalOffset = horizontalOffset;
-            _distanceMeters   = distanceMeters;
+            return requestedWrappedSetpointDeg;
         }
 
-        public int id()
+        double deadZoneCenter = wrapDegrees(ShooterConstants.TURRET_DEAD_ZONE_CENTER);
+        double halfWidth      = ShooterConstants.TURRET_DEAD_ZONE_WIDTH / 2.0;
+        double leftEdge       = wrapDegrees(deadZoneCenter - halfWidth);
+        double rightEdge      = wrapDegrees(deadZoneCenter + halfWidth);
+        double leftDelta      = Math.abs(MathUtil.inputModulus(requestedWrappedSetpointDeg - leftEdge, -180.0, 180.0));
+        double rightDelta     = Math.abs(MathUtil.inputModulus(requestedWrappedSetpointDeg - rightEdge, -180.0, 180.0));
+
+        return leftDelta <= rightDelta ? leftEdge : rightEdge;
+    }
+
+    private boolean pathCrossesDeadZone(double startWrappedDeg, double deltaDeg)
+    {
+        if (ShooterConstants.TURRET_DEAD_ZONE_WIDTH <= 0.0)
         {
-            return _id;
+            return false;
         }
 
-        public Angle horizontalOffset()
+        if (Math.abs(deltaDeg) <= 1e-9)
         {
-            return _horizontalOffset;
+            return isInDeadZone(startWrappedDeg);
         }
 
-        public double distanceMeters()
+        double zoneCenter   = wrapDegrees(ShooterConstants.TURRET_DEAD_ZONE_CENTER);
+        double halfWidth    = ShooterConstants.TURRET_DEAD_ZONE_WIDTH / 2.0;
+        double endUnwrapped = startWrappedDeg + deltaDeg;
+
+        double startExclusive = deltaDeg > 0.0 ? Math.nextUp(startWrappedDeg) : Math.nextDown(startWrappedDeg);
+        double low            = Math.min(startExclusive, endUnwrapped);
+        double high           = Math.max(startExclusive, endUnwrapped);
+
+        // Exact interval intersection against periodic dead-zone copies (center+360k),
+        // which is robust across +/-180 wrap boundaries.
+        int kMin = (int)Math.floor((low - zoneCenter) / 360.0) - 1;
+        int kMax = (int)Math.ceil((high - zoneCenter) / 360.0) + 1;
+        for (int k = kMin; k <= kMax; k++)
         {
-            return _distanceMeters;
+            double centerK      = zoneCenter + (360.0 * k);
+            double intervalLow  = centerK - halfWidth;
+            double intervalHigh = centerK + halfWidth;
+            if (intervalHigh >= low && intervalLow <= high)
+            {
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    private boolean isInDeadZone(double wrappedAngleDeg)
+    {
+        double centerDelta = Math.abs(MathUtil.inputModulus(wrappedAngleDeg - ShooterConstants.TURRET_DEAD_ZONE_CENTER, -180.0, 180.0));
+        return centerDelta <= ShooterConstants.TURRET_DEAD_ZONE_WIDTH / 2.0;
+    }
+
+    private static double wrapDegrees(double angleDeg)
+    {
+        return MathUtil.inputModulus(angleDeg, -180.0, 180.0);
+    }
+
+    private static double getTurretPotFullRange()
+    {
+        return ((ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE) * GeneralConstants.SENSOR_VOLTAGE) / (ShooterConstants.TURRET_POTENTIOMETER_MAX_VOLTS - ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS);
+    }
+
+    private static double getTurretPotOffset()
+    {
+        double fullRange = getTurretPotFullRange();
+        return ShooterConstants.TURRET_MIN_ANGLE - ((ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS / GeneralConstants.SENSOR_VOLTAGE) * fullRange) + ShooterConstants.TURRET_POTENTIOMETER_ZERO_OFFSET_DEG;
     }
 }

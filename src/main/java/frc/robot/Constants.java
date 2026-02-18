@@ -120,30 +120,41 @@ public final class Constants
         public static final double HOOD_SIM_MAX_SPEED  = 45.0; // TODO: compute from motor free speed and hood gear ratio
 
         // Turret
-        public static final double                      TURRET_CURRENT_LIMIT = 40.0;
-        public static final double                      TURRET_KP            = 2.4;   // TODO: Tune
-        public static final double                      TURRET_KI            = 0.0;
-        public static final double                      TURRET_KD            = 0.1;
-        public static final double                      TURRET_GEAR_RATIO    = 13.0;
-        public static final double                      TURRET_MIN_ANGLE     = -180.0; // degrees (full 360° rotation)
-        public static final double                      TURRET_MAX_ANGLE     = 180.0;  // degrees
-        public static final double                      TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
-        public static final double                      TURRET_TOLERANCE     = 2.0;   // degrees
-        public static final int                         BLUE_CENTER_TAG_ID   = 26;
-        public static final int                         BLUE_LEFT_TAG_ID     = 25;
-        public static final int                         RED_CENTER_TAG_ID    = 10;
-        public static final int                         RED_LEFT_TAG_ID      = 9;
-        public static final double                      TURRET_CL_METERS     = 0.3556; // 14.00 in from GE-26300
-                                                                                       // (https://firstfrc.blob.core.windows.net/frc2026/FieldAssets/2026-field-dimension-dwgs.pdf)
-        public static final double                      TURRET_CH_METERS     = 0.5969; // 23.50 in from GE-26300
-        public static final String                      LIMELIGHT_NAME       = "limelight-shooter";
-        public static final Angle                       TURRET_PASS_TARGET   = Degrees.of(180.0); // TODO: Validate in driver practice
-        private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap
+        public static final double TURRET_CURRENT_LIMIT = 40.0;
+        public static final double TURRET_KP            = 2.4;   // TODO: Tune
+        public static final double TURRET_KI            = 0.0;
+        public static final double TURRET_KD            = 0.1;
+        public static final double TURRET_GEAR_RATIO    = 13.0;
+        public static final double TURRET_MIN_ANGLE     = -180.0; // degrees (full 360° rotation)
+        public static final double TURRET_MAX_ANGLE     = 180.0;  // degrees
+        public static final double TURRET_HOME_ANGLE    = 0.0;   // Forward-facing when no target
+        public static final double TURRET_TOLERANCE     = 2.0;   // degrees
+        // Pot calibration model:
+        // - MIN/MAX volts are measured at conceptual turret min/max angle.
+        // - ZERO_OFFSET shifts the conceptual 0-deg heading without changing hard
+        // limits.
+        public static final double TURRET_POTENTIOMETER_MIN_VOLTS       = 0.35;  // TODO: Calibrate pot voltage at min turret angle
+        public static final double TURRET_POTENTIOMETER_MAX_VOLTS       = 4.65;  // TODO: Calibrate pot voltage at max turret angle
+        public static final double TURRET_POTENTIOMETER_ZERO_OFFSET_DEG = 0.0;   // TODO: Calibrate conceptual turret zero offset (degrees)
+        // Dead-zone model (robot-relative):
+        // - Center/width define forbidden cable-wrap sector.
+        // - Width <= 0 disables dead-zone routing logic.
+        public static final double                      TURRET_DEAD_ZONE_CENTER = 180.0; // degrees (robot-relative)
+        public static final double                      TURRET_DEAD_ZONE_WIDTH  = 0.0;   // degrees; set > 0 once cable-wrap dead-zone is measured
+        public static final int                         BLUE_CENTER_TAG_ID      = 26;
+        public static final int                         BLUE_LEFT_TAG_ID        = 25;
+        public static final int                         RED_CENTER_TAG_ID       = 10;
+        public static final int                         RED_LEFT_TAG_ID         = 9;
+        public static final double                      TURRET_CL_METERS        = 0.3556; // 14.00 in
+        public static final double                      TURRET_CH_METERS        = 0.5969; // 23.50 ins
+        public static final String                      LIMELIGHT_NAME          = "limelight-shooter";
+        public static final Angle                       TURRET_PASS_TARGET      = Degrees.of(180.0); // TODO: Validate in driver practice
+        private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE    = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 3000.0), Map.entry(2.0, 3000.0), Map.entry(3.5, 3500.0), Map.entry(5.0, 4000.0), Map.entry(6.5, 4500.0), Map.entry(7.0, 5000.0));
-        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE     = InterpolatingDoubleTreeMap
+        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE        = InterpolatingDoubleTreeMap
                 .ofEntries(Map.entry(0.0, 20.0), Map.entry(2.0, 15.0), Map.entry(3.5, 22.0), Map.entry(5.0, 30.0), Map.entry(6.5, 38.0), Map.entry(7.0, 45.0));
-        public static final List<Integer>               BLUE_HUB_TAG_IDS     = List.of(2, 3, 4, 5, 8, 9, 10, 11);
-        public static final List<Integer>               RED_HUB_TAG_IDS      = List.of(18, 19, 20, 21, 24, 25, 26, 27);
+        public static final List<Integer>               BLUE_HUB_TAG_IDS        = List.of(2, 3, 4, 5, 8, 9, 10, 11);
+        public static final List<Integer>               RED_HUB_TAG_IDS         = List.of(18, 19, 20, 21, 24, 25, 26, 27);
 
         // Feeder
         public static final int    FEEDER_CURRENT_LIMIT = 60;
