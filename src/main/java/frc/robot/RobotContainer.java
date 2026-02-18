@@ -22,8 +22,8 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
-import frc.robot.subsystems.shooter.Shooter.ShootMode;
 
 @Logged
 public class RobotContainer
@@ -81,8 +81,8 @@ public class RobotContainer
         _joystick.povLeft().onTrue(_shooter.startCmd(RPM.of(2000)));
         _joystick.povUp().onTrue(_shooter.startCmd(RPM.of(4000)));
         _joystick.povRight().onTrue(_shooter.startCmd(RPM.of(6000)));
-        _joystick.leftBumper().onTrue(_shooter.setShootModeCmd(ShootMode.Pass));
-        _joystick.rightBumper().onTrue(_shooter.setShootModeCmd(ShootMode.Shoot));
+        _joystick.leftBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Pass));
+        _joystick.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

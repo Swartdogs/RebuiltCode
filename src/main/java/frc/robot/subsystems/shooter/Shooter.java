@@ -16,11 +16,6 @@ public class Shooter extends SubsystemBase
         Idle, Preparing, Ready, Firing
     }
 
-    public enum ShootMode
-    {
-        Shoot, Pass
-    }
-
     /************
      * COMMANDS *
      ************/
@@ -39,9 +34,15 @@ public class Shooter extends SubsystemBase
         return runOnce(() -> start(velocity));
     }
 
-    public Command setShootModeCmd(ShootMode mode)
+    public Command setShootModeCmd(Hood.HoodPosition mode)
     {
-        return runOnce(() -> setShootMode(mode));
+        return runOnce(() ->
+        {
+            if (_state != ShooterState.Firing)
+            {
+                _hood.setHoodPosition(mode);
+            }
+        });
     }
 
     /*************
@@ -51,7 +52,6 @@ public class Shooter extends SubsystemBase
     private final Feeder    _feeder;
     private final Hood      _hood;
     private ShooterState    _state;
-    private ShootMode       _mode;
     private AngularVelocity _targetVelocity;
 
     public Shooter()
@@ -60,7 +60,6 @@ public class Shooter extends SubsystemBase
         _feeder         = new Feeder();
         _hood           = new Hood();
         _state          = ShooterState.Idle;
-        _mode           = ShootMode.Shoot;
         _targetVelocity = RPM.zero();
 
         _hood.setHoodPosition(HoodPosition.Shoot);
@@ -121,10 +120,8 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Preparing;
         }
-        if (_state != ShooterState.Firing)
-        {
-            _targetVelocity = velocity;
-        }
+
+        _targetVelocity = velocity;
     }
 
     public void stop()
@@ -139,20 +136,5 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Firing;
         }
-    }
-
-    public void setShootMode(ShootMode mode)
-    {
-        if (_state == ShooterState.Firing)
-        {
-            return;
-        }
-        _mode = mode;
-
-        _hood.setHoodPosition(switch (_mode)
-        {
-            case Pass -> HoodPosition.Pass;
-            case Shoot -> HoodPosition.Shoot;
-        });
     }
 }
