@@ -108,8 +108,6 @@ public class Shooter extends SubsystemBase
     @Override
     public void simulationPeriodic()
     {
-        // Feeder has no simulation periodic
-        // _feeder.simulationPeriodic();
         _flywheel.simulationPeriodic();
         _hood.simulationPeriodic();
     }
