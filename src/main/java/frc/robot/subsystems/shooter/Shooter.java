@@ -10,6 +10,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.shooter.Hood.HoodPosition;
 
 @Logged
 public class Shooter extends SubsystemBase
@@ -24,17 +25,51 @@ public class Shooter extends SubsystemBase
         Shoot, Pass
     }
 
+    /************
+     * COMMANDS *
+     ************/
+    public Command fireCmd()
+    {
+        return runOnce(this::fire);
+    }
+
+    public Command stopCmd()
+    {
+        return runOnce(this::stop);
+    }
+
+    public Command startCmd(AngularVelocity velocity)
+    {
+        return runOnce(() -> start(velocity));
+    }
+
+    public Command setShootModeCmd(ShootMode mode)
+    {
+        return runOnce(() -> setShootMode(mode));
+    }
+
+    /*************
+     * SUBSYSTEM *
+     *************/
     private final Flywheel  _flywheel;
     private final Feeder    _feeder;
+    private final Hood      _hood;
     private ShooterState    _state;
+    private ShootMode       _mode;
     private AngularVelocity _targetVelocity;
 
     public Shooter()
     {
         _flywheel       = new Flywheel();
         _feeder         = new Feeder();
+        _hood           = new Hood();
         _state          = ShooterState.Idle;
+        _mode           = ShootMode.Shoot;
         _targetVelocity = RPM.zero();
+
+        _hood.setHoodPosition(HoodPosition.Shoot);
+        _feeder.set(false);
+        _flywheel.stop();
     }
 
     @Override
@@ -72,6 +107,7 @@ public class Shooter extends SubsystemBase
         }
         _flywheel.periodic();
         _feeder.periodic();
+        _hood.periodic();
     }
 
     @Override
@@ -80,6 +116,7 @@ public class Shooter extends SubsystemBase
         // Feeder has no simulation periodic
         // _feeder.simulationPeriodic();
         _flywheel.simulationPeriodic();
+        _hood.simulationPeriodic();
     }
 
     public void start(AngularVelocity velocity)
@@ -108,18 +145,18 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    public Command fireCmd()
+    public void setShootMode(ShootMode mode)
     {
-        return runOnce(this::fire);
-    }
+        if (_state == ShooterState.Firing)
+        {
+            return;
+        }
+        _mode = mode;
 
-    public Command stopCmd()
-    {
-        return runOnce(this::stop);
-    }
-
-    public Command startCmd(AngularVelocity velocity)
-    {
-        return runOnce(() -> start(velocity));
+        _hood.setHoodPosition(switch (_mode)
+        {
+            case Pass -> HoodPosition.Pass;
+            case Shoot -> HoodPosition.Shoot;
+        });
     }
 }
