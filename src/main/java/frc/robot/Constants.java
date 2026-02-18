@@ -110,15 +110,16 @@ public final class Constants
     public static class ShooterConstants
     {
         // Flywheel
-        public static final double                                    FLYWHEEL_KP            = 0.0001; // TODO: Tune
-        public static final double                                    FLYWHEEL_KI            = 0.0;    // TODO: Tune
-        public static final double                                    FLYWHEEL_KD            = 0.0;
-        public static final Voltage                                   FLYWHEEL_KS            = Volts.of(0.0);            // TODO: Tune - static friction voltage
-        public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KV            = Volts.of(12.0).div(RPM.of(6784.0));
-        public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA            = Volts.of(0).per(RotationsPerSecondPerSecond);            // TODO: Tune - acceleration voltage
-        public static final Dimensionless                             FLYWHEEL_TOLERANCE     = Percent.of(15);
-        public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
-        public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
+        public static final double                                    FLYWHEEL_KP                  = 0.0001; // TODO: Tune
+        public static final double                                    FLYWHEEL_KI                  = 0.0;    // TODO: Tune
+        public static final double                                    FLYWHEEL_KD                  = 0.0;
+        public static final Voltage                                   FLYWHEEL_KS                  = Volts.of(0.0);            // TODO: Tune - static friction voltage
+        public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KV                  = Volts.of(12.0).div(RPM.of(6784.0));
+        public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA                  = Volts.of(0).per(RotationsPerSecondPerSecond);            // TODO: Tune - acceleration voltage
+        public static final Dimensionless                             FLYWHEEL_TOLERANCE           = Percent.of(15);
+        public static final Current                                   FLYWHEEL_CURRENT_LIMIT       = Amps.of(60);
+        public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY       = RPM.of(3000.0); // TODO: Tune
+        public static final AngularVelocity                           MAX_PASS_VELOCITY_ADJUSTMENT = RPM.of(1000.0); // TODO:Tune
 
         // Hood (VictorSPX with analog potentiometer)
         public static final double        HOOD_KP          = 3.0;

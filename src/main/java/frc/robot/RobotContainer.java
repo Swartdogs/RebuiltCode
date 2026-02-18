@@ -11,6 +11,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -37,7 +38,7 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter();
+    private final Shooter                        _shooter    = new Shooter(() -> MathUtil.applyDeadband(-_joystick.getLeftY(), DriveConstants.DEADBAND.in(Value)));
 
     public RobotContainer()
     {

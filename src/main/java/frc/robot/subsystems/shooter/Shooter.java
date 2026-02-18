@@ -1,5 +1,10 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
+
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -52,21 +57,30 @@ public class Shooter extends SubsystemBase
     /*************
      * SUBSYSTEM *
      *************/
-    private final Flywheel _flywheel;
-    private final Feeder   _feeder;
-    private final Hood     _hood;
-    private ShooterState   _state;
+    private final Flywheel  _flywheel;
+    private final Feeder    _feeder;
+    private final Hood      _hood;
+    private ShooterState    _state;
+    private DoubleSupplier  _velocityAdjustmentFunc;
+    private AngularVelocity _targetVelocity;
 
-    public Shooter()
+    public Shooter(DoubleSupplier velocityAdjustmentFunc)
     {
-        _flywheel = new Flywheel();
-        _feeder   = new Feeder();
-        _hood     = new Hood();
-        _state    = ShooterState.Idle;
+        _flywheel               = new Flywheel();
+        _feeder                 = new Feeder();
+        _hood                   = new Hood();
+        _state                  = ShooterState.Idle;
+        _velocityAdjustmentFunc = velocityAdjustmentFunc;
+        _targetVelocity         = RPM.zero();
 
         _hood.setHoodPosition(HoodPosition.Shoot);
         _feeder.set(false);
         _flywheel.stop();
+    }
+
+    public Shooter()
+    {
+        this(() -> 0.0);
     }
 
     @Override
@@ -75,6 +89,7 @@ public class Shooter extends SubsystemBase
         switch (_state)
         {
             case Preparing:
+                _flywheel.setVelocity(getDesiredVelocity());
                 _feeder.set(false);
                 if (_flywheel.atSpeed() && _hood.atSetpoint())
                 {
@@ -83,6 +98,7 @@ public class Shooter extends SubsystemBase
                 break;
 
             case Priming:
+                _flywheel.setVelocity(getDesiredVelocity());
                 _feeder.set(false);
                 if (_flywheel.atSpeed() && _hood.atSetpoint())
                 {
@@ -91,6 +107,7 @@ public class Shooter extends SubsystemBase
                 break;
 
             case Ready:
+                _flywheel.setVelocity(getDesiredVelocity());
                 _feeder.set(false);
                 if (!_flywheel.atSpeed())
                 {
@@ -99,6 +116,7 @@ public class Shooter extends SubsystemBase
                 break;
 
             case Firing:
+                _flywheel.setVelocity(getDesiredVelocity());
                 _feeder.set(true);
                 break;
             case Idle:
@@ -126,13 +144,13 @@ public class Shooter extends SubsystemBase
             _state = ShooterState.Preparing;
         }
 
-        _flywheel.setVelocity(velocity);
+        _targetVelocity = velocity;
     }
 
     public void stop()
     {
-        _state = ShooterState.Idle;
-        _flywheel.stop();
+        _state          = ShooterState.Idle;
+        _targetVelocity = RPM.zero();
     }
 
     public void fire()
@@ -143,6 +161,21 @@ public class Shooter extends SubsystemBase
         }
     }
 
+    private AngularVelocity getDesiredVelocity()
+    {
+        if (_hood.getHoodPosition() == HoodPosition.Pass)
+        {
+            return getPassVelocity();
+        }
+
+        return _targetVelocity;
+    }
+
+    private AngularVelocity getPassVelocity()
+    {
+        return ShooterConstants.PASS_FLYWHEEL_VELOCITY.plus(ShooterConstants.MAX_PASS_VELOCITY_ADJUSTMENT.times(_velocityAdjustmentFunc.getAsDouble()));
+    }
+
     public void pass()
     {
         if (_state != ShooterState.Firing)
@@ -150,7 +183,6 @@ public class Shooter extends SubsystemBase
             _hood.setHoodPosition(HoodPosition.Pass);
         }
 
-        _flywheel.setVelocity(ShooterConstants.PASS_FLYWHEEL_VELOCITY);
         _state = ShooterState.Priming;
     }
 }
