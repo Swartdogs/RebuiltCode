@@ -13,8 +13,6 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.DutyCycleEncoderSim;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.epilogue.Logged;
 
 import frc.robot.Constants.GeneralConstants;
@@ -26,7 +24,7 @@ import frc.robot.util.MeasureUtil;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
 @Logged
-public class Hood extends SubsystemBase
+public class Hood
 {
     public enum HoodPosition
     {
@@ -86,7 +84,6 @@ public class Hood extends SubsystemBase
         }
     }
 
-    @Override
     public void periodic()
     {
         _hoodMotorVoltage = Volts.of(_hoodMotor.getMotorOutputVoltage());
@@ -110,7 +107,6 @@ public class Hood extends SubsystemBase
         }
     }
 
-    @Override
     public void simulationPeriodic()
     {
         var percentOutput = Volts.of(_hoodMotor.getMotorOutputVoltage()).div(GeneralConstants.MOTOR_VOLTAGE);
@@ -152,15 +148,5 @@ public class Hood extends SubsystemBase
     public HoodPosition getHoodPosition()
     {
         return _hoodPosition;
-    }
-
-    public Command getSetPositionCmd(HoodPosition hoodPosition)
-    {
-        return runOnce(() -> setHoodPosition(hoodPosition));
-    }
-
-    public Command getStopCmd()
-    {
-        return runOnce(this::stop);
     }
 }

@@ -4,6 +4,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -17,12 +18,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.shooter.Feeder;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
 
 @Logged
@@ -37,9 +37,7 @@ public class RobotContainer
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    // private final Shooter _shooter = new Shooter();
-    private final Feeder  _feeder  = new Feeder();
-    private final Shooter _shooter = new Shooter();
+    private final Shooter                        _shooter    = new Shooter();
 
     public RobotContainer()
     {
@@ -76,28 +74,15 @@ public class RobotContainer
         _joystick.start().and(_joystick.x()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // Reset the field-centric heading on left bumper press.
-        _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+        _joystick.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
-        _joystick.povUp().whileTrue(_feeder.getForwardCmd());
-        _joystick.rightStick().onTrue(_feeder.getstopCmd());
-        _joystick.rightBumper().whileTrue(_intake.startRollers());
-        _joystick.rightTrigger().whileTrue(_intake.reverseRollers());
-
-        // _joystick.leftTrigger().whileTrue(_shooter.getAimCmd()); // TODO
-
-        // Temporary shooter bindings (adjust later).
-        // _joystick.x().onTrue(_shooter.getFireCmd());
-        // _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_RPM,
-        // ShooterConstants.PASS_HOOD_ANGLE_DEG));
-        // _joystick.leftStick().onTrue(_shooter.getStopCmd());
-
-        _joystick.povUp().whileTrue(_feeder.getForwardCmd());
-        _joystick.rightStick().onTrue(_feeder.getstopCmd());
-
-        // Temporary shooter bindings (adjust later).
-        _joystick.x().onTrue(_shooter.getFireCmd());
-        _joystick.y().whileTrue(_shooter.getPreparePassCmd(ShooterConstants.PASS_FLYWHEEL_VELOCITY, ShooterConstants.PASS_HOOD_ANGLE));
-        _joystick.leftStick().onTrue(_shooter.getStopCmd());
+        _joystick.rightTrigger().onTrue(_shooter.fireCmd());
+        _joystick.leftTrigger().onTrue(_shooter.stopCmd());
+        _joystick.povLeft().onTrue(_shooter.startCmd(RPM.of(2000)));
+        _joystick.povUp().onTrue(_shooter.startCmd(RPM.of(4000)));
+        _joystick.povRight().onTrue(_shooter.startCmd(RPM.of(6000)));
+        _joystick.leftBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Pass));
+        _joystick.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

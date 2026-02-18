@@ -27,26 +27,14 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
 
 @Logged
-public class Flywheel extends SubsystemBase
+public class Flywheel
 {
-    public Command stopFlywheel()
-    {
-        return runOnce(this::stop);
-    }
-
-    public Command setFlywheelVelocity(AngularVelocity velocity)
-    {
-        return runOnce(() -> setVelocity(velocity));
-    }
-
     private final SparkFlex                 _leadMotor;
     private final SparkFlex                 _followMotor;
     private final SparkClosedLoopController _closedLoopController;
@@ -98,14 +86,12 @@ public class Flywheel extends SubsystemBase
         }
     }
 
-    @Override
     public void periodic()
     {
         _velocity        = RPM.of(_flywheelEncoder.getVelocity());
         _flywheelVoltage = Volts.of(_leadMotor.getAppliedOutput() * _leadMotor.getBusVoltage());
     }
 
-    @Override
     public void simulationPeriodic()
     {
         _flywheelSim.setInputVoltage(_flywheelVoltage.in(Volts));
