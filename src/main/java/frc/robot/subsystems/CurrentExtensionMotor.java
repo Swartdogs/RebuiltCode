@@ -149,7 +149,7 @@ public class CurrentExtensionMotor extends SubsystemBase
             volts      = _extendOutput;
             _retracted = false;
         }
-        else if (finalState && _retracted)
+        else if (!finalState && !_retracted)
         {
             volts     = _retractVolts;
             _extended = false;
