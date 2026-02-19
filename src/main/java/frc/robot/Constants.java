@@ -97,6 +97,7 @@ public final class Constants
         public static final Distance                     EXTENSION_MIN_POSITION      = Inches.of(0);
         public static final Voltage                      EXTEND_VOLTS                = Volts.of(6.7);
         public static final Voltage                      RETRACT_VOLTS               = Volts.of(-6.9);
+        public static final Current                      EXTENSION_PEAK_CURRENT      = Amps.of(35.0);
     }
 
     public static class GeneralConstants

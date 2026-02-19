@@ -27,10 +27,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.subsystems.ExtensionMotor;
+import frc.robot.subsystems.CurrentExtensionMotor;
 
 @Logged
-public class Intake extends ExtensionMotor
+public class Intake extends CurrentExtensionMotor
 {
     public enum IntakeState
     {

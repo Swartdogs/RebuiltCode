@@ -74,13 +74,14 @@ public class RobotContainer
         _joystick.start().and(_joystick.x()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // Reset the field-centric heading on left bumper press.
-        _joystick.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+       // _joystick.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
         _joystick.rightTrigger().onTrue(_shooter.fireCmd());
         _joystick.leftTrigger().onTrue(_shooter.stopCmd());
-        _joystick.povLeft().onTrue(_shooter.startCmd(RPM.of(2000)));
-        _joystick.povUp().onTrue(_shooter.startCmd(RPM.of(4000)));
-        _joystick.povRight().onTrue(_shooter.startCmd(RPM.of(6000)));
+        _joystick.povUp().onTrue(_intake.getExtendCmd());
+        _joystick.povDown().onTrue(_intake.getRetractCmd());
+        _joystick.povRight().onTrue(_intake.startRollers());
+        _joystick.povLeft().onTrue(_intake.stopRollers());
 
         _joystick.leftBumper().whileTrue(_shooter.passCmd());
         _joystick.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
