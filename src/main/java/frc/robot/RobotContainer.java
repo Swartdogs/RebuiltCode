@@ -68,17 +68,16 @@ public class RobotContainer
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-       // _joystick.back().and(_joystick.y()).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
-       // _joystick.back().and(_joystick.x()).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
-       // _joystick.start().and(_joystick.y()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
-       // _joystick.start().and(_joystick.x()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
+        // _joystick.back().and(_joystick.y()).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
+        // _joystick.back().and(_joystick.x()).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
+        // _joystick.start().and(_joystick.y()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
+        // _joystick.start().and(_joystick.x()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // Reset the field-centric heading on left bumper press.
-       // _joystick.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+        // _joystick.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
-       // _joystick.rightTrigger().onTrue(_shooter.fireCmd());
-       // _joystick.leftTrigger().onTrue(_shooter.stopCmd());
-
+        // _joystick.rightTrigger().onTrue(_shooter.fireCmd());
+        // _joystick.leftTrigger().onTrue(_shooter.stopCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }

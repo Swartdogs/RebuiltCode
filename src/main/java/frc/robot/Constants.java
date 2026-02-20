@@ -53,15 +53,15 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE           = 14;  // Vortex
-        public static final int INTAKE_EXTEND    = 15;  // Vortex
-        public static final int FEEDER_MOTOR     = 16;  // Vortex
-        public static final int TURRET_MOTOR     = 17;  // Talon
-        public static final int FLYWHEEL_LEAD    = 18;  // Vortex
-        public static final int FLYWHEEL_FOLLOW  = 19;  // Vortex
-        public static final int HOOD_MOTOR       = 20;  // Victor
-        public static final int CLIMBER_EXTEND   = 21;
-        public static final int CLIMBER_ROTATE   = 22;
+        public static final int INTAKE          = 14;  // Vortex
+        public static final int INTAKE_EXTEND   = 15;  // Vortex
+        public static final int FEEDER_MOTOR    = 16;  // Vortex
+        public static final int TURRET_MOTOR    = 17;  // Talon
+        public static final int FLYWHEEL_LEAD   = 18;  // Vortex
+        public static final int FLYWHEEL_FOLLOW = 19;  // Vortex
+        public static final int HOOD_MOTOR      = 20;  // Victor
+        public static final int CLIMBER_EXTEND  = 21;
+        public static final int CLIMBER_ROTATE  = 22;
     }
 
     public static class AIOConstants
@@ -143,6 +143,7 @@ public final class Constants
         public static final Angle         TURRET_TOLERANCE     = Degrees.of(2.0);   // degrees
         public static final String        LIMELIGHT_NAME       = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET   = Degrees.of(180.0); // TODO: Validate in driver practice
+        public static final Time          TURRET_LOOKAHEAD     = Milliseconds.of(120.0); // first approximation while robot is moving
         public static final List<Integer> BLUE_HUB_TAG_IDS     = List.of(2, 3, 4, 5, 8, 9, 10, 11);
         public static final List<Integer> RED_HUB_TAG_IDS      = List.of(18, 19, 20, 21, 24, 25, 26, 27);
 

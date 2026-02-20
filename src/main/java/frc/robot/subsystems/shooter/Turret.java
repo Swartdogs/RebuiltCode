@@ -77,6 +77,10 @@ public class Turret extends SubsystemBase
     private boolean                    _hasTarget;
     @Logged
     private Angle                      _targetHorizontalOffset;
+    @Logged
+    private Angle                      _predictedRobotHeading;
+    @Logged
+    private Angle                      _rotationLookahead;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -107,6 +111,8 @@ public class Turret extends SubsystemBase
         _turretState            = TurretState.Idle;
         _hasTarget              = false;
         _targetHorizontalOffset = Degrees.of(0.0);
+        _predictedRobotHeading  = Degrees.zero();
+        _rotationLookahead      = Degrees.zero();
         _turretSetpoint         = Degrees.zero();
         _hasSetpoint            = false;
         _swerveStateSupplier    = (swerveStateSupplier == null) ? () -> new SwerveDriveState() : swerveStateSupplier;
@@ -138,8 +144,11 @@ public class Turret extends SubsystemBase
         {
             _swerveDriveState = state;
         }
-        _fieldTurretAngle   = _robotTurretAngle.plus(_swerveDriveState.Pose.getRotation().getMeasure());
-        _turretMotorVoltage = _turretMotor.getMotorVoltage().getValue();
+        var robotHeading = _swerveDriveState.Pose.getRotation().getMeasure();
+        _fieldTurretAngle      = _robotTurretAngle.plus(robotHeading);
+        _rotationLookahead     = Degrees.of(Math.toDegrees(_swerveDriveState.Speeds.omegaRadiansPerSecond * ShooterConstants.TURRET_LOOKAHEAD.in(Seconds)));
+        _predictedRobotHeading = robotHeading.plus(_rotationLookahead);
+        _turretMotorVoltage    = _turretMotor.getMotorVoltage().getValue();
 
         if (RobotBase.isReal())
         {
@@ -158,17 +167,19 @@ public class Turret extends SubsystemBase
         Angle requestedSetpoint = switch (_turretState)
         {
             case Idle -> null;
-            case Track -> _hasTarget ? _robotTurretAngle.plus(_targetHorizontalOffset) : ShooterConstants.TURRET_HOME_ANGLE;
-            case Pass -> ShooterConstants.TURRET_PASS_TARGET.minus(_swerveDriveState.Pose.getRotation().getMeasure());
+            case Track -> _hasTarget ? _robotTurretAngle.plus(_targetHorizontalOffset).minus(_rotationLookahead) : ShooterConstants.TURRET_HOME_ANGLE;
+            case Pass -> ShooterConstants.TURRET_PASS_TARGET.minus(_predictedRobotHeading);
         };
 
         if (requestedSetpoint == null)
         {
-            _turretSetpoint = null;
+            _hasSetpoint    = false;
+            _turretSetpoint = _robotTurretAngle;
             _turretMotor.setVoltage(0.0);
             return;
         }
 
+        _hasSetpoint    = true;
         _turretSetpoint = MeasureUtil.clamp(requestedSetpoint, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
         var target = _turretSetpoint.times(ShooterConstants.TURRET_GEAR_RATIO);
         _turretMotor.setControl(_positionRequest.withPosition(target.in(Rotations)));
@@ -212,7 +223,7 @@ public class Turret extends SubsystemBase
 
     public boolean isLinedUp()
     {
-        if (_turretSetpoint == null) return _turretState == TurretState.Idle;
+        if (!_hasSetpoint) return _turretState == TurretState.Idle;
         if (_turretState == TurretState.Track && !_hasTarget) return false;
 
         return _robotTurretAngle.isNear(_turretSetpoint, ShooterConstants.TURRET_TOLERANCE);
