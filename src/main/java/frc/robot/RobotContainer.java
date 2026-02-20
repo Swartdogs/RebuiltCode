@@ -14,6 +14,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -22,8 +23,10 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
+
 
 @Logged
 public class RobotContainer
@@ -34,10 +37,12 @@ public class RobotContainer
     private final SwerveRequest.SwerveDriveBrake brake       = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt    point       = new SwerveRequest.PointWheelsAt();
     private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
-    private final CommandXboxController          _joystick   = new CommandXboxController(0);
+    private final CommandJoystick                _driver     = new CommandJoystick(0);
+    private final CommandXboxController          _operator   = new CommandXboxController(1);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter();
+    private final Turret                         _turret     = new Turret(_drivetrain::getState);
 
     public RobotContainer()
     {
@@ -51,9 +56,9 @@ public class RobotContainer
         _drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 _drivetrain.applyRequest(
-                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_joystick.getLeftY())), DriveConstants.DEADBAND))// Drive forward with negative Y (forward)
-                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_joystick.getLeftX())), DriveConstants.DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_joystick.getRightX())), DriveConstants.DEADBAND)) // Drive counterclockwise with negative X (left)
+                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.DEADBAND))// Drive forward with negative Y (forward)
+                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.DEADBAND)) // Drive left with negative X (left)
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.DEADBAND)) // Drive counterclockwise with negative X (left)
                 )
         );
 
@@ -63,23 +68,29 @@ public class RobotContainer
 
         RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-        _joystick.a().whileTrue(_drivetrain.applyRequest(() -> brake));
-        _joystick.b().whileTrue(_drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_joystick.getLeftY(), -_joystick.getLeftX()))));
+        _driver.button(1).whileTrue(_drivetrain.applyRequest(() -> brake));
+        _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_driver.getY(), -_driver.getX()))));
 
-        // Run SysId routines when holding back/start and X/Y.
+        //Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-       // _joystick.back().and(_joystick.y()).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
-       // _joystick.back().and(_joystick.x()).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
-       // _joystick.start().and(_joystick.y()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
-       // _joystick.start().and(_joystick.x()).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
+         _driver.button(3).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
+         _driver.button(4).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
+         _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
+         _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
+         _operator.a().onTrue(Commands.runOnce(() -> _intake.extend(!_intake.isExtended()), _intake));
+         _operator.x().onTrue(_intake.startRollers());
+         _operator.y().onTrue(_intake.reverseRollers());
+         _operator.leftStick().onTrue(_intake.stopRollers());
+         
+         _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
+         _operator.leftBumper().onTrue(_shooter.passCmd());
+         _operator.povUp().onTrue(_shooter.startCmd(RPM.of(4500)));
+         _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
+         _operator.leftTrigger().onTrue(_shooter.stopCmd());
+         _operator.rightTrigger().onTrue(_shooter.fireCmd());
         // Reset the field-centric heading on left bumper press.
-       // _joystick.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-
-       // _joystick.rightTrigger().onTrue(_shooter.fireCmd());
-       // _joystick.leftTrigger().onTrue(_shooter.stopCmd());
-
-
+         _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 

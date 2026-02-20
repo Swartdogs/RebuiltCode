@@ -53,15 +53,15 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE           = 14;  // Vortex
-        public static final int INTAKE_EXTEND    = 15;  // Vortex
-        public static final int FEEDER_MOTOR     = 16;  // Vortex
-        public static final int TURRET_MOTOR     = 17;  // Talon
-        public static final int FLYWHEEL_LEAD    = 18;  // Vortex
-        public static final int FLYWHEEL_FOLLOW  = 19;  // Vortex
-        public static final int HOOD_MOTOR       = 20;  // Victor
-        public static final int CLIMBER_EXTEND   = 21;
-        public static final int CLIMBER_ROTATE   = 22;
+        public static final int INTAKE          = 14;  // Vortex
+        public static final int INTAKE_EXTEND   = 15;  // Vortex
+        public static final int FEEDER_MOTOR    = 16;  // Vortex
+        public static final int TURRET_MOTOR    = 17;  // Talon
+        public static final int FLYWHEEL_LEAD   = 18;  // Vortex
+        public static final int FLYWHEEL_FOLLOW = 19;  // Vortex
+        public static final int HOOD_MOTOR      = 20;  // Victor
+        public static final int CLIMBER_EXTEND  = 21;
+        public static final int CLIMBER_ROTATE  = 22;
     }
 
     public static class AIOConstants
