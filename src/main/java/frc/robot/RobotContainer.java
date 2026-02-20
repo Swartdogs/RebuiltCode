@@ -91,6 +91,7 @@ public class RobotContainer
          _operator.rightTrigger().onTrue(_shooter.fireCmd());
         // Reset the field-centric heading on left bumper press.
          _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 
