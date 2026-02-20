@@ -144,6 +144,7 @@ public final class Constants
         public static final Angle         TURRET_TOLERANCE     = Degrees.of(2.0);   // degrees
         public static final String        LIMELIGHT_NAME       = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET   = Degrees.of(180.0); // TODO: Validate in driver practice
+        public static final Time          TURRET_LOOKAHEAD     = Milliseconds.of(120.0); // first approximation while robot is moving
         public static final List<Integer> BLUE_HUB_TAG_IDS     = List.of(2, 3, 4, 5, 8, 9, 10, 11);
         public static final List<Integer> RED_HUB_TAG_IDS      = List.of(18, 19, 20, 21, 24, 25, 26, 27);
 
