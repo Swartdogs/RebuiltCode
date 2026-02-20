@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.AnalogInputSim;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
@@ -47,6 +48,21 @@ public class Turret extends SubsystemBase
     public enum TurretState
     {
         Idle, Track, Pass
+    }
+
+    public Command getTrackCmd()
+    {
+        return startEnd(() -> setTurretState(TurretState.Track), () -> setTurretState(TurretState.Idle));
+    }
+
+    public Command getPassCmd()
+    {
+        return startEnd(() -> setTurretState(TurretState.Pass), () -> setTurretState(TurretState.Idle));
+    }
+
+    public Command getIdleCmd()
+    {
+        return runOnce(() -> setTurretState(TurretState.Idle));
     }
 
     private final TalonFX                    _turretMotor;
@@ -149,7 +165,7 @@ public class Turret extends SubsystemBase
      * This function executes automatically every 20 milliseconds. For the turret
      * specifically, we need to ensure the turret is behaving according to the rules
      * defined by the state the turret is in. If in <code>Idle</code>, the turret
-     * shouldn't rotate at all, even if the robot rotates. If in <code>Shoot</code>
+     * shouldn't rotate at all, even if the robot rotates. If in <code>Track</code>
      * or <code>Pass</code>, the turret should rotate to whatever angle is provided
      * by the <code>
      * TurretDirector</code> class.

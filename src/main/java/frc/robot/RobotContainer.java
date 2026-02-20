@@ -17,9 +17,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
-import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Turret;
-import frc.robot.subsystems.shooter.Turret.TurretState;
 
 @Logged
 public class RobotContainer
@@ -32,7 +30,6 @@ public class RobotContainer
     private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED);
     private final CommandXboxController          _joystick   = new CommandXboxController(0);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
-    private final Intake                         _intake     = new Intake();
     private final Turret                         _turret     = new Turret(_drivetrain::getState);
 
     public RobotContainer()
@@ -72,13 +69,10 @@ public class RobotContainer
         // Reset the field-centric heading on left bumper press.
         _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
-        _joystick.rightBumper().whileTrue(_intake.startRollers());
-        _joystick.rightTrigger().whileTrue(_intake.reverseRollers());
-
-        // Turret test bindings.
-        _joystick.leftTrigger().onTrue(Commands.runOnce(() -> _turret.setTurretState(TurretState.Track), _turret));
-        _joystick.y().onTrue(Commands.runOnce(() -> _turret.setTurretState(TurretState.Pass), _turret));
-        _joystick.leftStick().onTrue(Commands.runOnce(() -> _turret.setTurretState(TurretState.Idle), _turret));
+        // Turret simulation bindings.
+        _joystick.leftTrigger().whileTrue(_turret.getTrackCmd());
+        _joystick.y().whileTrue(_turret.getPassCmd());
+        _joystick.leftStick().onTrue(_turret.getIdleCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
