@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
@@ -26,7 +27,6 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
-
 
 @Logged
 public class RobotContainer
@@ -71,26 +71,30 @@ public class RobotContainer
         _driver.button(1).whileTrue(_drivetrain.applyRequest(() -> brake));
         _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_driver.getY(), -_driver.getX()))));
 
-        //Run SysId routines when holding back/start and X/Y.
+        // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-         _driver.button(3).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
-         _driver.button(4).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
-         _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
-         _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
+        _driver.button(3).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
+        _driver.button(4).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
+        _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
+        _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-         _operator.a().onTrue(Commands.runOnce(() -> _intake.extend(!_intake.isExtended()), _intake));
-         _operator.x().onTrue(_intake.startRollers());
-         _operator.y().onTrue(_intake.reverseRollers());
-         _operator.leftStick().onTrue(_intake.stopRollers());
-         
-         _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
-         _operator.leftBumper().onTrue(_shooter.passCmd());
-         _operator.povUp().onTrue(_shooter.startCmd(RPM.of(4500)));
-         _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
-         _operator.leftTrigger().onTrue(_shooter.stopCmd());
-         _operator.rightTrigger().onTrue(_shooter.fireCmd());
+        _operator.a().onTrue(Commands.runOnce(() -> _intake.extend(!_intake.isExtended()), _intake));
+        _operator.x().onTrue(_intake.startRollers());
+        _operator.y().onTrue(_intake.reverseRollers());
+        _operator.leftStick().onTrue(_intake.stopRollers());
+
+        _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
+        _operator.leftBumper().onTrue(_shooter.passCmd());
+        _operator.povUp().onTrue(Commands.either(_shooter.bumpCalibrationFlywheelCmd(ShooterConstants.CALIBRATION_FLYWHEEL_STEP), _shooter.startCmd(RPM.of(4500)), _shooter::isCalibrationMode));
+        _operator.povDown().onTrue(Commands.either(_shooter.bumpCalibrationFlywheelCmd(ShooterConstants.CALIBRATION_FLYWHEEL_STEP.unaryMinus()), Commands.none(), _shooter::isCalibrationMode));
+        _operator.povRight().onTrue(Commands.either(_shooter.bumpCalibrationHoodCmd(ShooterConstants.CALIBRATION_HOOD_STEP), Commands.none(), _shooter::isCalibrationMode));
+        _operator.povLeft().onTrue(Commands.either(_shooter.bumpCalibrationHoodCmd(ShooterConstants.CALIBRATION_HOOD_STEP.unaryMinus()), _shooter.startCmd(RPM.of(3500)), _shooter::isCalibrationMode));
+        _operator.leftTrigger().onTrue(_shooter.stopCmd());
+        _operator.rightTrigger().onTrue(_shooter.fireCmd());
+        _operator.start().onTrue(_shooter.toggleCalibrationModeCmd());
+        _operator.back().onTrue(_shooter.captureCalibrationSampleCmd(_turret::getDistanceToTarget));
         // Reset the field-centric heading on left bumper press.
-         _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+        _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 

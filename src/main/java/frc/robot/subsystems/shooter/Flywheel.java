@@ -128,4 +128,9 @@ public class Flywheel
     {
         return _velocity;
     }
+
+    public AngularVelocity getTargetVelocity()
+    {
+        return _targetVelocity;
+    }
 }
