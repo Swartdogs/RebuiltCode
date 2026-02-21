@@ -35,48 +35,62 @@ public class RobotContainer
     private final SwerveRequest.FieldCentric     drive       = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake       = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt    point       = new SwerveRequest.PointWheelsAt();
-    private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
-    private final CommandJoystick                _driver     = new CommandJoystick(0);
-    private final CommandXboxController          _operator   = new CommandXboxController(1);
-    private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
-    private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter();
-    private final Turret                         _turret     = new Turret(_drivetrain::getState);
+    private final Telemetry                      _logger     = initalizeLogger();
+    private final CommandJoystick                _driver     = initalizeDriver();
+    private final CommandXboxController          _operator   = initalizeOperator();
+    private final Drive                          _drivetrain = initializeDrivetrain();
+    private final Intake                         _intake     = initalizeIntake();
+    private final Shooter                        _shooter    = initalizeShooter();
+    private final Turret                         _turret     = initalizeTurret();
 
-    public RobotContainer()
+    private Telemetry initalizeLogger()
     {
-        configureBindings();
+        return new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
     }
 
-    private void configureBindings()
+    private CommandJoystick initalizeDriver()
     {
+        return new CommandJoystick(0);
+    }
+
+    private Drive initializeDrivetrain()
+    {
+        Drive drivetrain = TunerConstants.createDrivetrain();
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
-        _drivetrain.setDefaultCommand(
+        drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
-                _drivetrain.applyRequest(
+                drivetrain.applyRequest(
                         () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.DEADBAND))// Drive forward with negative Y (forward)
                                 .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.DEADBAND)) // Drive left with negative X (left)
                                 .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.DEADBAND)) // Drive counterclockwise with negative X (left)
                 )
         );
-
+        drivetrain.registerTelemetry(_logger::telemeterize);
+        // Reset the field-centric heading on left bumper press.
+        _driver.povDown().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
-        final var idle = new SwerveRequest.Idle();
+        final SwerveRequest idle = new SwerveRequest.Idle();
 
-        RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
+        RobotModeTriggers.disabled().whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(_drivetrain.applyRequest(() -> brake));
-        _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_driver.getY(), -_driver.getX()))));
+        _driver.button(1).whileTrue(drivetrain.applyRequest(() -> brake));
+        _driver.button(2).whileTrue(drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_driver.getY(), -_driver.getX()))));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        _driver.button(3).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
-        _driver.button(4).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
-        _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
-        _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
+        _driver.button(3).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        _driver.button(4).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        _driver.button(5).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        _driver.button(6).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
+        return drivetrain;
+    }
+
+    private CommandXboxController initalizeOperator()
+    {
+        CommandXboxController operator = new CommandXboxController(1);
         _operator.a().onTrue(Commands.runOnce(() -> _intake.extend(!_intake.isExtended()), _intake));
         _operator.x().onTrue(_intake.startRollers());
         _operator.y().onTrue(_intake.reverseRollers());
@@ -88,15 +102,29 @@ public class RobotContainer
         _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
         _operator.leftTrigger().onTrue(_shooter.stopCmd());
         _operator.rightTrigger().onTrue(_shooter.fireCmd());
-        // Reset the field-centric heading on left bumper press.
-        _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-        _drivetrain.registerTelemetry(_logger::telemeterize);
+
+        return operator;
+    }
+
+    private Intake initalizeIntake()
+    {
+        return new Intake();
+    }
+
+    private Shooter initalizeShooter()
+    {
+        return new Shooter();
+    }
+
+    private Turret initalizeTurret()
+    {
+        return new Turret(_drivetrain::getState);
     }
 
     public Command getAutonomousCommand()
     {
         // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
+        final SwerveRequest idle = new SwerveRequest.Idle();
         return Commands.sequence(
 
                 // Reset our field centric heading to match the robot
