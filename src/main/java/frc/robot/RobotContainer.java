@@ -8,6 +8,9 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
+import choreo.auto.AutoFactory;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -27,7 +30,6 @@ import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
 
-
 @Logged
 public class RobotContainer
 {
@@ -42,7 +44,8 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter();
-    private final Turret                         _turret     = new Turret(_drivetrain::getState);
+    // private final Turret _turret = new Turret(_drivetrain::getState);
+    private final Autos _autos = new Autos(_drivetrain);
 
     public RobotContainer()
     {
@@ -71,42 +74,32 @@ public class RobotContainer
         _driver.button(1).whileTrue(_drivetrain.applyRequest(() -> brake));
         _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_driver.getY(), -_driver.getX()))));
 
-        //Run SysId routines when holding back/start and X/Y.
+        // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-         _driver.button(3).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
-         _driver.button(4).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
-         _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
-         _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
+        _driver.button(3).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
+        _driver.button(4).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
+        _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
+        _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-         _operator.a().onTrue(Commands.runOnce(() -> _intake.extend(!_intake.isExtended()), _intake));
-         _operator.x().onTrue(_intake.startRollers());
-         _operator.y().onTrue(_intake.reverseRollers());
-         _operator.leftStick().onTrue(_intake.stopRollers());
-         
-         _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
-         _operator.leftBumper().onTrue(_shooter.passCmd());
-         _operator.povUp().onTrue(_shooter.startCmd(RPM.of(4500)));
-         _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
-         _operator.leftTrigger().onTrue(_shooter.stopCmd());
-         _operator.rightTrigger().onTrue(_shooter.fireCmd());
+        _operator.a().onTrue(Commands.runOnce(() -> _intake.extend(!_intake.isExtended()), _intake));
+        _operator.x().onTrue(_intake.startRollers());
+        _operator.y().onTrue(_intake.reverseRollers());
+        _operator.leftStick().onTrue(_intake.stopRollers());
+
+        _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
+        _operator.leftBumper().onTrue(_shooter.passCmd());
+        _operator.povUp().onTrue(_shooter.startCmd(RPM.of(4500)));
+        _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
+        _operator.leftTrigger().onTrue(_shooter.stopCmd());
+        _operator.rightTrigger().onTrue(_shooter.fireCmd());
         // Reset the field-centric heading on left bumper press.
-         _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+        _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 
     public Command getAutonomousCommand()
     {
-        // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-
-                // Reset our field centric heading to match the robot
-                // facing away from our alliance station wall (0 deg).
-                _drivetrain.runOnce(() -> _drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                // Then slowly drive forward (away from us) for 5 seconds.
-                _drivetrain.applyRequest(() -> drive.withVelocityX(0.5).withVelocityY(0).withRotationalRate(0)).withTimeout(5.0),
-                // Finally idle for the rest of auton
-                _drivetrain.applyRequest(() -> idle)
-        );
+        return _autos.followPath("LeftTrenchToDepot");
     }
 }
