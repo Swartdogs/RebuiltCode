@@ -8,6 +8,9 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
+import choreo.auto.AutoFactory;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -41,7 +44,8 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter();
-    private final Turret                         _turret     = new Turret(_drivetrain::getState);
+    // private final Turret _turret = new Turret(_drivetrain::getState);
+    private final Autos _autos = new Autos(_drivetrain);
 
     public RobotContainer()
     {
@@ -96,17 +100,6 @@ public class RobotContainer
 
     public Command getAutonomousCommand()
     {
-        // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-
-                // Reset our field centric heading to match the robot
-                // facing away from our alliance station wall (0 deg).
-                _drivetrain.runOnce(() -> _drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                // Then slowly drive forward (away from us) for 5 seconds.
-                _drivetrain.applyRequest(() -> drive.withVelocityX(0.5).withVelocityY(0).withRotationalRate(0)).withTimeout(5.0),
-                // Finally idle for the rest of auton
-                _drivetrain.applyRequest(() -> idle)
-        );
+        return _autos.followPath("LeftTrenchToDepot");
     }
 }
