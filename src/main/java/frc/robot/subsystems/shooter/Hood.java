@@ -136,9 +136,14 @@ public class Hood
             return;
         }
 
-        Angle targetAngle = hoodPosition.targetAngle;
+        setHoodAngle(hoodPosition.targetAngle);
+    }
+
+    public void setHoodAngle(Angle targetAngle)
+    {
         _hoodSetpoint = MeasureUtil.clamp(targetAngle, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hasSetpoint  = true;
+        _hoodPosition = HoodPosition.Undefined;
         _pidController.setSetpoint(_hoodSetpoint.in(Degrees));
     }
 
@@ -170,5 +175,20 @@ public class Hood
     public TestHook getHook()
     {
         return new HoodHook();
+    }
+
+    public Angle getHoodSetpoint()
+    {
+        return _hoodSetpoint;
+    }
+
+    public Angle getHoodAngle()
+    {
+        return _hoodAngle;
+    }
+
+    public boolean hasSetpoint()
+    {
+        return _hasSetpoint;
     }
 }

@@ -150,4 +150,9 @@ public class Flywheel
     {
         return new FlywheelHook();
     }
+
+    public AngularVelocity getTargetVelocity()
+    {
+        return _targetVelocity;
+    }
 }
