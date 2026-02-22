@@ -5,12 +5,11 @@
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 
-name: Autoformatter with Gradle
+name: Manual spotless format check with Gradle
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events
 on: 
-  pull_request:
-  push:
+  workflow_dispatch
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   spotless:
