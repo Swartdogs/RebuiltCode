@@ -1,6 +1,7 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoFactory;
@@ -42,14 +43,26 @@ public class Autos
         Pose2d pose = _driveSubsystem.getState().Pose;
 
         // Build up "request" based on "sample"
-        _autoFollowingRequest.withVelocityX(sample.vx + _xController.calculate(pose.getX(), sample.x)).withVelocityY(sample.vy + _yController.calculate(pose.getY(), sample.y))
-                .withRotationalRate(sample.omega + _headingController.calculate(pose.getRotation().getRadians(), sample.heading));
+        // @formatter:off
+        _autoFollowingRequest
+            .withVelocityX(sample.vx + _xController.calculate(pose.getX(), sample.x))
+            .withVelocityY(sample.vy + _yController.calculate(pose.getY(), sample.y))
+            .withRotationalRate(sample.omega + _headingController.calculate(pose.getRotation().getRadians(), sample.heading))
+            .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+        // @formatter:on
 
         _driveSubsystem.setControl(_autoFollowingRequest);
     }
 
     public Command followPath(String pathName)
     {
-        return Commands.sequence(_autoFactory.resetOdometry(pathName), _autoFactory.trajectoryCmd(pathName), Commands.runOnce(() -> _driveSubsystem.setControl(new SwerveRequest.Idle()), _driveSubsystem));
+        // @formatter:off
+        return Commands.sequence
+        (
+            _autoFactory.resetOdometry(pathName),
+            _autoFactory.trajectoryCmd(pathName),
+            Commands.runOnce(() -> _driveSubsystem.setControl(new SwerveRequest.Idle()), _driveSubsystem)
+        );
+        // @formatter:on
     }
 }
