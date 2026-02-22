@@ -18,13 +18,23 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: checkout repo
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-java@v4
+      - name: setup java
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
-      - run: 
-          ./gradlew spotlessCheck
+      - name: check with spotless
+        run: ./gradlew spotlessCheck
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: Your Name
+          author_email: mail@example.com
+          message: 'Your commit message'
+          add: '*.java'
+        
       
