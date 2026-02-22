@@ -3,7 +3,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Spotless format check with Gradle
+name: Spotless Format Fixer with Gradle
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events
 on:
