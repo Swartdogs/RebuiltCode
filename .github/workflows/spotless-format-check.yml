@@ -11,6 +11,8 @@ name: Spotless format check with Gradle
 on:
   workflow_dispatch:
   pull_request:
+  push:
+    branches: [main]
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   spotless-check:
@@ -42,7 +44,7 @@ jobs:
         if: ${{failure() }}
         run: ./gradlew spotlessApply
       - name: Commit changes
-        if: ${{!cancelled() }}
+        if: ${{!cancelled() && success()}}
         uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actions
