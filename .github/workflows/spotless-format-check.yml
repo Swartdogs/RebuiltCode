@@ -36,14 +36,15 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
+      - name: Check with spotless
+        run: ./gradlew spotlessCheck
       - name: Apply spotless
+        if: ${{failure() }}
         run: ./gradlew spotlessApply
       - name: Commit changes
+        if: ${{success() }}
         uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actions
           message: 'Formatted code using spotless.'
-      - name: Check with spotless
-        #This code only runs if changes could not be commited. This may occur if either applying changes did nothing, and ensures format validation regardless.
-        if: ${{failure() }}
-        run: ./gradlew spotlessCheck
+      
