@@ -28,13 +28,12 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
-      #- name: Check with spotless
-      #  run: ./gradlew spotlessCheck
       - name: Apply spotless
-      #  if: ${{ failure() }}
         run: ./gradlew spotlessApply
       - name: Commit changes
-      #  if: ${{ success() }}
         uses: actions-x/commit@v6
         with:
           message: 'Formatted code using spotless.'
+      - name: Check with spotless
+        if: ${{failure() }}
+        run: ./gradlew spotlessCheck
