@@ -11,8 +11,10 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.DutyCycleEncoderSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.epilogue.Logged;
 
 import frc.robot.Constants.GeneralConstants;
@@ -28,15 +30,17 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 @Logged
 public class Hood
 {
+    private static final String kSettingsPrefix = "Dashboard/Dashboard Settings/";
+
     public enum HoodPosition
     {
         Shoot(ShooterConstants.HOOD_SHOOT_ANGLE), Pass(ShooterConstants.HOOD_PASS_ANGLE), Undefined(null);
 
         public final Angle targetAngle;
 
-        private HoodPosition(Angle angle)
+        private HoodPosition(Angle targetAngle)
         {
-            targetAngle = angle;
+            this.targetAngle = targetAngle;
         }
     }
 
@@ -69,8 +73,14 @@ public class Hood
         _hasSetpoint      = false;
         _simAngleDeg      = ShooterConstants.HOOD_PASS_ANGLE;
 
+        initializeTuningPreferences();
+
         _pidController.setTolerance(ShooterConstants.HOOD_TOLERANCE.in(Degrees));
 
+        // Dashboard
+        SmartDashboard.putData("Hood PID", _pidController);
+
+        // Real vs. Simulation
         if (RobotBase.isReal())
         {
             _hoodMotor.configFactoryDefault();
@@ -88,6 +98,7 @@ public class Hood
 
     public void periodic()
     {
+        _pidController.setTolerance(getToleranceAngle().in(Degrees));
         _hoodMotorVoltage = Volts.of(_hoodMotor.getMotorOutputVoltage());
         _hoodAngle        = Degrees.of(_hoodSensor.get());
         Voltage voltageOutput = Volts.zero();
@@ -101,7 +112,8 @@ public class Hood
 
         for (var position : HoodPosition.values())
         {
-            if (position.targetAngle == null || _hoodAngle.isNear(position.targetAngle, ShooterConstants.HOOD_TOLERANCE))
+            Angle target = getTargetAngle(position);
+            if (target == null || _hoodAngle.isNear(target, getToleranceAngle()))
             {
                 _hoodPosition = position;
                 break;
@@ -136,15 +148,15 @@ public class Hood
             return;
         }
 
-        Angle targetAngle = hoodPosition.targetAngle;
-        _hoodSetpoint = MeasureUtil.clamp(targetAngle, ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
+        Angle targetAngle = getTargetAngle(hoodPosition);
+        _hoodSetpoint = MeasureUtil.clamp(targetAngle, getMinAngle(), getMaxAngle());
         _hasSetpoint  = true;
         _pidController.setSetpoint(_hoodSetpoint.in(Degrees));
     }
 
     public boolean atSetpoint()
     {
-        return _hasSetpoint && _hoodAngle.isNear(_hoodSetpoint, ShooterConstants.HOOD_TOLERANCE);
+        return _hasSetpoint && _hoodAngle.isNear(_hoodSetpoint, getToleranceAngle());
     }
 
     public HoodPosition getHoodPosition()
@@ -170,5 +182,54 @@ public class Hood
     public TestHook getHook()
     {
         return new HoodHook();
+    }
+
+    private static void initPreference(String key, double value)
+    {
+        Preferences.initDouble(kSettingsPrefix + key, value);
+    }
+
+    private static void initializeTuningPreferences()
+    {
+        initPreference("Hood Min Angle", ShooterConstants.HOOD_MIN_ANGLE.in(Degrees));
+        initPreference("Hood Max Angle", ShooterConstants.HOOD_MAX_ANGLE.in(Degrees));
+        initPreference("Hood Shoot Angle", ShooterConstants.HOOD_SHOOT_ANGLE.in(Degrees));
+        initPreference("Hood Pass Angle", ShooterConstants.HOOD_PASS_ANGLE.in(Degrees));
+        initPreference("Hood Tolerance", ShooterConstants.HOOD_TOLERANCE.in(Degrees));
+    }
+
+    private static Angle getMinAngle()
+    {
+        return Degrees.of(Preferences.getDouble(kSettingsPrefix + "Hood Min Angle", ShooterConstants.HOOD_MIN_ANGLE.in(Degrees)));
+    }
+
+    private static Angle getMaxAngle()
+    {
+        return Degrees.of(Preferences.getDouble(kSettingsPrefix + "Hood Max Angle", ShooterConstants.HOOD_MAX_ANGLE.in(Degrees)));
+    }
+
+    private static Angle getShootAngle()
+    {
+        return Degrees.of(Preferences.getDouble(kSettingsPrefix + "Hood Shoot Angle", ShooterConstants.HOOD_SHOOT_ANGLE.in(Degrees)));
+    }
+
+    private static Angle getPassAngle()
+    {
+        return Degrees.of(Preferences.getDouble(kSettingsPrefix + "Hood Pass Angle", ShooterConstants.HOOD_PASS_ANGLE.in(Degrees)));
+    }
+
+    private static Angle getToleranceAngle()
+    {
+        return Degrees.of(Preferences.getDouble(kSettingsPrefix + "Hood Tolerance", ShooterConstants.HOOD_TOLERANCE.in(Degrees)));
+    }
+
+    private static Angle getTargetAngle(HoodPosition hoodPosition)
+    {
+        return switch (hoodPosition)
+        {
+            case Shoot -> getShootAngle();
+            case Pass -> getPassAngle();
+            case Undefined -> null;
+        };
     }
 }

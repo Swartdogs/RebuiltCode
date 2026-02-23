@@ -65,6 +65,35 @@ public final class Utilities
 
     }
 
+    public static Time getHubStateTimeRemaining()
+    {
+        var timeRemaining = Seconds.of(DriverStation.getMatchTime());
+        if (timeRemaining.lt(Seconds.zero()))
+        {
+            return Seconds.zero();
+        }
+
+        if (DriverStation.isAutonomous())
+        {
+            return timeRemaining;
+        }
+
+        if (!DriverStation.isTeleop())
+        {
+            return Seconds.zero();
+        }
+
+        return switch (getAllianceShift(timeRemaining))
+        {
+            case 0 -> timeRemaining.minus(kTransitionShiftEndTimeSecs);
+            case 1 -> timeRemaining.minus(kShift1EndTimeSecs);
+            case 2 -> timeRemaining.minus(kShift2EndTimeSecs);
+            case 3 -> timeRemaining.minus(kShift3EndTimeSecs);
+            case 4 -> timeRemaining.minus(kShift4EndTimeSecs);
+            default -> timeRemaining;
+        };
+    }
+
     /**
      * Check if we are on the Blue alliance.
      */

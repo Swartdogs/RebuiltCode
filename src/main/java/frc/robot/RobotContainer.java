@@ -23,6 +23,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
+import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
@@ -43,8 +44,8 @@ public class RobotContainer
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
     private final TestOperation                  _testop     = new TestOperation();
-    // private final Turret _turret = new Turret(_drivetrain::getState);
-    private final Autos _autos = new Autos(_drivetrain);
+    private final Autos                          _autos      = new Autos(_drivetrain);
+    private final Dashboard                      _dashboard  = new Dashboard(_intake, _shooter, _shooter._turret);
 
     public RobotContainer()
     {

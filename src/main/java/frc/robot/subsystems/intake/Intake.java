@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
@@ -21,6 +22,7 @@ import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -34,6 +36,8 @@ import frc.robot.subsystems.ExtensionMotor;
 @Logged
 public class Intake extends ExtensionMotor
 {
+    private static final String kSettingsPrefix = "Dashboard/Dashboard Settings/";
+
     public enum IntakeState
     {
         Off, Forward, Reverse
@@ -73,6 +77,7 @@ public class Intake extends ExtensionMotor
     public Intake()
     {
         super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR);
+        initializeTuningPreferences();
 
         _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
@@ -126,8 +131,8 @@ public class Intake extends ExtensionMotor
 
         var volts = switch (_intakeState)
         {
-            case Forward -> IntakeConstants.INTAKE_VOLTS;
-            case Reverse -> IntakeConstants.REVERSE_VOLTS;
+            case Forward -> getForwardVoltage();
+            case Reverse -> getReverseVoltage();
             case Off -> Volts.zero();
         };
 
@@ -167,5 +172,29 @@ public class Intake extends ExtensionMotor
     public TestHook getHook()
     {
         return new IntakeHook();
+    }
+
+    private static void initPreference(String key, double value)
+    {
+        Preferences.initDouble(kSettingsPrefix + key, value);
+    }
+
+    private static void initializeTuningPreferences()
+    {
+        initPreference("Intake Forward Voltage", IntakeConstants.INTAKE_VOLTS.in(Volts));
+        initPreference("Intake Reverse Voltage", IntakeConstants.REVERSE_VOLTS.in(Volts));
+        initPreference("Intake Extension Max Position", IntakeConstants.EXTENSION_MAX_POSITION.in(Inches));
+        initPreference("Intake Extend Voltage", IntakeConstants.EXTEND_VOLTS.in(Volts));
+        initPreference("Intake Retract Voltage", IntakeConstants.RETRACT_VOLTS.in(Volts));
+    }
+
+    private static Voltage getForwardVoltage()
+    {
+        return Volts.of(Preferences.getDouble(kSettingsPrefix + "Intake Forward Voltage", IntakeConstants.INTAKE_VOLTS.in(Volts)));
+    }
+
+    private static Voltage getReverseVoltage()
+    {
+        return Volts.of(Preferences.getDouble(kSettingsPrefix + "Intake Reverse Voltage", IntakeConstants.REVERSE_VOLTS.in(Volts)));
     }
 }

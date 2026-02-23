@@ -30,10 +30,14 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.simulation.AnalogInputSim;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.MotorHook;
 import frc.robot.TestHook;
@@ -48,6 +52,8 @@ import limelight.Limelight;
 @Logged
 public class Turret extends SubsystemBase
 {
+    private static final String kSettingsPrefix = "Dashboard/Dashboard Settings/";
+
     public enum TurretState
     {
         Idle, Track, Pass
@@ -62,6 +68,10 @@ public class Turret extends SubsystemBase
     private Supplier<SwerveDriveState> _swerveStateSupplier;
     private SwerveDriveState           _swerveDriveState;
     private PositionVoltage            _positionRequest = new PositionVoltage(0).withSlot(0);
+    private double                     _lastKP;
+    private double                     _lastKI;
+    private double                     _lastKD;
+    private boolean                    _testModeActive;
     private List<Integer>              _cachedTagFilter;
     @Logged
     private Angle                      _fieldTurretAngle;
@@ -118,6 +128,27 @@ public class Turret extends SubsystemBase
         _swerveDriveState       = new SwerveDriveState();
         _cachedTagFilter        = List.of();
 
+        _lastKP = ShooterConstants.TURRET_KP;
+        _lastKI = ShooterConstants.TURRET_KI;
+        _lastKD = ShooterConstants.TURRET_KD;
+
+        initializeTuningPreferences();
+
+        _testModeActive = false;
+        Command testModeCommand = Commands.startRun(() -> _testModeActive = true, () ->
+        {
+            Angle setpoint = Degrees.of(Preferences.getDouble(kSettingsPrefix + "Turret Test Setpoint", 0.0));
+            _turretSetpoint = MeasureUtil.clamp(setpoint, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
+            _hasSetpoint    = true;
+            _turretMotor.setControl(_positionRequest.withPosition(_turretSetpoint.times(ShooterConstants.TURRET_GEAR_RATIO).in(Rotations)));
+        }, this).finallyDo(() ->
+        {
+            _testModeActive = false;
+            _hasSetpoint    = false;
+            _turretMotor.setVoltage(0.0);
+        });
+        SmartDashboard.putData("Turret Test Mode", testModeCommand);
+
         if (RobotBase.isReal())
         {
             _turretMotorSim  = null;
@@ -133,9 +164,42 @@ public class Turret extends SubsystemBase
         }
     }
 
+    private static void initPreference(String key, double value)
+    {
+        Preferences.initDouble(kSettingsPrefix + key, value);
+    }
+
+    private static void initializeTuningPreferences()
+    {
+        initPreference("Turret kP", ShooterConstants.TURRET_KP);
+        initPreference("Turret kI", ShooterConstants.TURRET_KI);
+        initPreference("Turret kD", ShooterConstants.TURRET_KD);
+        initPreference("Turret Test Setpoint", 0.0);
+        initPreference("Turret Min Angle", ShooterConstants.TURRET_MIN_ANGLE.in(Degrees));
+        initPreference("Turret Max Angle", ShooterConstants.TURRET_MAX_ANGLE.in(Degrees));
+        initPreference("Turret Home Angle", ShooterConstants.TURRET_HOME_ANGLE.in(Degrees));
+        initPreference("Turret Pass Angle", ShooterConstants.TURRET_PASS_TARGET.in(Degrees));
+        initPreference("Turret Tolerance", ShooterConstants.TURRET_TOLERANCE.in(Degrees));
+    }
+
     @Override
     public void periodic()
     {
+        double newP = Preferences.getDouble(kSettingsPrefix + "Turret kP", ShooterConstants.TURRET_KP);
+        double newI = Preferences.getDouble(kSettingsPrefix + "Turret kI", ShooterConstants.TURRET_KI);
+        double newD = Preferences.getDouble(kSettingsPrefix + "Turret kD", ShooterConstants.TURRET_KD);
+        if (newP != _lastKP || newI != _lastKI || newD != _lastKD)
+        {
+            var slot0 = new Slot0Configs();
+            slot0.kP = newP;
+            slot0.kI = newI;
+            slot0.kD = newD;
+            _turretMotor.getConfigurator().apply(slot0);
+            _lastKP = newP;
+            _lastKI = newI;
+            _lastKD = newD;
+        }
+
         _robotTurretAngle = Degrees.of(_turretSensor.get());
 
         SwerveDriveState state = _swerveStateSupplier.get();
@@ -160,6 +224,8 @@ public class Turret extends SubsystemBase
             _targetHorizontalOffset = Degrees.of(targetData.getHorizontalOffset());
         }
 
+        if (_testModeActive) return;
+
         Angle requestedSetpoint = switch (_turretState)
         {
             case Idle -> null;
@@ -169,11 +235,12 @@ public class Turret extends SubsystemBase
 
         if (requestedSetpoint == null)
         {
-            _turretSetpoint = null;
+            _hasSetpoint = false;
             _turretMotor.setVoltage(0.0);
             return;
         }
 
+        _hasSetpoint    = true;
         _turretSetpoint = MeasureUtil.clamp(requestedSetpoint, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
         var target = _turretSetpoint.times(ShooterConstants.TURRET_GEAR_RATIO);
         _turretMotor.setControl(_positionRequest.withPosition(target.in(Rotations)));
@@ -217,7 +284,7 @@ public class Turret extends SubsystemBase
 
     public boolean isLinedUp()
     {
-        if (_turretSetpoint == null) return _turretState == TurretState.Idle;
+        if (!_hasSetpoint) return _turretState == TurretState.Idle;
         if (_turretState == TurretState.Track && !_hasTarget) return false;
 
         return _robotTurretAngle.isNear(_turretSetpoint, ShooterConstants.TURRET_TOLERANCE);
