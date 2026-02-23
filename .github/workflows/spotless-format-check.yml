@@ -34,6 +34,7 @@ jobs:
         if: ${{ failure() }}
         run: ./gradlew spotlessApply
       - name: Commit changes
+        if: ${{ success() }}
         uses: EndBug/add-and-commit@v9
         with:
           message: 'Formatted code using spotless.'
