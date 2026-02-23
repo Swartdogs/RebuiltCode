@@ -11,23 +11,10 @@ import static edu.wpi.first.units.Units.Milliseconds;
 import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Rotations;
 
-
-
-
-
-
-
-
-                
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
-    import static edu.wpi.first.units.Units.Value;
+import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
-
-
-
-
-
 
 import java.util.List;
 import java.util.Map;
@@ -200,30 +187,15 @@ public final class Constants
         public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(-90));
         public static final Rotation3d RIGHT_CAMERA_ROTATION = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(0));
 
-// Camera offsets
+        // Camera offsets
         public static final Pose3d LEFT_CAMERA_OFFSET  = new Pose3d(LEFT_CAMERA_TRANSLATION, LEFT_CAMERA_ROTATION);
         public static final Pose3d RIGHT_CAMERA_OFFSET = new Pose3d(RIGHT_CAMERA_TRANSLATION, RIGHT_CAMERA_ROTATION);
 
-
-
-
-        
         // Reject vision updates when spinning faster than this (MegaTag2 guidance)
         public static final AngularVelocity MAX_ANGULAR_RATE_FOR_VISION = DegreesPerSecond.of(720.0);
 
         // Reject vision updates when robot is tilted more than this (on ramp)
         public static final Angle MAX_TILT_FOR_VISION = Degrees.of(10.0); // TODO: find the correct value
-  
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     }
 
     public static class ClimberConstants
