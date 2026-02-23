@@ -130,7 +130,7 @@ public class Intake extends ExtensionMotor
             case Off -> Volts.zero();
         };
 
-                   _intakeMotor.setVoltage(volts);
+        _intakeMotor.setVoltage(volts);
 
         if (RobotBase.isSimulation())
         {
