@@ -2,7 +2,7 @@
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
 # documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# This workflow will format a Java project with Gradle
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 
 name: Spotless format check with Gradle
@@ -19,8 +19,18 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout repo
-        uses: actions/checkout@v2.4.2
+      - name: Checkout repo (Pull Request)
+        #Checks if the event was trigged by a pull request, this step will be skipped if not.
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v4
+        with:
+          #Sets up branch system properly per https://github.com/marketplace/actions/add-commit#working-with-prs
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Checkout repo (Manually Run)
+        #Checks if the previous step was skipped, only runs if so.
+        if: ${{cancelled() }}
+        uses: actions/checkout@v4
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -29,9 +39,11 @@ jobs:
       - name: Apply spotless
         run: ./gradlew spotlessApply
       - name: Commit changes
-        uses: actions-x/commit@v6
+        uses: EndBug/add-and-commit@v9
         with:
+          default_author: github_actions
           message: 'Formatted code using spotless.'
       - name: Check with spotless
+        #This code only runs if changes could not be commited. This may occur if either applying changes did nothing, and ensures format validation regardless.
         if: ${{failure() }}
         run: ./gradlew spotlessCheck
