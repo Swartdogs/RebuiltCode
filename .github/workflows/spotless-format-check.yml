@@ -20,7 +20,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - name: Setup Java
@@ -35,8 +35,7 @@ jobs:
         run: ./gradlew spotlessApply
       - name: Commit changes
         if: ${{ success() }}
-        uses: EndBug/add-and-commit@v9
+        uses: actions-x/commit@v6
         with:
           message: 'Formatted code using spotless.'
-          default_author: github_actions
         
