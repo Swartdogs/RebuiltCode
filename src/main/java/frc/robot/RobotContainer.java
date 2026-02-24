@@ -98,6 +98,11 @@ public class RobotContainer
         _drivetrain.registerTelemetry(_logger::telemeterize);
     }
 
+    private void configureTestBindings()
+    {
+        _operator.leftBumper().whileTrue(_tester.commandShift());
+    }
+
     public Command getAutonomousCommand()
     {
         return _autos.followPath("LeftTrenchToDepot");
