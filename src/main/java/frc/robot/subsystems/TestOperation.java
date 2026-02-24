@@ -68,26 +68,26 @@ public class TestOperation extends SubsystemBase
 
     public void do_forward()
     {
-        if ( _current ) {
+        if ( _current != null ) {
           _current.forward() ;
           _current.setRate( _rate ) ;
         }
     }
     public void do_reverse()
     {
-        if ( _current ) {
-          _current-> reverse() ;
-          _current-> setRate( _rate ) ;
+        if ( _current != null ) {
+          _current.reverse() ;
+          _current.setRate( _rate ) ;
         }
     }
     public void do_jog()
     {
-        if ( _current ) {
-          _current-> forward() ;
-          _current-> setRate( _rate ) ;
-          _current-> reverse() ;
-          _current-> setRate( _rate ) ;
-          _current-> stop() ;
+        if ( _current != null ) {
+          _current.forward() ;
+          _current.setRate( _rate ) ;
+          _current.reverse() ;
+          _current.setRate( _rate ) ;
+          _current.stop() ;
         }
     }
 
@@ -98,7 +98,7 @@ public class TestOperation extends SubsystemBase
 
     public void do_select( int slot )
     {
-        if (_current) { _current-> stop() ; }
+        if (_current != null) { _current.stop() ; }
         _current = _slots[ slot + _shiftMod ] ;
         do_jog() ;
     }
