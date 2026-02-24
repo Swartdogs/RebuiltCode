@@ -1,14 +1,8 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.TestHook;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.Intake.IntakeState;
-import frc.robot.subsystems.shooter.Feeder;
-import frc.robot.subsystems.shooter.Flywheel;
-import frc.robot.subsystems.shooter.Hood;
 import java.util.Map ;
 
 public class TestOperation extends SubsystemBase 
@@ -24,7 +18,7 @@ public class TestOperation extends SubsystemBase
     private double _rate = 0.0 ;
     private int _shiftMod = 0 ;
 
-    public Command cmd_shift() { return startEnd(() -> _shiftMod = 4, () -> _shiftMod = 0; }
+    public Command cmd_shift() { return startEnd(() -> _shiftMod = 4, () -> _shiftMod = 0 );}
     
     public  Command cmd_button_04() { return runOnce(() -> do_select( 0 ) ) ; }
     public  Command cmd_button_15() { return runOnce(() -> do_select( 1 ) ) ; }
