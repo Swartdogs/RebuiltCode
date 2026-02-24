@@ -33,11 +33,6 @@ jobs:
         #Only runs if triggered manually
         if: ${{github.event_name == 'workflow_dispatch' }}
         uses: actions/checkout@v4
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: 17
       - name: Checkout repo (Push to main)
         #Only runs if triggered manually
         if: ${{github.event_name == 'push' }}
