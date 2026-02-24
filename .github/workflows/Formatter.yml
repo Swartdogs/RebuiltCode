@@ -38,6 +38,15 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
+      - name: Checkout repo (Push to main)
+        #Only runs if triggered manually
+        if: ${{github.event_name == 'push' }}
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
       - name: Check with spotless
         id: spot-check
         run: ./gradlew spotlessCheck
