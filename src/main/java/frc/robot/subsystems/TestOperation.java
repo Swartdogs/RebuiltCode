@@ -1,7 +1,9 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.TestHook;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.Intake.IntakeState;
 import frc.robot.subsystems.shooter.Feeder;
@@ -18,16 +20,16 @@ public class TestOperation extends SubsystemBase
     private TestHook[]            _slots = { null, null, null, null, null, null, null, null, } ;
 
     private TestHook    _current = null ;
-    private final boolean _active = false ;
-    private final double _rate = 0.0 ;
-    private final int _shiftMod = 0 ;
+    private boolean _active = false ;
+    private double _rate = 0.0 ;
+    private int _shiftMod = 0 ;
 
     public Command cmd_shift() { return startEnd(() -> _shiftMod = 4, () -> _shiftMod = 0; }
     
-    public  Command cmd_button_04() { return runOnce( do_select( 0 ) ) ; }
-    public  Command cmd_button_15() { return runOnce( do_select( 1 ) ) ; }
-    public  Command cmd_button_26() { return runOnce( do_select( 2 ) ) ; }
-    public  Command cmd_button_37() { return runOnce( do_select( 3 ) ) ; }
+    public  Command cmd_button_04() { return runOnce(() -> do_select( 0 ) ) ; }
+    public  Command cmd_button_15() { return runOnce(() -> do_select( 1 ) ) ; }
+    public  Command cmd_button_26() { return runOnce(() -> do_select( 2 ) ) ; }
+    public  Command cmd_button_37() { return runOnce(() -> do_select( 3 ) ) ; }
 
     public TestOperation() 
     {
@@ -47,27 +49,28 @@ public class TestOperation extends SubsystemBase
     public void connect( int slot, String name, String shift_name )
     {
       _slots[slot] = _hooks.get(name) ;
-      _slots[slot + 4] = hooks.get(shift_name) ;
+      _slots[slot + 4] = _hooks.get(shift_name) ;
     }
 
     @Override
     public void periodic()
     {
         if (_active && ( null != _current )) {
-          _current-> setRate( _rate ) ;
+          _current.setRate( _rate ) ;
+        }
     }
 
     public void do_stop() 
     {
         _active = false ;
-        _hooks.forEach( key, hook ) { hook-> stop() ; }
+        _hooks.forEach(( key, hook ) -> { hook.stop() ; });
     }
 
     public void do_forward()
     {
         if ( _current ) {
-          _current-> forward() ;
-          _current-> setRate( _rate ) ;
+          _current.forward() ;
+          _current.setRate( _rate ) ;
         }
     }
     public void do_reverse()
