@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
@@ -140,5 +141,32 @@ public class Intake extends ExtensionMotor
     public IntakeState getIntakeState()
     {
         return _intakeState;
+    }
+
+    public class IntakeHook extends TestHook
+    {
+        @Override
+        public void stop()
+        {
+            setIntakeState(IntakeState.Off);
+        }
+
+        @Override
+        public void setRate(double rate) 
+        {
+            _intakeMotorVoltage.times(rate); 
+        }
+        
+        @Override
+        public void forward() 
+        {
+            setIntakeState(IntakeState.Forward);
+        }
+
+        @Override
+        public void reverse()
+        {
+            setIntakeState(IntakeState.Reverse);
+        }
     }
 }
