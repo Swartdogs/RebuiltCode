@@ -1,10 +1,20 @@
 package frc.robot;
 
-public class TestHook {
+public class TestHook
+{
+    public void stop()
+    {
+    }
 
-    public void stop() {}
-    public void setRate(double rate) {}
-    public void forward() {}
-    public void reverse() {}
+    public void setRate(double rate)
+    {
+    }
 
+    public void forward()
+    {
+    }
+
+    public void reverse()
+    {
+    }
 }

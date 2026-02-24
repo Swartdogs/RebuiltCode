@@ -1,0 +1,52 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will format a Java project with Gradle
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Spotless format check with Gradle
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  spotless-check:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-22.04
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repo (Pull Request)
+        #Checks if the event was trigged by a pull request, this step will be skipped if not.
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v4
+        with:
+          #Sets up branch system properly per https://github.com/marketplace/actions/add-commit#working-with-prs
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Checkout repo (Manually Run)
+        #Only runs if triggered manually
+        if: ${{github.event_name == 'workflow_dispatch' }}
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+      - name: Check with spotless
+        id: spot-check
+        run: ./gradlew spotlessCheck
+      - name: Apply spotless
+        if: ${{failure() }}
+        run: ./gradlew spotlessApply
+      - name: Commit changes
+        if: ${{ failure() && steps.spot-check.conclusion == 'failure' }}
+        uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actions
+          message: 'Formatted code using spotless.'

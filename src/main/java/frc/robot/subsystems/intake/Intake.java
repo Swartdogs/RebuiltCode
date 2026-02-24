@@ -152,13 +152,13 @@ public class Intake extends ExtensionMotor
         }
 
         @Override
-        public void setRate(double rate) 
+        public void setRate(double rate)
         {
-            _intakeMotorVoltage.times(rate); 
+            _intakeMotorVoltage.times(rate);
         }
-        
+
         @Override
-        public void forward() 
+        public void forward()
         {
             setIntakeState(IntakeState.Forward);
         }
