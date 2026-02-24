@@ -102,7 +102,7 @@ public class Intake extends ExtensionMotor
     {
         super.periodic();
 
-        _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
+_intakeMotorVoltage=Volts.of(_intakeMotor.getAppliedOutput()*_intakeMotor.getBusVoltage());
     }
 
     @Override
@@ -116,17 +116,17 @@ public class Intake extends ExtensionMotor
 
     public void setIntakeState(IntakeState state)
     {
-        if (state != IntakeState.Off && !isExtended())
+        if (state!= IntakeState.Off && !isExtended())
         {
-            state = IntakeState.Off;
+            state =                 IntakeState.Off;
         }
 
         _intakeState = state;
 
-        var volts = switch (_intakeState)
+        var volts = switch          (_intakeState)
         {
             case Forward -> IntakeConstants.INTAKE_VOLTS;
-            case Reverse -> IntakeConstants.REVERSE_VOLTS;
+                        case Reverse -> IntakeConstants.REVERSE_VOLTS;
             case Off -> Volts.zero();
         };
 
