@@ -52,9 +52,10 @@ public class Shooter extends SubsystemBase
     /*************
      * SUBSYSTEM *
      *************/
-    private final Flywheel _flywheel;
-    private final Feeder   _feeder;
-    private final Hood     _hood;
+    public final Flywheel _flywheel;
+    public final Feeder   _feeder;
+    public final Hood     _hood;
+
     private ShooterState   _state;
 
     public Shooter()

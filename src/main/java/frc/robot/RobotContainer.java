@@ -44,6 +44,7 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter();
+    private final TestOperation                  _testop     = new TestOperation() ;
     // private final Turret _turret = new Turret(_drivetrain::getState);
     private final Autos _autos = new Autos(_drivetrain);
 
@@ -100,7 +101,26 @@ public class RobotContainer
 
     private void configureTestBindings()
     {
-        _operator.leftBumper().whileTrue(_tester.commandShift());
+        _testop.add( "intake", _intake.gethook() ) ;
+        _testop.add( "intake-extend", _intake.getHookExt() ) ;
+        _testop.add( "feeder", _turret._feeder.gethook() ;
+        _testop.add( "flywheel", _turret._flywheel.gethook() ;
+        _testop.add( "hood", _turret._hood.gethook() ;
+        // turret
+        // climber
+
+        _testop.connect( 0, "intake", "intake-extend" ) ;
+        _testop.connect( 1, "feeder" ) ;
+        _testop.connect( 3, "flywheel", "hood" ) ;
+
+        _operator.leftBumper().whileTrue(_testop.commandShift());
+        _operator.a().onTrue( _testop.cmd_button_04() );
+        _operator.b().onTrue( _testop.cmd_button_15() );
+        _operator.x().onTrue( _testop.cmd_button_26() );
+        _operator.y().onTrue( _testop.cmd_button_37() );
+
+        // _operator.leftTrigger() -- reverse
+        // _operator.rightTrigger() -- forward
     }
 
     public Command getAutonomousCommand()
