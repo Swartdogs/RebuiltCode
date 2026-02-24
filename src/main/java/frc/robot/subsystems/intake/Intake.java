@@ -174,4 +174,9 @@ public class Intake extends ExtensionMotor
             setIntakeState(IntakeState.Reverse);
         }
     }
+
+    public TestHook getTestHook()
+    {
+        return new IntakeHook(); 
+    }
 }
