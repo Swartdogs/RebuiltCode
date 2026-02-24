@@ -135,6 +135,11 @@ public class Intake extends ExtensionMotor
             case Off -> Volts.zero();
         };
 
+        setIntakeVoltage(volts);
+    }
+
+    private void setIntakeVoltage(Voltage volts)
+    {
         _intakeMotor.setVoltage(volts);
 
         if (RobotBase.isSimulation())
@@ -150,33 +155,35 @@ public class Intake extends ExtensionMotor
 
     public class IntakeHook extends TestHook
     {
+        private int _polarity = 1;
+
         @Override
         public void stop()
         {
-            setIntakeState(IntakeState.Off);
+            _intakeMotor.stopMotor();
         }
 
         @Override
         public void setRate(double rate)
         {
-            _intakeMotorVoltage.times(rate);
+            setIntakeVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }
 
         @Override
         public void forward()
         {
-            setIntakeState(IntakeState.Forward);
+            _polarity = 1;
         }
 
         @Override
         public void reverse()
         {
-            setIntakeState(IntakeState.Reverse);
+            _polarity = -1;
         }
     }
 
     public TestHook getTestHook()
     {
-        return new IntakeHook(); 
+        return new IntakeHook();
     }
 }

@@ -96,6 +96,12 @@ public class RobotContainer
         _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
+
+        var intakeTestHook = _intake.getTestHook();
+
+        _testController.rightTrigger().onTrue(Commands.runOnce(() -> intakeTestHook.forward()));
+        _testController.leftTrigger().onTrue(Commands.runOnce(() -> intakeTestHook.reverse()));
+        _testController.a().whileTrue(Commands.startEnd(() -> intakeTestHook.setRate(0.5), () -> intakeTestHook.stop()));
     }
 
     private void configureTestBindings()
