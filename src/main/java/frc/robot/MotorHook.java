@@ -7,12 +7,12 @@ public class MotorHook extends TestHook
     @Override
     public void forward()
     {
-	_polarity = 1;
+        _polarity = 1;
     }
 
     @Override
     public void reverse()
     {
-	_polarity = -1;
+        _polarity = -1;
     }
 }

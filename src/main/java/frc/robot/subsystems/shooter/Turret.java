@@ -35,6 +35,8 @@ import edu.wpi.first.wpilibj.simulation.AnalogInputSim;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.MotorHook;
+import frc.robot.TestHook;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
@@ -227,5 +229,25 @@ public class Turret extends SubsystemBase
 
         var targetPose = _limelight.getData().targetData.getCameraToTarget();
         return Meters.of(targetPose.getTranslation().toTranslation2d().getNorm());
+    }
+
+    private class TurretHook extends MotorHook
+    {
+        @Override
+        public void stop()
+        {
+            _turretMotor.setVoltage(0.0);
+        }
+
+        @Override
+        public void setRate(double rate)
+        {
+            _turretMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.in(Volts) * rate * _polarity);
+        }
+    }
+
+    public TestHook getHook()
+    {
+        return new TurretHook();
     }
 }

@@ -56,7 +56,12 @@ public class Feeder
         @Override
         public void setRate(double rate)
         {
-            
+            _feederMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }
+    }
+
+    public TestHook getHook()
+    {
+        return new FeederHook();
     }
 }

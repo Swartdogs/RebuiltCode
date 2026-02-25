@@ -169,7 +169,7 @@ public class Intake extends ExtensionMotor
         }
     }
 
-    public TestHook getTestHook()
+    public TestHook getHook()
     {
         return new IntakeHook();
     }

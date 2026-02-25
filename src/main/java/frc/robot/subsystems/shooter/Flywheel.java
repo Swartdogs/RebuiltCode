@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.MotorHook;
 import frc.robot.TestHook;
 
 @Logged
@@ -130,10 +131,8 @@ public class Flywheel
         return _velocity;
     }
 
-    public class FlywheelHook extends TestHook
+    private class FlywheelHook extends MotorHook
     {
-        private int _polarity = 1;
-
         @Override
         public void stop()
         {
@@ -144,18 +143,6 @@ public class Flywheel
         public void setRate(double rate)
         {
             _leadMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
-        }
-
-        @Override
-        public void forward()
-        {
-            _polarity = 1;
-        }
-
-        @Override
-        public void reverse()
-        {
-            _polarity = -1;
         }
     }
 

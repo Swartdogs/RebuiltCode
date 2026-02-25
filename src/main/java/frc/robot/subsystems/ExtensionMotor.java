@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.SimulationConstants;
+import frc.robot.MotorHook;
 import frc.robot.TestHook;
 
 @Logged
@@ -164,10 +165,8 @@ public class ExtensionMotor extends SubsystemBase
         return runOnce(() -> extend(false));
     }
 
-    public class ExtensionHook extends TestHook
+    private class ExtensionHook extends MotorHook
     {
-        private int _polarity = 1;
-
         @Override
         public void stop()
         {
@@ -178,18 +177,6 @@ public class ExtensionMotor extends SubsystemBase
         public void setRate(double rate)
         {
             _extendMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
-        }
-
-        @Override
-        public void forward()
-        {
-            _polarity = 1;
-        }
-
-        @Override
-        public void reverse()
-        {
-            _polarity = -1;
         }
     }
 

@@ -17,6 +17,8 @@ import edu.wpi.first.epilogue.Logged;
 
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.DIOConstants;
+import frc.robot.MotorHook;
+import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.MeasureUtil;
@@ -148,5 +150,25 @@ public class Hood
     public HoodPosition getHoodPosition()
     {
         return _hoodPosition;
+    }
+
+    private class HoodHook extends MotorHook
+    {
+        @Override
+        public void stop()
+        {
+            Hood.this.stop();
+        }
+
+        @Override
+        public void setRate(double rate)
+        {
+            setHoodMotorVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
+        }
+    }
+
+    public TestHook getHook()
+    {
+        return new HoodHook();
     }
 }

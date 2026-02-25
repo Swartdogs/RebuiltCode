@@ -97,7 +97,7 @@ public class RobotContainer
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 
-        var intakeTestHook = _intake.getTestHook();
+        var intakeTestHook = _intake.getHook();
 
         _testController.rightTrigger().onTrue(Commands.runOnce(() -> intakeTestHook.forward()));
         _testController.leftTrigger().onTrue(Commands.runOnce(() -> intakeTestHook.reverse()));
