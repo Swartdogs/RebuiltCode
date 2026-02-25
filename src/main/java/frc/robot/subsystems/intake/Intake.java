@@ -153,7 +153,7 @@ public class Intake extends ExtensionMotor
         return _intakeState;
     }
 
-    public class IntakeHook extends TestHook
+    private class IntakeHook extends TestHook
     {
         private int _polarity = 1;
 
