@@ -57,6 +57,11 @@ public class Intake extends ExtensionMotor
         return runOnce(() -> setIntakeState(IntakeState.Off));
     }
 
+    public TestHook getHook()
+    {
+        return null;
+    }
+
     /*************
      * SUBSYSTEM *
      *************/
