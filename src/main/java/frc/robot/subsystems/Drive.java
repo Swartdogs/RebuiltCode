@@ -103,7 +103,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      */
     private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
             new SysIdRoutine.Config(
-                    /* This is in radians per second², but SysId only supports "volts per second" */
+                    /* This is in radians per second, but SysId only supports "volts per second" */
                     Volts.of(Math.PI / 6).per(Second),
                     /* This is in radians per second, but SysId only supports "volts" */
                     Volts.of(Math.PI), null, // Use default timeout (10 s)
@@ -177,10 +177,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *                                  unspecified or set to 0 Hz, this is 250 Hz
      *                                  on CAN FD, and 100 Hz on CAN 2.0.
      * @param odometryStandardDeviation The standard deviation for odometry
-     *                                  calculation in the form [x, y, theta]ᵀ, with
+     *                                  calculation in the form [x, y, theta], with
      *                                  units in meters and radians
      * @param visionStandardDeviation   The standard deviation for vision
-     *                                  calculation in the form [x, y, theta]ᵀ, with
+     *                                  calculation in the form [x, y, theta], with
      *                                  units in meters and radians
      * @param modules                   Constants for each specific module
      */
@@ -300,7 +300,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      * @param timestampSeconds         The timestamp of the vision measurement in
      *                                 seconds.
      * @param visionMeasurementStdDevs Standard deviations of the vision pose
-     *                                 measurement in the form [x, y, theta]ᵀ, with
+     *                                 measurement in the form [x, y, theta], with
      *                                 units in meters and radians.
      */
     @Override
