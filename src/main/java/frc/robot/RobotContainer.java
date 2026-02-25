@@ -9,8 +9,6 @@ import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 
-import choreo.auto.AutoFactory;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -24,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.TestOperation;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Turret;
@@ -44,6 +43,7 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter();
+    private final TestOperation                  _testop     = new TestOperation();
     // private final Turret _turret = new Turret(_drivetrain::getState);
     private final Autos _autos = new Autos(_drivetrain);
 
@@ -96,6 +96,34 @@ public class RobotContainer
         _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
+    }
+
+    private void configureTestBindings()
+    {
+        _testop.add("intake", _intake.getHook());
+        _testop.add("intake-extend", _intake.getHookExt());
+        // _testop.add( "feeder", _turret._feeder.gethook() ;
+        // _testop.add( "flywheel", _turret._flywheel.gethook() ;
+        // _testop.add( "hood", _turret._hood.gethook() ;
+        // turret
+        // climber
+
+        _testop.connect(0, "intake", "intake-extend");
+        _testop.connect(1, "feeder");
+        _testop.connect(3, "flywheel", "hood");
+
+        _operator.leftBumper().whileTrue(_testop.cmd_shift());
+        _operator.a().onTrue(_testop.cmd_button_04());
+        _operator.b().onTrue(_testop.cmd_button_15());
+        _operator.x().onTrue(_testop.cmd_button_26());
+        _operator.y().onTrue(_testop.cmd_button_37());
+        _operator.leftTrigger().whileTrue(_testop.cmd_reverse());
+        _operator.rightTrigger().whileTrue(_testop.cmd_forward());
+        _operator.povUp().onTrue(_testop.cmd_increase());
+        _operator.povDown().onTrue(_testop.cmd_decrease());
+        _operator.povLeft().onTrue(_testop.cmd_jog());
+        _operator.povRight().onTrue(_testop.cmd_full());
+        _operator.start().onTrue(_testop.cmd_reset());
     }
 
     public Command getAutonomousCommand()

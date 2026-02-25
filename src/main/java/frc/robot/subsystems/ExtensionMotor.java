@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.SimulationConstants;
+import frc.robot.TestHook;
 
 @Logged
 public class ExtensionMotor extends SubsystemBase
@@ -161,5 +162,10 @@ public class ExtensionMotor extends SubsystemBase
     public Command getRetractCmd()
     {
         return runOnce(() -> extend(false));
+    }
+
+    public TestHook getHookExt()
+    {
+        return null;
     }
 }
