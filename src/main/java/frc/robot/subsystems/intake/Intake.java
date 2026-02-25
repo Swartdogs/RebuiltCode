@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.MotorHook;
 import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
@@ -153,10 +154,8 @@ public class Intake extends ExtensionMotor
         return _intakeState;
     }
 
-    private class IntakeHook extends TestHook
+    private class IntakeHook extends MotorHook
     {
-        private int _polarity = 1;
-
         @Override
         public void stop()
         {
@@ -167,18 +166,6 @@ public class Intake extends ExtensionMotor
         public void setRate(double rate)
         {
             setIntakeVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
-        }
-
-        @Override
-        public void forward()
-        {
-            _polarity = 1;
-        }
-
-        @Override
-        public void reverse()
-        {
-            _polarity = -1;
         }
     }
 

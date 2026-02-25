@@ -2,7 +2,7 @@ package frc.robot;
 
 public class MotorHook extends TestHook
 {
-    private int _polarity = 1;
+    protected int _polarity = 1;
 
     @Override
     public void forward()

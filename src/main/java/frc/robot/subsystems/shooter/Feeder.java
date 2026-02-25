@@ -11,6 +11,7 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.MotorHook;
 import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
@@ -42,5 +43,20 @@ public class Feeder
     {
         Voltage targetVoltage = on ? ShooterConstants.FEEDER_VOLTAGE : Volts.zero();
         _feederMotor.setVoltage(targetVoltage.in(Volts));
+    }
+
+    private class FeederHook extends MotorHook
+    {
+        @Override
+        public void stop()
+        {
+            set(false);
+        }
+
+        @Override
+        public void setRate(double rate)
+        {
+            
+        }
     }
 }
