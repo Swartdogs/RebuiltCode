@@ -164,8 +164,37 @@ public class ExtensionMotor extends SubsystemBase
         return runOnce(() -> extend(false));
     }
 
+    public class ExtensionHook extends TestHook
+    {
+        private int _polarity = 1;
+
+        @Override
+        public void stop()
+        {
+            _extendMotor.stopMotor();
+        }
+
+        @Override
+        public void setRate(double rate)
+        {
+            _extendMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
+        }
+
+        @Override
+        public void forward()
+        {
+            _polarity = 1;
+        }
+
+        @Override
+        public void reverse()
+        {
+            _polarity = -1;
+        }
+    }
+
     public TestHook getHookExt()
     {
-        return null;
+        return new ExtensionHook();
     }
 }
