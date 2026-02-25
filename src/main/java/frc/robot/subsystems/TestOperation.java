@@ -42,6 +42,41 @@ public class TestOperation extends SubsystemBase
         return runOnce(() -> do_select(3));
     }
 
+    public Command cmd_forward()
+    {
+        return startEnd(() -> do_forward(), () -> do_stop());
+    }
+
+    public Command cmd_reverse()
+    {
+        return startEnd(() -> do_reverse(), () -> do_stop());
+    }
+
+    public Command cmd_increase()
+    {
+        return runOnce(() -> do_increase());
+    }
+
+    public Command cmd_decrease()
+    {
+        return runOnce(() -> do_decrease());
+    }
+
+    public Command cmd_reset()
+    {
+        return runOnce(() -> do_reset());
+    }
+
+    public Command cmd_full()
+    {
+        return runOnce(() -> do_full());
+    }
+
+    public Command cmd_jog()
+    {
+        return runOnce(() -> do_jog());
+    }
+
     public TestOperation()
     {
         _rate     = 0.1;

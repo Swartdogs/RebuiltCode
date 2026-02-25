@@ -117,9 +117,13 @@ public class RobotContainer
         _operator.b().onTrue(_testop.cmd_button_15());
         _operator.x().onTrue(_testop.cmd_button_26());
         _operator.y().onTrue(_testop.cmd_button_37());
-
-        // _operator.leftTrigger() -- reverse
-        // _operator.rightTrigger() -- forward
+        _operator.leftTrigger().whileTrue(_testop.cmd_reverse());
+        _operator.rightTrigger().whileTrue(_testop.cmd_forward());
+        _operator.povUp().onTrue(_testop.cmd_increase());
+        _operator.povDown().onTrue(_testop.cmd_decrease());
+        _operator.povLeft().onTrue(_testop.cmd_jog());
+        _operator.povRight().onTrue(_testop.cmd_full());
+        _operator.start().onTrue(_testop.cmd_reset());
     }
 
     public Command getAutonomousCommand()
