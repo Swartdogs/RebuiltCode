@@ -123,7 +123,7 @@ public class TestOperation extends SubsystemBase
         {
             _current.forward();
             _current.setRate(_rate);
-	    _active = true ;
+            _active = true;
         }
     }
 
@@ -133,7 +133,7 @@ public class TestOperation extends SubsystemBase
         {
             _current.reverse();
             _current.setRate(_rate);
-	    _active = true ;
+            _active = true;
         }
     }
 
