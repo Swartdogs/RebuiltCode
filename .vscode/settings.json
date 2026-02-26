@@ -1,6 +1,6 @@
 {
   "java.configuration.updateBuildConfiguration": "automatic",
-  "java.server.launchMode": "Standard",
+  "java.server.launchMode": "Hybrid",
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
