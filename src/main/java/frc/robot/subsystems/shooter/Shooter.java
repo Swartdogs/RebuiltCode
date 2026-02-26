@@ -115,6 +115,7 @@ public class Shooter extends SubsystemBase
                 _feeder.set(false);
                 break;
         }
+        _turret.periodic();
         _flywheel.periodic();
         _feeder.periodic();
         _hood.periodic();
@@ -125,6 +126,7 @@ public class Shooter extends SubsystemBase
     {
         _flywheel.simulationPeriodic();
         _hood.simulationPeriodic();
+        _turret.simulationPeriodic();
     }
 
     public void start(AngularVelocity velocity)
