@@ -179,12 +179,12 @@ public final class Constants
         public static final Matrix<N3, N1> STD_DEVS            = VecBuilder.fill(XY_STD_DEV.in(Meters), XY_STD_DEV.in(Meters), THETA_STD_DEV.in(Degrees));
 
         // Camera translations
-        public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(0.875), Inches.of(13), Inches.of(7.625));
-        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(15.25), Inches.of(5.75), Inches.of(7.5));
+        public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(10.67), Inches.of(10.67), Inches.of(7.625));
+        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(10.67), Inches.of(-10.67), Inches.of(7.5));
 
         // Camera rotations
-        public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(-90));
-        public static final Rotation3d RIGHT_CAMERA_ROTATION = new Rotation3d(Degrees.of(0), Degrees.of(0), Degrees.of(0));
+        public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(13), Degrees.of(-45));
+        public static final Rotation3d RIGHT_CAMERA_ROTATION = new Rotation3d(Degrees.of(0), Degrees.of(13), Degrees.of(45));
 
         // Camera offsets
         public static final Pose3d LEFT_CAMERA_OFFSET  = new Pose3d(LEFT_CAMERA_TRANSLATION, LEFT_CAMERA_ROTATION);
