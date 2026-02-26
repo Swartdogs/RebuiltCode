@@ -65,7 +65,7 @@
   "editor.defaultFormatter": "redhat.java",
   "files.trimFinalNewlines": true,
   "git.autofetch": true,
-  "git.autofetchPeriod": 1500,
+  "git.autofetchPeriod": 180,
   "files.trimTrailingWhitespace": true,
   "git.branchProtection": [
     "main"
