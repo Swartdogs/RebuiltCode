@@ -70,5 +70,6 @@
   "git.branchProtection": [
     "main"
   ],
-  "files.autoSaveWhenNoErrors": true
+  "files.autoSaveWhenNoErrors": true,
+  "files.autoSave": "afterDelay"
 }
