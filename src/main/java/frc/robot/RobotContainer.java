@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
@@ -24,7 +25,9 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.shooter.Hood;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
 
@@ -42,9 +45,10 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
+    private final Hood                           _hood       = new Hood();
     private final TestOperation                  _testop     = new TestOperation();
-    // private final Turret _turret = new Turret(_drivetrain::getState);
-    private final Autos _autos = new Autos(_drivetrain);
+    private final Turret                         _turret     = new Turret(_drivetrain::getState);
+    private final Autos                          _autos      = new Autos(_drivetrain);
 
     public RobotContainer()
     {
@@ -60,7 +64,8 @@ public class RobotContainer
                 _drivetrain.applyRequest(
                         () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))// Drive forward with negative Y (forward)
                                 .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise with negative X (left)
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise
+                                                                                                                                                                                     // with negative X (left)
                 )
         );
 
@@ -80,20 +85,9 @@ public class RobotContainer
         _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
         _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        // _operator.a().onTrue(Commands.runOnce(() ->
-        // _intake.extend(!_intake.isExtended()), _intake));
-        // _operator.x().onTrue(_intake.startRollers());
-        // _operator.y().onTrue(_intake.reverseRollers());
-        // _operator.leftStick().onTrue(_intake.stopRollers());
-
-        // _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
-        // _operator.leftBumper().onTrue(_shooter.passCmd());
-        // _operator.povUp().onTrue(_shooter.startCmd(RPM.of(4500)));
-        // _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
-        // _operator.leftTrigger().onTrue(_shooter.stopCmd());
-        // _operator.rightTrigger().onTrue(_shooter.fireCmd());
         // Reset the field-centric heading on left bumper press.
         _driver.button(7).onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+
         _operator.rightBumper().onTrue(_shooter.modVelocity(RPM.of(100)));
         _operator.leftBumper().onTrue(_shooter.modVelocity(RPM.of(-100)));
         _operator.a().onTrue(_shooter.stopCmd());
@@ -101,6 +95,13 @@ public class RobotContainer
         _operator.x().onTrue(_shooter.setVelocity(RPM.of(3000)));
         _operator.y().onTrue(_shooter.setVelocity(RPM.of(5000)));
         _operator.rightTrigger().whileTrue(_shooter.runFeeder());
+
+        _operator.povDown().onTrue(_turret.stop());
+        _operator.povLeft().onTrue(_turret.setSetpoint(Degrees.of(60)));
+        _operator.povUp().onTrue(_turret.setSetpoint(Degrees.of(0)));
+        _operator.povRight().onTrue(_turret.setSetpoint(Degrees.of(-60)));
+
+        _operator.leftTrigger().whileTrue(_intake.runRollers());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 

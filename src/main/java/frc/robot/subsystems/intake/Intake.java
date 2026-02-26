@@ -58,6 +58,11 @@ public class Intake extends ExtensionMotor
         return runOnce(() -> setIntakeState(IntakeState.Off));
     }
 
+    public Command runRollers()
+    {
+        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off));
+    }
+
     /*************
      * SUBSYSTEM *
      *************/

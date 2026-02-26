@@ -133,19 +133,22 @@ public final class Constants
         public static final Angle         PASS_HOOD_ANGLE  = Degrees.of(20.0);   // TODO: Tune
 
         // Turret
-        public static final Current       TURRET_CURRENT_LIMIT = Amps.of(40.0);
-        public static final double        TURRET_KP            = 2.4;   // TODO: Tune
-        public static final double        TURRET_KI            = 0.0;
-        public static final double        TURRET_KD            = 0.1;
-        public static final Dimensionless TURRET_GEAR_RATIO    = Value.of(13.0 / 1.0); // 13 : 1
-        public static final Angle         TURRET_MIN_ANGLE     = Degrees.of(-180.0); // degrees (full 360 rotation)
-        public static final Angle         TURRET_MAX_ANGLE     = Degrees.of(180.0);  // degrees
-        public static final Angle         TURRET_HOME_ANGLE    = Degrees.of(0.0);   // Forward-facing when no target
-        public static final Angle         TURRET_TOLERANCE     = Degrees.of(2.0);   // degrees
-        public static final String        LIMELIGHT_NAME       = "limelight-shooter";
-        public static final Angle         TURRET_PASS_TARGET   = Degrees.of(180.0); // TODO: Validate in driver practice
-        public static final List<Integer> BLUE_HUB_TAG_IDS     = List.of(2, 3, 4, 5, 8, 9, 10, 11);
-        public static final List<Integer> RED_HUB_TAG_IDS      = List.of(18, 19, 20, 21, 24, 25, 26, 27);
+        public static final Current       TURRET_CURRENT_LIMIT   = Amps.of(40.0);
+        public static final double        TURRET_KP              = 0.25;   // TODO: Tune
+        public static final double        TURRET_KI              = 0.0;
+        public static final double        TURRET_KD              = 0.013;
+        public static final Dimensionless TURRET_GEAR_RATIO      = Value.of(13.0 / 1.0); // 13 : 1
+        public static final Angle         TURRET_HARD_MIN_ANGLE  = Degrees.of(-180.0); // degrees (full 360 rotation)
+        public static final Angle         TURRET_HARD_MAX_ANGLE  = Degrees.of(180.0);  // degrees
+        public static final Angle         TURRET_SOFT_MIN_ANGLE  = Degrees.of(-90.0); // degrees (full 360 rotation)
+        public static final Angle         TURRET_SOFT_MAX_ANGLE  = Degrees.of(90.0);  // degrees
+        public static final boolean       TURRET_SENSOR_INVERTED = true;
+        public static final Angle         TURRET_HOME_ANGLE      = Degrees.of(0.0);   // Forward-facing when no target
+        public static final Angle         TURRET_TOLERANCE       = Degrees.of(2.0);   // degrees
+        public static final String        LIMELIGHT_NAME         = "limelight-shooter";
+        public static final Angle         TURRET_PASS_TARGET     = Degrees.of(180.0); // TODO: Validate in driver practice
+        public static final List<Integer> BLUE_HUB_TAG_IDS       = List.of(2, 3, 4, 5, 8, 9, 10, 11);
+        public static final List<Integer> RED_HUB_TAG_IDS        = List.of(18, 19, 20, 21, 24, 25, 26, 27);
 
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
