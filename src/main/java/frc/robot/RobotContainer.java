@@ -48,7 +48,7 @@ public class RobotContainer
 
     public RobotContainer()
     {
-        configureBindings();
+        // configureBindings();
         configureTestBindings();
     }
 
@@ -103,9 +103,9 @@ public class RobotContainer
     {
         _testop.add("intake", _intake.getHook());
         _testop.add("intake-extend", _intake.getHookExt());
-        // _testop.add( "feeder", _turret._feeder.gethook() ;
-        // _testop.add( "flywheel", _turret._flywheel.gethook() ;
-        // _testop.add( "hood", _turret._hood.gethook() ;
+        _testop.add("feeder", _shooter._feeder.getHook());
+        _testop.add("flywheel", _shooter._flywheel.getHook());
+        _testop.add("hood", _shooter._hood.getHook());
         // turret
         // climber
 
