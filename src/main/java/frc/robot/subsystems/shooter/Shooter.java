@@ -1,11 +1,16 @@
 package frc.robot.subsystems.shooter;
 
+import java.util.function.Supplier;
+
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
+import frc.robot.subsystems.shooter.Turret.TurretState;
 
 @Logged
 public class Shooter extends SubsystemBase
@@ -55,18 +60,21 @@ public class Shooter extends SubsystemBase
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
     public final Hood     _hood;
+    public final Turret   _turret;
     private ShooterState  _state;
 
-    public Shooter()
+    public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
     {
         _flywheel = new Flywheel();
         _feeder   = new Feeder();
         _hood     = new Hood();
+        _turret   = new Turret(swerveStateSupplier);
         _state    = ShooterState.Idle;
 
         _hood.setHoodPosition(HoodPosition.Shoot);
         _feeder.set(false);
         _flywheel.stop();
+        _turret.setTurretState(TurretState.Idle);
     }
 
     @Override
