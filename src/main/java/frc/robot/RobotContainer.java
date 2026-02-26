@@ -25,7 +25,6 @@ import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
 
@@ -50,6 +49,7 @@ public class RobotContainer
     public RobotContainer()
     {
         configureBindings();
+        configureTestBindings();
     }
 
     private void configureBindings()
@@ -96,6 +96,7 @@ public class RobotContainer
         _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
+
     }
 
     private void configureTestBindings()

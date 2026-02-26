@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.MotorHook;
 import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
@@ -55,11 +56,6 @@ public class Intake extends ExtensionMotor
     public Command stopRollers()
     {
         return runOnce(() -> setIntakeState(IntakeState.Off));
-    }
-
-    public TestHook getHook()
-    {
-        return null;
     }
 
     /*************
@@ -135,6 +131,11 @@ public class Intake extends ExtensionMotor
             case Off -> Volts.zero();
         };
 
+        setIntakeVoltage(volts);
+    }
+
+    private void setIntakeVoltage(Voltage volts)
+    {
         _intakeMotor.setVoltage(volts);
 
         if (RobotBase.isSimulation())
@@ -148,30 +149,23 @@ public class Intake extends ExtensionMotor
         return _intakeState;
     }
 
-    public class IntakeHook extends TestHook
+    private class IntakeHook extends MotorHook
     {
         @Override
         public void stop()
         {
-            setIntakeState(IntakeState.Off);
+            _intakeMotor.stopMotor();
         }
 
         @Override
         public void setRate(double rate)
         {
-            _intakeMotorVoltage.times(rate);
+            setIntakeVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }
+    }
 
-        @Override
-        public void forward()
-        {
-            setIntakeState(IntakeState.Forward);
-        }
-
-        @Override
-        public void reverse()
-        {
-            setIntakeState(IntakeState.Reverse);
-        }
+    public TestHook getHook()
+    {
+        return new IntakeHook();
     }
 }

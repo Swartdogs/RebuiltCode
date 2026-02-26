@@ -137,7 +137,7 @@ public final class Constants
         public static final double        TURRET_KI            = 0.0;
         public static final double        TURRET_KD            = 0.1;
         public static final Dimensionless TURRET_GEAR_RATIO    = Value.of(13.0 / 1.0); // 13 : 1
-        public static final Angle         TURRET_MIN_ANGLE     = Degrees.of(-180.0); // degrees (full 360° rotation)
+        public static final Angle         TURRET_MIN_ANGLE     = Degrees.of(-180.0); // degrees (full 360 rotation)
         public static final Angle         TURRET_MAX_ANGLE     = Degrees.of(180.0);  // degrees
         public static final Angle         TURRET_HOME_ANGLE    = Degrees.of(0.0);   // Forward-facing when no target
         public static final Angle         TURRET_TOLERANCE     = Degrees.of(2.0);   // degrees

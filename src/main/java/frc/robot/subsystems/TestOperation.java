@@ -3,14 +3,12 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.TestHook;
+import java.util.HashMap;
 import java.util.Map;
 
 public class TestOperation extends SubsystemBase
 {
-    // array of testhook
-    // current testhook
-    // fixrate
-    private Map<String, TestHook> _hooks;
+    private Map<String, TestHook> _hooks    = new HashMap<>();
     private TestHook[]            _slots    = { null, null, null, null, null, null, null, null, };
     private TestHook              _current  = null;
     private boolean               _active   = false;
@@ -85,16 +83,19 @@ public class TestOperation extends SubsystemBase
 
     public void add(String name, TestHook hook)
     {
+        if (name == null || hook == null) return;
         _hooks.put(name, hook);
     }
 
     public void connect(int slot, String name)
     {
+        if (slot < 0 || slot >= _slots.length) return;
         _slots[slot] = _hooks.get(name);
     }
 
     public void connect(int slot, String name, String shift_name)
     {
+        if (slot < 0 || slot + 4 >= _slots.length) return;
         _slots[slot]     = _hooks.get(name);
         _slots[slot + 4] = _hooks.get(shift_name);
     }
@@ -171,11 +172,12 @@ public class TestOperation extends SubsystemBase
 
     public void do_select(int slot)
     {
+        if (slot < 0 || slot + _shiftMod >= _slots.length) return;
         if (_current != null)
         {
             _current.stop();
         }
         _current = _slots[slot + _shiftMod];
-        do_jog();
+        _active  = false;
     }
 }
