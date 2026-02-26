@@ -41,7 +41,7 @@ public class RobotContainer
     private final CommandXboxController          _operator   = new CommandXboxController(1);
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter();
+    private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
     private final TestOperation                  _testop     = new TestOperation();
     // private final Turret _turret = new Turret(_drivetrain::getState);
     private final Autos _autos = new Autos(_drivetrain);
@@ -106,11 +106,12 @@ public class RobotContainer
         _testop.add("feeder", _shooter._feeder.getHook());
         _testop.add("flywheel", _shooter._flywheel.getHook());
         _testop.add("hood", _shooter._hood.getHook());
-        // turret
+        _testop.add("turret", _shooter._turret.getHook());
         // climber
 
         _testop.connect(0, "intake", "intake-extend");
         _testop.connect(1, "feeder");
+        _testop.connect(2, "turret");
         _testop.connect(3, "flywheel", "hood");
 
         _operator.leftBumper().whileTrue(_testop.cmd_shift());
