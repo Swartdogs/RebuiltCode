@@ -80,10 +80,11 @@ public class RobotContainer
         _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
         _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        _operator.a().onTrue(Commands.runOnce(() -> _intake.extend(!_intake.isExtended()), _intake));
-        _operator.x().onTrue(_intake.startRollers());
-        _operator.y().onTrue(_intake.reverseRollers());
-        _operator.leftStick().onTrue(_intake.stopRollers());
+        // _operator.a().onTrue(Commands.runOnce(() ->
+        // _intake.extend(!_intake.isExtended()), _intake));
+        // _operator.x().onTrue(_intake.startRollers());
+        // _operator.y().onTrue(_intake.reverseRollers());
+        // _operator.leftStick().onTrue(_intake.stopRollers());
 
         // _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
         // _operator.leftBumper().onTrue(_shooter.passCmd());
