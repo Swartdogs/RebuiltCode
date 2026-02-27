@@ -1,15 +1,22 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants;
+import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ClimberConstants;
 
 @Logged
@@ -28,17 +35,17 @@ public class Climb extends SubsystemBase
     private final TalonFX  _extendMotor;
     private final TalonFX  _rotateMotor;
     @Logged
-    private double         _currentRotation  = 0.0; // TODO: replace with encoder position
+    private Angle          _currentRotation  = Degrees.zero(); // TODO: replace with encoder position
     @Logged
-    private double         _currentExtension = 0.0; // TODO: replace with encoder position
+    private Distance       _currentExtension = Inches.zero(); // TODO: replace with encoder position
     @Logged
     private ExtensionState _extensionState   = ExtensionState.Idle;
     @Logged
-    private double         _extendOutput     = 0.0;
+    private Voltage        _extendOutput     = Volts.zero();
     @Logged
-    private double         _rotateOutput     = 0.0;
+    private Voltage        _rotateOutput     = Volts.zero();
     @Logged
-    private double         _rotationTarget   = 0.0;
+    private Angle          _rotationTarget   = Degrees.zero();
     @Logged
     private boolean        _extended         = false;
     @Logged
@@ -50,8 +57,8 @@ public class Climb extends SubsystemBase
 
     public Climb()
     {
-        _extendMotor = new TalonFX(Constants.CAN.CLIMBER_EXTEND);
-        _rotateMotor = new TalonFX(Constants.CAN.CLIMBER_ROTATE);
+        _extendMotor = new TalonFX(CANConstants.CLIMBER_EXTEND);
+        _rotateMotor = new TalonFX(CANConstants.CLIMBER_ROTATE);
 
         var extendConfig = new MotorOutputConfigs();
         extendConfig.NeutralMode = NeutralModeValue.Brake;
@@ -78,20 +85,17 @@ public class Climb extends SubsystemBase
     {
         switch (_extensionState)
         {
-            case Idle:
-                _extendOutput = 0.0;
-                break;
-
             case Extending:
                 _extendOutput = ClimberConstants.EXTEND_OUTPUT;
                 break;
 
             case Retracting:
-                _extendOutput = -ClimberConstants.EXTEND_OUTPUT;
+                _extendOutput = ClimberConstants.EXTEND_OUTPUT.unaryMinus();
                 break;
 
+            case Idle:
             default:
-                _extendOutput = 0.0;
+                _extendOutput = Volts.zero();
                 break;
         }
     }
@@ -126,19 +130,13 @@ public class Climb extends SubsystemBase
 
     private void updateRotation()
     {
-        if (!_extended)
+        if (!_extended || _currentRotation.isNear(_rotationTarget, ClimberConstants.ROTATION_TOLERANCE))
         {
-            _rotateOutput = 0.0;
+            _rotateOutput = Volts.zero();
             return;
         }
 
-        if (Math.abs(_currentRotation - _rotationTarget) <= ClimberConstants.ROTATION_TOLERANCE)
-        {
-            _rotateOutput = 0.0;
-            return;
-        }
-
-        _rotateOutput = (_rotationTarget > _currentRotation) ? ClimberConstants.ROTATE_OUTPUT : -ClimberConstants.ROTATE_OUTPUT;
+        _rotateOutput = _rotationTarget.gt(_currentRotation) ? ClimberConstants.ROTATE_OUTPUT : ClimberConstants.ROTATE_OUTPUT.unaryMinus();
     }
 
     public void setRotationTarget(ClimbLevel level)
@@ -234,7 +232,7 @@ public class Climb extends SubsystemBase
 
     private void applyOutputs()
     {
-        _extendMotor.set(_extendOutput);
-        _rotateMotor.set(_rotateOutput);
+        _extendMotor.setVoltage(_extendOutput.in(Volts));
+        _rotateMotor.setVoltage(_rotateOutput.in(Volts));
     }
 }
