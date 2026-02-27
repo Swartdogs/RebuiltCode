@@ -71,5 +71,6 @@
     "main"
   ],
   "files.autoSaveWhenNoErrors": true,
-  "files.autoSave": "afterDelay"
+  "files.autoSave": "afterDelay",
+  "git.pruneOnFetch": true
 }
