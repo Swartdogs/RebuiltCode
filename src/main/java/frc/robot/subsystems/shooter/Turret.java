@@ -38,7 +38,6 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.units.measure.Distance;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
@@ -201,7 +200,7 @@ public class Turret extends SubsystemBase
 
         TurretDirector.DirectorContext                              directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _offsetTagObservation);
         TurretDirector.TurretAimSolution aimSolution     = TurretDirector.getAimSolution(directorContext);
-    
+
         if (!aimSolution.hasSetpoint())
         {
             case Idle -> null;
