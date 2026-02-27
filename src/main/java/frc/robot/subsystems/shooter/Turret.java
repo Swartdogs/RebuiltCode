@@ -82,7 +82,7 @@ public class Turret extends SubsystemBase
     private final Supplier<SwerveDriveState> _swerveStateSupplier;
     private final PositionVoltage            _positionRequest = new PositionVoltage(0).withSlot(0);
     private List<Integer>                    _cachedTagFilter;
-    private final Angle                      _defaultSetpoint = Degrees.of(ShooterConstants.TURRET_HOME_ANGLE);
+    private final Angle                      _defaultSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
     private SwerveDriveState                 _swerveDriveState;
     @Logged
     private Angle                            _fieldTurretAngle;
@@ -198,24 +198,31 @@ public class Turret extends SubsystemBase
 
         updateVisionData();
 
-        TurretDirector.DirectorContext                              directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _offsetTagObservation);
+        TurretDirector.DirectorContext   directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _offsetTagObservation);
         TurretDirector.TurretAimSolution aimSolution     = TurretDirector.getAimSolution(directorContext);
 
         if (!aimSolution.hasSetpoint())
         {
-            case Idle -> null;
-            case Track -> _hasTarget ? _robotTurretAngle.plus(_targetHorizontalOffset) : ShooterConstants.TURRET_HOME_ANGLE;
-            case Pass -> ShooterConstants.TURRET_PASS_TARGET.minus(_swerveDriveState.Pose.getRotation().getMeasure());
-        };
-
-        if (requestedSetpoint == null)
-        {
-            _turretSetpoint = null;
-            _turretMotor.setVoltage(0.0);
+            // This occured while debugging merges. //TODO: Remove this if it safely can be.
+            // case Idle -> null;
+            // case Track -> _hasTarget ? _robotTurretAngle.plus(_targetHorizontalOffset) :
+            // ShooterConstants.TURRET_HOME_ANGLE;
+            // case Pass ->
+            // ShooterConstants.TURRET_PASS_TARGET.minus(_swerveDriveState.Pose.getRotation().getMeasure());
+            stopTurret();
             return;
-        }
+        } ;
 
-        _turretSetpoint = MeasureUtil.clamp(requestedSetpoint, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
+        // if (requestedSetpoint == null)
+        // {
+        // _turretSetpoint = null;
+        // _turretMotor.setVoltage(0.0);
+        // return;
+        // }
+
+        // _turretSetpoint = MeasureUtil.clamp(requestedSetpoint,
+        // ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
+        // //TODO: Check this
         var target = _turretSetpoint.times(ShooterConstants.TURRET_GEAR_RATIO);
         _turretMotor.setControl(_positionRequest.withPosition(target.in(Rotations)));
     }
@@ -283,9 +290,9 @@ public class Turret extends SubsystemBase
      */
     public boolean isLinedUp()
     {
-        if (!_hasSetpoint)
+        if (!_hasSetpoint || _turretSetpoint == null)
         {
-            return false;
+            return _turretState == TurretState.Idle; // This originally returned false, new version should work better
         }
 
         if (_turretState == TurretState.Track && !_hasTarget)
@@ -293,20 +300,16 @@ public class Turret extends SubsystemBase
             return false;
         }
 
-        return Math.abs(_continuousRobotAngleDeg - _continuousTurretSetpointDeg) <= ShooterConstants.TURRET_TOLERANCE;
+        return Math.abs(_continuousRobotAngleDeg - _continuousTurretSetpointDeg) <= ShooterConstants.TURRET_TOLERANCE.in(Degrees);
+        // This could also be the below line if that works better
+        // TODO: check which one is better.
+        // return _robotTurretAngle.isNear(_turretSetpoint,
+        // ShooterConstants.TURRET_TOLERANCE);
     }
 
     public boolean hasTarget()
     {
         return _hasTarget;
-    }
-
-    public boolean isLinedUp()
-    {
-        if (_turretSetpoint == null) return _turretState == TurretState.Idle;
-        if (_turretState == TurretState.Track && !_hasTarget) return false;
-
-        return _robotTurretAngle.isNear(_turretSetpoint, ShooterConstants.TURRET_TOLERANCE);
     }
 
     public double getDistanceToTarget()
@@ -343,6 +346,7 @@ public class Turret extends SubsystemBase
     public TestHook getHook()
     {
         return new TurretHook();
+    }
 
     private void updateVisionData()
     {
@@ -426,7 +430,7 @@ public class Turret extends SubsystemBase
 
     private static Angle clampToTurretLimits(Angle angle)
     {
-        return Degrees.of(MathUtil.clamp(angle.in(Degrees), ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE));
+        return Degrees.of(MathUtil.clamp(angle.in(Degrees), ShooterConstants.TURRET_MIN_ANGLE.in(Degrees), ShooterConstants.TURRET_MAX_ANGLE.in(Degrees)));
     }
 
     private void syncMotorEncoderToPotentiometer()
@@ -437,7 +441,7 @@ public class Turret extends SubsystemBase
         _continuousRobotAngleDeg     = _lastWrappedRobotAngleDeg;
         _continuousTurretSetpointDeg = _continuousRobotAngleDeg;
 
-        double motorRotations = Degrees.of(_continuousRobotAngleDeg).in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO;
+        double motorRotations = Degrees.of(_continuousRobotAngleDeg).in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO; // TODO: Find how to get dimensionless as a double
         _turretMotor.setPosition(motorRotations);
     }
 
