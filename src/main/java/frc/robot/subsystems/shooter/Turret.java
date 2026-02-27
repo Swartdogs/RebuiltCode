@@ -19,16 +19,16 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
@@ -38,12 +38,13 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.MotorHook;
-import frc.robot.TestHook;
+import edu.wpi.first.units.measure.Distance;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.MotorHook;
+import frc.robot.TestHook;
 import frc.robot.util.MeasureUtil;
 import frc.robot.util.Utilities;
 import limelight.Limelight;
@@ -198,9 +199,9 @@ public class Turret extends SubsystemBase
 
         updateVisionData();
 
-        var                              directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _offsetTagObservation);
+        TurretDirector.DirectorContext                              directorContext = new TurretDirector.DirectorContext(_turretState, _fieldTurretAngle, robotHeading, _targetHorizontalOffset, _hasTarget, _centerTagObservation, _offsetTagObservation);
         TurretDirector.TurretAimSolution aimSolution     = TurretDirector.getAimSolution(directorContext);
-
+    
         if (!aimSolution.hasSetpoint())
         {
             case Idle -> null;
@@ -238,9 +239,9 @@ public class Turret extends SubsystemBase
         _turretMotorSim.setRawRotorPosition(_motorSimModel.getAngularPosition().times(ShooterConstants.TURRET_GEAR_RATIO));
         _turretMotorSim.setRotorVelocity(_motorSimModel.getAngularVelocity().times(ShooterConstants.TURRET_GEAR_RATIO));
 
-        double   mechanismAngle = _motorSimModel.getAngularPosition().div(ShooterConstants.TURRET_GEAR_RATIO);
-        Angle clamped        = MeasureUtil.clamp(mechanismAngle, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
-        double   normalized     = clamped.minus(ShooterConstants.TURRET_MIN_ANGLE).div(ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE));
+        double mechanismAngle = _motorSimModel.getAngularPosition().div(ShooterConstants.TURRET_GEAR_RATIO);
+        Angle  clamped        = MeasureUtil.clamp(mechanismAngle, ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
+        double normalized     = clamped.minus(ShooterConstants.TURRET_MIN_ANGLE).div(ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE));
         _turretSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized.in(Value));
     }
 
@@ -308,6 +309,7 @@ public class Turret extends SubsystemBase
 
         return _robotTurretAngle.isNear(_turretSetpoint, ShooterConstants.TURRET_TOLERANCE);
     }
+
     public double getDistanceToTarget()
     {
         if (_distanceToHubMeters > 0.0)
@@ -342,6 +344,7 @@ public class Turret extends SubsystemBase
     public TestHook getHook()
     {
         return new TurretHook();
+
     private void updateVisionData()
     {
         if (_limelight == null)

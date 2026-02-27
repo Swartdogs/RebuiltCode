@@ -177,11 +177,11 @@ public final class Constants
         // @formatter:off
         private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE                 = InterpolatingDoubleTreeMap.ofEntries
         (
-            Map.entry(0.0, 20.0), 
-            Map.entry(2.0, 15.0), 
-            Map.entry(3.5, 22.0), 
-            Map.entry(5.0, 30.0), 
-            Map.entry(6.5, 38.0), 
+            Map.entry(0.0, 20.0),
+            Map.entry(2.0, 15.0),
+            Map.entry(3.5, 22.0),
+            Map.entry(5.0, 30.0),
+            Map.entry(6.5, 38.0),
             Map.entry(7.0, 45.0)
         );
         // @formatter:on
