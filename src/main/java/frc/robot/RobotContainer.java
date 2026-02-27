@@ -27,6 +27,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
+import frc.robot.subsystems.shooter.Turret;
 
 @Logged
 public class RobotContainer
@@ -44,7 +45,8 @@ public class RobotContainer
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
     private final TestOperation                  _testop     = new TestOperation();
     // private final Turret _turret = new Turret(_drivetrain::getState);
-    private final Autos _autos = new Autos(_drivetrain);
+    private final Autos  _autos  = new Autos(_drivetrain);
+    private final Turret _turret = new Turret(_drivetrain::getState);
 
     public RobotContainer()
     {
@@ -94,6 +96,12 @@ public class RobotContainer
         _operator.rightTrigger().onTrue(_shooter.fireCmd());
         // Reset the field-centric heading on left bumper press.
         _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+        _joystick.leftBumper().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+
+        // Turret simulation bindings.
+        _joystick.leftTrigger().whileTrue(_turret.getTrackCmd());
+        _joystick.y().whileTrue(_turret.getPassCmd());
+        _joystick.leftStick().onTrue(_turret.getIdleCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 

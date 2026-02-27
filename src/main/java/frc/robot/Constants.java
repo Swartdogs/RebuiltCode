@@ -157,6 +157,34 @@ public final class Constants
             Map.entry(7.0, 5000.0)
         );
         // @formatter:on
+        // Pot calibration model:
+        // - MIN/MAX volts are measured at conceptual turret min/max angle.
+        // - ZERO_OFFSET shifts the conceptual 0-deg heading without changing hard
+        // limits.
+        public static final double TURRET_POTENTIOMETER_MIN_VOLTS       = 0.35;  // TODO: Calibrate pot voltage at min turret angle
+        public static final double TURRET_POTENTIOMETER_MAX_VOLTS       = 4.65;  // TODO: Calibrate pot voltage at max turret angle
+        public static final double TURRET_POTENTIOMETER_ZERO_OFFSET_DEG = 0.0;   // TODO: Calibrate conceptual turret zero offset (degrees)
+        // Dead-zone model (robot-relative):
+        // - Center/width define forbidden cable-wrap sector.
+        // - Width <= 0 disables dead-zone routing logic.
+        public static final double              TURRET_DEAD_ZONE_CENTER          = 180.0; // degrees (robot-relative)
+        public static final double              TURRET_DEAD_ZONE_WIDTH           = 0.0;   // degrees; set > 0 once cable-wrap dead-zone is measured
+        public static final List<List<Integer>> BLUE_HUB_CENTER_OFFSET_TAG_PAIRS = List.of(List.of(18, 27), List.of(20, 19), List.of(21, 24), List.of(26, 25));
+        public static final List<List<Integer>> RED_HUB_CENTER_OFFSET_TAG_PAIRS  = List.of(List.of(2, 11), List.of(4, 3), List.of(5, 8), List.of(10, 9));
+        public static final double              TURRET_CL_METERS                 = 0.3556; // 14.00 in
+        public static final double              TURRET_CH_METERS                 = 0.5969; // 23.50 ins
+        public static final String              LIMELIGHT_NAME                   = "limelight-shooter";
+        // @formatter:off
+        private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE                 = InterpolatingDoubleTreeMap.ofEntries
+        (
+            Map.entry(0.0, 20.0), 
+            Map.entry(2.0, 15.0), 
+            Map.entry(3.5, 22.0), 
+            Map.entry(5.0, 30.0), 
+            Map.entry(6.5, 38.0), 
+            Map.entry(7.0, 45.0)
+        );
+        // @formatter:on
 
         // Feeder
         public static final Current FEEDER_CURRENT_LIMIT = Amps.of(60);
@@ -166,6 +194,14 @@ public final class Constants
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
         {
             return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Meters)));
+            return RPM.of(FLYWHEEL_SPEED_TABLE.get(meters));
+        }
+
+        // TODO: Tune these values with testing!
+
+        public static double getHoodAngleForDistance(double meters)
+        {
+            return HOOD_ANGLE_TABLE.get(meters);
         }
     }
 
