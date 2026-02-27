@@ -228,7 +228,8 @@ public class Turret extends SubsystemBase
 
         double mechanismAngle = _motorSimModel.getAngularPosition().div(ShooterConstants.TURRET_GEAR_RATIO).in(Degrees); // TODO: Quickly glance over this line to ensure it's correct.
         Angle  clamped        = MeasureUtil.clamp(Degrees.of(mechanismAngle), ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
-        double normalized     = clamped.minus(ShooterConstants.TURRET_MIN_ANGLE).div(ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE)); // FIXME: Figure out the issue with .div
+        double normalized     = clamped.in(Degrees) - (ShooterConstants.TURRET_MIN_ANGLE.in(Degrees)) / (ShooterConstants.TURRET_MAX_ANGLE.in(Degrees) - (ShooterConstants.TURRET_MIN_ANGLE.in(Degrees))); // TODO: Do this in the actually
+                                                                                                                                                                                                           // better way.
         _turretSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized);
     }
 
@@ -422,7 +423,7 @@ public class Turret extends SubsystemBase
         _continuousRobotAngleDeg     = _lastWrappedRobotAngleDeg;
         _continuousTurretSetpointDeg = _continuousRobotAngleDeg;
 
-        double motorRotations = Degrees.of(_continuousRobotAngleDeg).in(Rotations) * ShooterConstants.TURRET_GEAR_RATIO; // TODO: Find how to get dimensionless as a double
+        double motorRotations = _continuousRobotAngleDeg * ShooterConstants.TURRET_GEAR_RATIO.baseUnitMagnitude(); // TODO: Check if there's a better way to do this line.
         _turretMotor.setPosition(motorRotations);
     }
 
@@ -526,12 +527,21 @@ public class Turret extends SubsystemBase
 
     private static double getTurretPotFullRange()
     {
-        return ((ShooterConstants.TURRET_MAX_ANGLE - ShooterConstants.TURRET_MIN_ANGLE) * GeneralConstants.SENSOR_VOLTAGE) / (ShooterConstants.TURRET_POTENTIOMETER_MAX_VOLTS - ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS);
+        return ((ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE)).in(Degrees) * GeneralConstants.SENSOR_VOLTAGE.in(Volts))
+                / (ShooterConstants.TURRET_POTENTIOMETER_MAX_VOLTS - ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS); // TODO: Check if all this conversion is needed or this can be done better.
     }
 
     private static double getTurretPotOffset()
     {
         double fullRange = getTurretPotFullRange();
-        return ShooterConstants.TURRET_MIN_ANGLE - ((ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS / GeneralConstants.SENSOR_VOLTAGE) * fullRange) + ShooterConstants.TURRET_POTENTIOMETER_ZERO_OFFSET_DEG;
+        return ShooterConstants.TURRET_MIN_ANGLE.in(Degrees) - ((ShooterConstants.TURRET_POTENTIOMETER_MIN_VOLTS / GeneralConstants.SENSOR_VOLTAGE.in(Volts)) * fullRange) + ShooterConstants.TURRET_POTENTIOMETER_ZERO_OFFSET_DEG; // TODO:
+                                                                                                                                                                                                                                    // Check if
+                                                                                                                                                                                                                                    // all this
+                                                                                                                                                                                                                                    // conversion
+                                                                                                                                                                                                                                    // is needed
+                                                                                                                                                                                                                                    // or this
+                                                                                                                                                                                                                                    // can be
+                                                                                                                                                                                                                                    // done
+                                                                                                                                                                                                                                    // better.
     }
 }
