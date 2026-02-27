@@ -228,7 +228,7 @@ public class Turret extends SubsystemBase
 
         double mechanismAngle = _motorSimModel.getAngularPosition().div(ShooterConstants.TURRET_GEAR_RATIO).in(Degrees); // TODO: Quickly glance over this line to ensure it's correct.
         Angle  clamped        = MeasureUtil.clamp(Degrees.of(mechanismAngle), ShooterConstants.TURRET_MIN_ANGLE, ShooterConstants.TURRET_MAX_ANGLE);
-        double normalized     = clamped.minus(ShooterConstants.TURRET_MIN_ANGLE).div(ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE)); // FIXME: Figure out what's happening here after doing the easy stuff.
+        double normalized     = clamped.minus(ShooterConstants.TURRET_MIN_ANGLE).div(ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE)); // FIXME: Figure out the issue with .div
         _turretSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized);
     }
 
