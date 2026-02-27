@@ -79,6 +79,8 @@ public class Turret extends SubsystemBase
     private boolean                    _hasTarget;
     @Logged
     private Angle                      _targetHorizontalOffset;
+    @Logged
+    private double                     _rawSensorVal;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -99,7 +101,10 @@ public class Turret extends SubsystemBase
 
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0Configs));
         AnalogInput turretSensorInput = new AnalogInput(AIOConstants.TURRET_POTENTIOMETER);
-        _turretSensor    = new AnalogPotentiometer(turretSensorInput, ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE).in(Degrees), ShooterConstants.TURRET_MIN_ANGLE.in(Degrees));
+        _turretSensor = new AnalogPotentiometer(turretSensorInput, 360, -180);
+        // _turretSensor = new AnalogPotentiometer(turretSensorInput,
+        // ShooterConstants.TURRET_MAX_ANGLE.minus(ShooterConstants.TURRET_MIN_ANGLE).in(Degrees),
+        // ShooterConstants.TURRET_MIN_ANGLE.in(Degrees));
         _positionRequest = new PositionVoltage(0).withSlot(0);
         _limelight       = new Limelight(ShooterConstants.LIMELIGHT_NAME);
 
@@ -133,6 +138,7 @@ public class Turret extends SubsystemBase
     @Override
     public void periodic()
     {
+        _rawSensorVal     = _turretSensor.get();
         _robotTurretAngle = Degrees.of(_turretSensor.get());
 
         SwerveDriveState state = _swerveStateSupplier.get();

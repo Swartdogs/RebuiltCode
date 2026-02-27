@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -54,68 +56,93 @@ public class Shooter extends SubsystemBase
         return startEnd(this::pass, this::stop);
     }
 
+    public Command setVelocity(AngularVelocity velocity)
+    {
+        return runOnce(() ->
+        {
+            _targetVelocity = velocity;
+            _flywheel.setVelocity(_targetVelocity);
+        });
+    }
+
+    public Command modVelocity(AngularVelocity mod)
+    {
+        return runOnce(() ->
+        {
+            _targetVelocity = _targetVelocity.plus(mod);
+            _flywheel.setVelocity(_targetVelocity);
+        });
+    }
+
+    public Command runFeeder()
+    {
+        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false));
+    }
+
     /*************
      * SUBSYSTEM *
      *************/
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
     public final Hood     _hood;
-    public final Turret   _turret;
-    private ShooterState  _state;
+    // public final Turret _turret;
+    private ShooterState    _state;
+    @Logged
+    private AngularVelocity _targetVelocity = RPM.zero();
 
     public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
     {
         _flywheel = new Flywheel();
         _feeder   = new Feeder();
         _hood     = new Hood();
-        _turret   = new Turret(swerveStateSupplier);
-        _state    = ShooterState.Idle;
+        // _turret = new Turret(swerveStateSupplier);
+        _state = ShooterState.Idle;
 
         _hood.setHoodPosition(HoodPosition.Shoot);
         _feeder.set(false);
         _flywheel.stop();
-        _turret.setTurretState(TurretState.Idle);
+        // _turret.setTurretState(TurretState.Idle);
     }
 
     @Override
     public void periodic()
     {
-        switch (_state)
-        {
-            case Preparing:
-                _feeder.set(false);
-                if (_flywheel.atSpeed() && _hood.atSetpoint())
-                {
-                    _state = ShooterState.Ready;
-                }
-                break;
+        // switch (_state)
+        // {
+        // case Preparing:
+        // _feeder.set(false);
+        // if (_flywheel.atSpeed() && _hood.atSetpoint())
+        // {
+        // _state = ShooterState.Ready;
+        // }
+        // break;
 
-            case Priming:
-                _feeder.set(false);
-                if (_flywheel.atSpeed() && _hood.atSetpoint())
-                {
-                    _state = ShooterState.Firing;
-                }
-                break;
+        // case Priming:
+        // _feeder.set(false);
+        // if (_flywheel.atSpeed() && _hood.atSetpoint())
+        // {
+        // _state = ShooterState.Firing;
+        // }
+        // break;
 
-            case Ready:
-                _feeder.set(false);
-                if (!_flywheel.atSpeed())
-                {
-                    _state = ShooterState.Preparing;
-                }
-                break;
+        // case Ready:
+        // _feeder.set(false);
+        // if (!_flywheel.atSpeed())
+        // {
+        // _state = ShooterState.Preparing;
+        // }
+        // break;
 
-            case Firing:
-                _feeder.set(true);
-                break;
-            case Idle:
-            default:
-                _flywheel.stop();
-                _feeder.set(false);
-                break;
-        }
-        _turret.periodic();
+        // case Firing:
+        // _feeder.set(true);
+        // break;
+        // case Idle:
+        // default:
+        // _flywheel.stop();
+        // _feeder.set(false);
+        // break;
+        // }
+        // _turret.periodic();
         _flywheel.periodic();
         _feeder.periodic();
         _hood.periodic();
@@ -126,7 +153,7 @@ public class Shooter extends SubsystemBase
     {
         _flywheel.simulationPeriodic();
         _hood.simulationPeriodic();
-        _turret.simulationPeriodic();
+        // _turret.simulationPeriodic();
     }
 
     public void start(AngularVelocity velocity)

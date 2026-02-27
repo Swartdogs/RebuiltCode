@@ -58,9 +58,9 @@ public class RobotContainer
         _drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 _drivetrain.applyRequest(
-                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.DEADBAND))// Drive forward with negative Y (forward)
-                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.DEADBAND)) // Drive counterclockwise with negative X (left)
+                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))// Drive forward with negative Y (forward)
+                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND)) // Drive left with negative X (left)
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise with negative X (left)
                 )
         );
 
@@ -85,14 +85,21 @@ public class RobotContainer
         _operator.y().onTrue(_intake.reverseRollers());
         _operator.leftStick().onTrue(_intake.stopRollers());
 
-        _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
-        _operator.leftBumper().onTrue(_shooter.passCmd());
-        _operator.povUp().onTrue(_shooter.startCmd(RPM.of(4500)));
-        _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
-        _operator.leftTrigger().onTrue(_shooter.stopCmd());
-        _operator.rightTrigger().onTrue(_shooter.fireCmd());
+        // _operator.rightBumper().onTrue(_shooter.setShootModeCmd(HoodPosition.Shoot));
+        // _operator.leftBumper().onTrue(_shooter.passCmd());
+        // _operator.povUp().onTrue(_shooter.startCmd(RPM.of(4500)));
+        // _operator.povLeft().onTrue(_shooter.startCmd(RPM.of(3500)));
+        // _operator.leftTrigger().onTrue(_shooter.stopCmd());
+        // _operator.rightTrigger().onTrue(_shooter.fireCmd());
         // Reset the field-centric heading on left bumper press.
-        _driver.povDown().onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+        _driver.button(7).onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
+        _operator.rightBumper().onTrue(_shooter.modVelocity(RPM.of(100)));
+        _operator.leftBumper().onTrue(_shooter.modVelocity(RPM.of(-100)));
+        _operator.a().onTrue(_shooter.stopCmd());
+        _operator.b().onTrue(_shooter.setVelocity(RPM.of(1000)));
+        _operator.x().onTrue(_shooter.setVelocity(RPM.of(3000)));
+        _operator.y().onTrue(_shooter.setVelocity(RPM.of(5000)));
+        _operator.rightTrigger().whileTrue(_shooter.runFeeder());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 
@@ -105,7 +112,7 @@ public class RobotContainer
         _testop.add("feeder", _shooter._feeder.getHook());
         _testop.add("flywheel", _shooter._flywheel.getHook());
         _testop.add("hood", _shooter._hood.getHook());
-        _testop.add("turret", _shooter._turret.getHook());
+        // _testop.add("turret", _shooter._turret.getHook());
         // climber
 
         _testop.connect(0, "intake", "intake-extend");
