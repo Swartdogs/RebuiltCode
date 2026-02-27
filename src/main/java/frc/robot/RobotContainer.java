@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
@@ -24,10 +23,10 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
-import frc.robot.util.MeasureUtil;
+import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Turret;
+import frc.robot.util.MeasureUtil;
 
 @Logged
 public class RobotContainer
@@ -44,6 +43,7 @@ public class RobotContainer
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
     private final TestOperation                  _testop     = new TestOperation();
+    private final CommandXboxController          _joystick   = new CommandXboxController(0); // TODO: Check if this can be removed
     // private final Turret _turret = new Turret(_drivetrain::getState);
     private final Autos  _autos  = new Autos(_drivetrain);
     private final Turret _turret = new Turret(_drivetrain::getState);

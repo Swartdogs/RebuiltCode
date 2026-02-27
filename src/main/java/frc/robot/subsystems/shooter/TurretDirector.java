@@ -51,7 +51,7 @@ public final class TurretDirector
             return TurretAimSolution.of(context.currentFieldAngle().plus(context.horizontalOffset()), fallbackDistance);
         }
 
-        return TurretAimSolution.of(context.robotHeading().plus(Degrees.of(ShooterConstants.TURRET_HOME_ANGLE)), 0.0);
+        return TurretAimSolution.of(context.robotHeading().plus((ShooterConstants.TURRET_HOME_ANGLE)), 0.0);
     }
 
     /**

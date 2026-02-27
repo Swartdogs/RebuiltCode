@@ -1,33 +1,19 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.RPM;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Milliseconds;
-import static edu.wpi.first.units.Units.Percent;
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Value;
-import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.*;
 
 import java.util.List;
 import java.util.Map;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
@@ -42,7 +28,6 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.math.system.plant.DCMotor;
 import frc.robot.generated.TunerConstants;
 
 public final class Constants
@@ -173,7 +158,6 @@ public final class Constants
         public static final List<List<Integer>> RED_HUB_CENTER_OFFSET_TAG_PAIRS  = List.of(List.of(2, 11), List.of(4, 3), List.of(5, 8), List.of(10, 9));
         public static final double              TURRET_CL_METERS                 = 0.3556; // 14.00 in
         public static final double              TURRET_CH_METERS                 = 0.5969; // 23.50 ins
-        public static final String              LIMELIGHT_NAME                   = "limelight-shooter";
         // @formatter:off
         private static final InterpolatingDoubleTreeMap HOOD_ANGLE_TABLE                 = InterpolatingDoubleTreeMap.ofEntries
         (
@@ -194,7 +178,6 @@ public final class Constants
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
         {
             return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Meters)));
-            return RPM.of(FLYWHEEL_SPEED_TABLE.get(meters));
         }
 
         // TODO: Tune these values with testing!
