@@ -76,9 +76,10 @@ public final class Constants
 
     public static class DriveConstants
     {
-        public static final LinearVelocity  MAX_SPEED        = TunerConstants.kSpeedAt12Volts.times(0.5); // kSpeedAt12Volts desired top speed
-        public static final AngularVelocity MAX_ANGULAR_RATE = RotationsPerSecond.of(0.75); // 3/4 of a rotation per second max angular velocity
-        public static final Dimensionless   DEADBAND         = Percent.of(5);
+        public static final LinearVelocity  MAX_SPEED          = TunerConstants.kSpeedAt12Volts.times(0.5); // kSpeedAt12Volts desired top speed
+        public static final AngularVelocity MAX_ANGULAR_RATE   = RotationsPerSecond.of(0.75); // 3/4 of a rotation per second max angular velocity
+        public static final Dimensionless   TRANSLATE_DEADBAND = Percent.of(8);
+        public static final Dimensionless   ROTATE_DEADBAND    = Percent.of(15);
     }
 
     public static class IntakeConstants
