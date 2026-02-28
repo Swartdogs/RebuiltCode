@@ -33,6 +33,7 @@ import frc.robot.subsystems.shooter.TurretDirector.HubTagPair;
 import frc.robot.util.MeasureUtil;
 import frc.robot.util.Utilities;
 import limelight.Limelight;
+import limelight.networktables.target.AprilTagFiducial;
 
 @Logged
 public class Turret extends SubsystemBase
@@ -59,8 +60,6 @@ public class Turret extends SubsystemBase
     private boolean                          _hasSetpoint;
     @Logged
     private Voltage                          _motorOutput;
-    @Logged
-    private Voltage                          _commandedOutput;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -83,7 +82,6 @@ public class Turret extends SubsystemBase
         _currentSwerveState = null;
         _turretState        = TurretState.Idle;
         _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
-        _commandedOutput    = Volts.zero();
         _hasSetpoint        = false;
 
         var currentConfig = new CurrentLimitsConfigs();
@@ -127,42 +125,37 @@ public class Turret extends SubsystemBase
 
         _motorOutput = _turretMotor.getMotorVoltage().getValue();
 
-        // var volts = Volts.zero();
-        // var tagPairs = new ArrayList<HubTagPair>();
+        var volts    = Volts.zero();
+        var tagPairs = new ArrayList<HubTagPair>();
 
-        // switch (_turretState)
-        // {
-        // case Track:
-        // tagPairs = getTagPairs();
-        // case Pass:
-        // _hasSetpoint = true;
-        // _turretSetpoint =
-        // MeasureUtil.clamp(toRobotFrame(TurretDirector.calculate(_turretState,
-        // _currentSwerveState, tagPairs)), ShooterConstants.TURRET_SOFT_MIN_ANGLE,
-        // ShooterConstants.TURRET_SOFT_MAX_ANGLE);
-        // break;
+        switch (_turretState)
+        {
+            case Track:
+                tagPairs = getTagPairs();
+            case Pass:
+                _hasSetpoint = true;
+                _turretSetpoint = MeasureUtil.clamp(toRobotFrame(TurretDirector.calculate(_turretState, _currentSwerveState, tagPairs)), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                break;
 
-        // case Idle:
-        // default:
-        // _hasSetpoint = false;
-        // _turretSetpoint = Degrees.zero();
-        // break;
-        // }
-
-        // if (_hasSetpoint)
-        // {
-        // volts = Volts.of(_pidController.calculate(_robotAngle.in(Degrees),
-        // _turretSetpoint.in(Degrees)));
-        // }
-
-        var volts = Volts.zero();
+            case Idle:
+            default:
+                _hasSetpoint = false;
+                _turretSetpoint = Degrees.zero();
+                break;
+        }
 
         if (_hasSetpoint)
         {
             volts = Volts.of(_pidController.calculate(_robotAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
 
-        _commandedOutput = volts;
+        // var volts = Volts.zero();
+
+        // if (_hasSetpoint)
+        // {
+        // volts = Volts.of(_pidController.calculate(_robotAngle.in(Degrees),
+        // _turretSetpoint.in(Degrees)));
+        // }
 
         _turretMotor.setVoltage(volts.in(Volts));
     }
@@ -186,13 +179,17 @@ public class Turret extends SubsystemBase
     {
         ArrayList<HubTagPair> pairs = new ArrayList<HubTagPair>();
 
-        // _limelight.getLatestResults().ifPresent(results ->
-        // {
-        // var tags = Collections.sort(List.of(results.targets_Fiducials), (t1, t2) ->
-        // Integer.compare((int)t1.fiducialID, (int)t2.fiducialID));
-        // var tagIds = Utilities.getOurHubTagIds();
+        _limelight.getLatestResults().ifPresent(results ->
+        {
+            // loop through fiducial targets
+            // average together the angles and distances to target
+            // use getTargetPose_CameraSpace2D
 
-        // });
+            // This is the leftover idk if it works
+            // var tags = Collections.sort(List.of(results.targets_Fiducials), (t1, t2) ->
+            // Integer.compare((int)t1.fiducialID, (int)t2.fiducialID));
+            // var tagIds = Utilities.getOurHubTagIds();
+        });
 
         return pairs;
     }
