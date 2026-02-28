@@ -98,6 +98,8 @@ public class Turret extends SubsystemBase
 
         _positionRequest = new PositionVoltage(0).withSlot(0);
 
+        seedEncoderFromPotentiometer();
+
         _limelight = new Limelight(ShooterConstants.LIMELIGHT_NAME);
 
         _currentSwerveState = new SwerveDriveState();
@@ -125,6 +127,11 @@ public class Turret extends SubsystemBase
     @Override
     public void periodic()
     {
+        if (_turretMotor.hasResetOccurred())
+        {
+            seedEncoderFromPotentiometer();
+        }
+
         var latestSwerveState = _swerveStateSupplier.get();
         if (latestSwerveState != null)
         {
@@ -240,6 +247,11 @@ public class Turret extends SubsystemBase
         var tagOffset = new Translation3d(ShooterConstants.TURRET_CENTER_TAG_TO_HUB_CENTER, Inches.zero(), Inches.zero());
         _limelight.getSettings().withAprilTagIdFilter(tagFilter).withAprilTagOffset(tagOffset).save();
         _activeTagFilter = List.copyOf(tagFilter);
+    }
+
+    private void seedEncoderFromPotentiometer()
+    {
+        _turretMotor.setPosition(Degrees.of(_turretSensor.get()).times(ShooterConstants.TURRET_GEAR_RATIO).in(Rotations));
     }
 
     private Angle toFieldFrame(Angle robotFrameAngle)
