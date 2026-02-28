@@ -9,6 +9,8 @@ import com.ctre.phoenix6.HootAutoReplay;
 
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,6 +30,10 @@ public class Robot extends TimedRobot
     {
         m_robotContainer = new RobotContainer();
         Epilogue.bind(this);
+
+        // Start a webserver in the deploy directory so Elastic can remotely download
+        // layouts
+        WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
     }
 
     @Override

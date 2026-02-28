@@ -190,4 +190,14 @@ public class Shooter extends SubsystemBase
         _flywheel.setVelocity(ShooterConstants.PASS_FLYWHEEL_VELOCITY);
         _state = ShooterState.Priming;
     }
+
+    public ShooterState getShooterState()
+    {
+        return _state;
+    }
+
+    public HoodPosition getShooterMode()
+    {
+        return _hood.getHoodPosition();
+    }
 }

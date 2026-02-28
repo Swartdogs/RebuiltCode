@@ -24,6 +24,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -37,6 +38,7 @@ import frc.robot.TestHook;
 @Logged
 public class Flywheel
 {
+    private static final String             kSettingsPrefix  = "Dashboard/Dashboard Settings/";
     private final SparkFlex                 _leadMotor;
     private final SparkFlex                 _followMotor;
     private final SparkClosedLoopController _closedLoopController;
@@ -49,6 +51,11 @@ public class Flywheel
     private AngularVelocity                 _targetVelocity  = RPM.zero();
     @Logged
     private Voltage                         _flywheelVoltage = Volts.zero();
+    private double                          _lastKP;
+    private double                          _lastKD;
+    private double                          _lastKS;
+    private double                          _lastKV;
+    private double                          _lastKA;
 
     public Flywheel()
     {
@@ -73,6 +80,14 @@ public class Flywheel
         _closedLoopController = _leadMotor.getClosedLoopController();
         _flywheelEncoder      = _leadMotor.getEncoder();
 
+        _lastKP = ShooterConstants.FLYWHEEL_KP;
+        _lastKD = ShooterConstants.FLYWHEEL_KD;
+        _lastKS = ShooterConstants.FLYWHEEL_KS.in(Volts);
+        _lastKV = ShooterConstants.FLYWHEEL_KV.in(Volts.per(RPM));
+        _lastKA = ShooterConstants.FLYWHEEL_KA.in(Volts.per(RotationsPerSecondPerSecond));
+
+        initializeTuningPreferences();
+
         if (RobotBase.isReal())
         {
             _leadMotor.setCANTimeout(0);
@@ -92,6 +107,24 @@ public class Flywheel
     {
         _velocity        = RPM.of(_flywheelEncoder.getVelocity());
         _flywheelVoltage = Volts.of(_leadMotor.getAppliedOutput() * _leadMotor.getBusVoltage());
+
+        double newP = Preferences.getDouble(kSettingsPrefix + "Flywheel kP", ShooterConstants.FLYWHEEL_KP);
+        double newD = Preferences.getDouble(kSettingsPrefix + "Flywheel kD", ShooterConstants.FLYWHEEL_KD);
+        double newS = Preferences.getDouble(kSettingsPrefix + "Flywheel kS", ShooterConstants.FLYWHEEL_KS.in(Volts));
+        double newV = Preferences.getDouble(kSettingsPrefix + "Flywheel kV", ShooterConstants.FLYWHEEL_KV.in(Volts.per(RPM)));
+        double newA = Preferences.getDouble(kSettingsPrefix + "Flywheel kA", ShooterConstants.FLYWHEEL_KA.in(Volts.per(RotationsPerSecondPerSecond)));
+        if (newP != _lastKP || newD != _lastKD || newS != _lastKS || newV != _lastKV || newA != _lastKA)
+        {
+            var config = new SparkFlexConfig();
+            config.closedLoop.p(newP).d(newD);
+            config.closedLoop.feedForward.kS(newS).kV(newV).kA(newA);
+            _leadMotor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+            _lastKP = newP;
+            _lastKD = newD;
+            _lastKS = newS;
+            _lastKV = newV;
+            _lastKA = newA;
+        }
     }
 
     public void simulationPeriodic()
@@ -129,6 +162,22 @@ public class Flywheel
     public AngularVelocity getVelocity()
     {
         return _velocity;
+    }
+
+    private static void initPreference(String key, double value)
+    {
+        Preferences.initDouble(kSettingsPrefix + key, value);
+    }
+
+    private static void initializeTuningPreferences()
+    {
+        initPreference("Flywheel kP", ShooterConstants.FLYWHEEL_KP);
+        initPreference("Flywheel kD", ShooterConstants.FLYWHEEL_KD);
+        initPreference("Flywheel kS", ShooterConstants.FLYWHEEL_KS.in(Volts));
+        initPreference("Flywheel kV", ShooterConstants.FLYWHEEL_KV.in(Volts.per(RPM)));
+        initPreference("Flywheel kA", ShooterConstants.FLYWHEEL_KA.in(Volts.per(RotationsPerSecondPerSecond)));
+        initPreference("Flywheel Tolerance", ShooterConstants.FLYWHEEL_TOLERANCE.in(Value));
+        initPreference("Flywheel Pass Velocity", ShooterConstants.PASS_FLYWHEEL_VELOCITY.in(RPM));
     }
 
     private class FlywheelHook extends MotorHook
