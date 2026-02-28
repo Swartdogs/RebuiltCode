@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
@@ -24,10 +23,9 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
+// import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.shooter.Hood;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
 
@@ -45,14 +43,15 @@ public class RobotContainer
     private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
     private final Intake                         _intake     = new Intake();
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
-    private final Hood                           _hood       = new Hood();
     private final TestOperation                  _testop     = new TestOperation();
-    private final Turret                         _turret     = new Turret(_drivetrain::getState);
     private final Autos                          _autos      = new Autos(_drivetrain);
+    // private final Dashboard _dashboard = new Dashboard(_intake, _shooter,
+    // _shooter._turret);
 
     public RobotContainer()
     {
-        configureBindings();
+        // configureBindings();
+        configureTestBindings();
     }
 
     private void configureBindings()
@@ -64,8 +63,7 @@ public class RobotContainer
                 _drivetrain.applyRequest(
                         () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))// Drive forward with negative Y (forward)
                                 .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise
-                                                                                                                                                                                     // with negative X (left)
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise with negative X (left)
                 )
         );
 
@@ -96,10 +94,10 @@ public class RobotContainer
         _operator.y().onTrue(_shooter.setVelocity(RPM.of(5000)));
         _operator.rightTrigger().whileTrue(_shooter.runFeeder());
 
-        _operator.povDown().onTrue(_turret.stop());
-        _operator.povLeft().onTrue(_turret.setSetpoint(Degrees.of(60)));
-        _operator.povUp().onTrue(_turret.setSetpoint(Degrees.of(0)));
-        _operator.povRight().onTrue(_turret.setSetpoint(Degrees.of(-60)));
+        // _operator.povDown().onTrue(_turret.stop());
+        // _operator.povLeft().onTrue(_turret.setSetpoint(Degrees.of(60)));
+        // _operator.povUp().onTrue(_turret.setSetpoint(Degrees.of(0)));
+        // _operator.povRight().onTrue(_turret.setSetpoint(Degrees.of(-60)));
 
         _operator.leftTrigger().whileTrue(_intake.runRollers());
 
