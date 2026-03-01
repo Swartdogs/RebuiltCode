@@ -144,11 +144,10 @@ public class Turret extends SubsystemBase
                 _hasSetpoint = true;
                 var directorResult = TurretDirector.calculate(_turretState, _currentSwerveState, fiducials);
 
-                _targetTransform = directorResult;
-                _targetPose = _currentSwerveState.Pose.plus(directorResult);
+                _targetPose = _currentSwerveState.Pose.plus(new Transform2d(directorResult, directorResult.getAngle()));
 
-                _hubDistance = Meters.of(directorResult.getTranslation().getNorm());
-                _turretSetpoint = MeasureUtil.clamp(directorResult.getRotation().getMeasure().minus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                _hubDistance = Meters.of(directorResult.getNorm());
+                _turretSetpoint = MeasureUtil.clamp(directorResult.getAngle().getMeasure().minus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
                 break;
 
             case Idle:

@@ -6,7 +6,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.subsystems.shooter.Turret.TurretState;
@@ -19,9 +18,9 @@ public class TurretDirector
     {
     }
 
-    public static Transform2d calculate(TurretState turretState, SwerveDriveState swerveState, AprilTagFiducial... fiducials)
+    public static Translation2d calculate(TurretState turretState, SwerveDriveState swerveState, AprilTagFiducial... fiducials)
     {
-        Transform2d ret;
+        Translation2d ret;
 
         switch (turretState)
         {
@@ -35,7 +34,7 @@ public class TurretDirector
                     Rotation2d    angle                = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
                     Rotation2d    robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
 
-                    ret = new Transform2d(robotToHub.rotateBy(robotAngleCorrection), angle.rotateBy(robotAngleCorrection));
+                    ret = robotToHub.rotateBy(angle).rotateBy(robotAngleCorrection);
                 }
                 else
                 {
@@ -56,7 +55,7 @@ public class TurretDirector
 
                     int n = fiducials.length;
 
-                    ret = new Transform2d(sumX / n, sumY / n, new Rotation2d(sumCos, sumSin));
+                    ret = new Translation2d(sumX / n, sumY / n).rotateBy(new Rotation2d(sumCos, sumSin));
                 }
                 break;
 
@@ -77,12 +76,12 @@ public class TurretDirector
                     rotation    = Rotation2d.k180deg;
                 }
 
-                ret = new Transform2d(translation, rotation);
+                ret = translation.rotateBy(rotation);
                 break;
 
             case Idle:
             default:
-                ret = new Transform2d();
+                ret = new Translation2d();
                 break;
         }
 
