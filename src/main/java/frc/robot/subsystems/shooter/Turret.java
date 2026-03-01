@@ -19,8 +19,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
@@ -65,9 +63,7 @@ public class Turret extends SubsystemBase
     @Logged
     private Distance                         _hubDistance;
     @Logged
-    private Pose2d                           _hubCenterTransform;
-    @Logged
-    private boolean                          _hasTarget = false;
+    private Pose2d                           _targetPose;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -87,14 +83,14 @@ public class Turret extends SubsystemBase
         _limelight          = new Limelight(ShooterConstants.LIMELIGHT_NAME);
         _pidController      = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
         _currentSwerveState = new SwerveDriveState();
-        _turretState        = TurretState.Track;
+        _turretState        = TurretState.Pass;
         _robotAngle         = Degrees.zero();
         _fieldAngle         = Degrees.zero();
         _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
         _hasSetpoint        = false;
         _motorVoltage       = Volts.zero();
         _hubDistance        = Meters.zero();
-        _hubCenterTransform = new Pose2d();
+        _targetPose         = new Pose2d();
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -145,7 +141,7 @@ public class Turret extends SubsystemBase
                 _hasSetpoint = true;
                 var directorResult = TurretDirector.calculate(_turretState, _currentSwerveState, fiducials);
 
-                _hubCenterTransform = new Pose2d(_currentSwerveState.Pose.getTranslation().plus(directorResult.getTranslation()), directorResult.getRotation());
+                _targetPose = new Pose2d(_currentSwerveState.Pose.getTranslation().plus(directorResult.getTranslation()), directorResult.getRotation());
 
                 _hubDistance = Meters.of(directorResult.getTranslation().getNorm());
                 _turretSetpoint = MeasureUtil.clamp(toRobotFrame(directorResult.getRotation().getMeasure()), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);

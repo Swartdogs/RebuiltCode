@@ -73,7 +73,7 @@ public class RobotContainer
                 )
         );
 
-        _drivetrain.resetPose(new Pose2d(ShooterConstants.RED_HUB.plus(new Translation2d(Feet.of(6), Feet.of(-7))), Rotation2d.fromDegrees(92)));
+        _drivetrain.resetPose(new Pose2d(ShooterConstants.RED_HUB.plus(new Translation2d(Feet.of(-6), Feet.of(-7))), Rotation2d.fromDegrees(92)));
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.

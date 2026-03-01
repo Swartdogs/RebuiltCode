@@ -1,10 +1,13 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.Constants.GeneralConstants;
 import frc.robot.subsystems.shooter.Turret.TurretState;
 import frc.robot.util.Utilities;
 import limelight.networktables.target.AprilTagFiducial;
@@ -56,8 +59,23 @@ public class TurretDirector
                 break;
 
             case Pass:
-                // When passing, magnitude doesn't matter
-                ret = new Pose2d(new Translation2d(), Utilities.isBlueAlliance() ? Rotation2d.kZero : Rotation2d.k180deg);
+                Rotation2d rotation;
+                Translation2d translation;
+
+                if (Utilities.isBlueAlliance())
+                {
+                    // Only worry about X distance. Shoot perpendicular to driver station
+                    translation = new Translation2d(Meters.of(-swerveState.Pose.getX()), Meters.zero());
+                    rotation    = Rotation2d.kZero;
+                }
+                else
+                {
+                    // Only worry about X distance. Shoot perpendicular to driver station
+                    translation = new Translation2d(GeneralConstants.FIELD_SIZE_X.minus(swerveState.Pose.getMeasureX()), Meters.zero());
+                    rotation    = Rotation2d.k180deg;
+                }
+
+                ret = new Pose2d(translation, rotation);
                 break;
 
             case Idle:
