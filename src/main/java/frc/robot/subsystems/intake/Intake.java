@@ -122,10 +122,10 @@ public class Intake extends ExtensionMotor
 
     public void setIntakeState(IntakeState state)
     {
-        // if (state != IntakeState.Off && !isExtended())
-        // {
-        // state = IntakeState.Off;
-        // }
+        if (state != IntakeState.Off && !isExtended())
+        {
+            state = IntakeState.Off;
+        }
 
         _intakeState = state;
 

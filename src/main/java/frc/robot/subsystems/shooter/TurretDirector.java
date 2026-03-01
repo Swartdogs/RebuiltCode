@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -28,24 +29,24 @@ public class TurretDirector
                 // No tags, get angle from current pose to hub
                 if (fiducials.length <= 0)
                 {
-                    var hub                  = Utilities.getHubCoordinates();
-                    var robot                = swerveState.Pose.getTranslation();
-                    var robotToHub           = hub.minus(robot);
-                    var angle                = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
-                    var robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
+                    Translation2d hub                  = Utilities.getHubCoordinates();
+                    Translation2d robot                = swerveState.Pose.getTranslation();
+                    Translation2d robotToHub           = hub.minus(robot);
+                    Rotation2d    angle                = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
+                    Rotation2d    robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
 
                     ret = new Transform2d(robotToHub.rotateBy(robotAngleCorrection), angle.rotateBy(robotAngleCorrection));
                 }
                 else
                 {
-                    var sumX   = 0.0;
-                    var sumY   = 0.0;
-                    var sumCos = 0.0;
-                    var sumSin = 0.0;
+                    double sumX   = 0.0;
+                    double sumY   = 0.0;
+                    double sumCos = 0.0;
+                    double sumSin = 0.0;
 
-                    for (var tag : fiducials)
+                    for (AprilTagFiducial tag : fiducials)
                     {
-                        var pose = tag.getTargetPose_CameraSpace2D();
+                        Pose2d pose = tag.getTargetPose_CameraSpace2D();
 
                         sumX   += pose.getX();
                         sumY   += pose.getY();

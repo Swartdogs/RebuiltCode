@@ -86,7 +86,7 @@ public class Turret extends SubsystemBase
         _limelight          = new Limelight(ShooterConstants.LIMELIGHT_NAME);
         _pidController      = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
         _currentSwerveState = new SwerveDriveState();
-        _turretState        = TurretState.Track;
+        _turretState        = TurretState.Idle;
         _robotAngle         = Degrees.zero();
         _fieldAngle         = Degrees.zero();
         _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
