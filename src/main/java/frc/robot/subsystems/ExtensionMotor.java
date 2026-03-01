@@ -23,6 +23,7 @@ import com.revrobotics.spark.config.LimitSwitchConfig.Behavior;
 import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
@@ -142,6 +143,7 @@ public class ExtensionMotor extends SubsystemBase
     {
     }
 
+    @NotLogged
     public Command getToggleCmd()
     {
         return runOnce(() -> extend(!isExtended()));

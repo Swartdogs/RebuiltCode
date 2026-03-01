@@ -12,6 +12,7 @@ import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
@@ -19,6 +20,7 @@ import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -66,20 +68,24 @@ public class Intake extends ExtensionMotor
     /*************
      * SUBSYSTEM *
      *************/
-    private final SparkFlex    _intakeMotor;
-    private final SparkFlexSim _intakeMotorSim;
-    private final UsbCamera    _camera;
-    private final DCMotor      _neoVortex;
+    private final SparkFlex       _intakeMotor;
+    private final RelativeEncoder _intakeEncoder;
+    private final SparkFlexSim    _intakeMotorSim;
+    private final UsbCamera       _camera;
+    private final DCMotor         _neoVortex;
     @Logged
-    private IntakeState        _intakeState        = IntakeState.Off;
+    private IntakeState           _intakeState        = IntakeState.Off;
     @Logged
-    private Voltage            _intakeMotorVoltage = Volts.of(0.0);
+    private Voltage               _intakeMotorVoltage = Volts.of(0.0);
+    @Logged
+    private double                _intakeVelocity     = 0.0;
 
     public Intake()
     {
         super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR);
 
-        _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
+        _intakeMotor   = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
+        _intakeEncoder = _intakeMotor.getEncoder();
 
         var config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
@@ -110,11 +116,35 @@ public class Intake extends ExtensionMotor
     }
 
     @Override
+    @NotLogged
+    public Command getToggleCmd()
+    {
+        return runOnce(() ->
+        {
+            if (isExtended())
+            {
+                // Want to retract - only allow if rollers are at speed
+                if (isAtSpeed())
+                {
+                    extend(false);
+                }
+                // else do nothing - wait for operator to spin up rollers first
+            }
+            else
+            {
+                // Extending is always allowed
+                extend(true);
+            }
+        });
+    }
+
+    @Override
     public void periodic()
     {
         super.periodic();
 
         _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
+        _intakeVelocity     = _intakeEncoder.getVelocity();
 
         // Stop intake when fully retracted (only if we were running reverse for
         // retraction)
@@ -122,6 +152,17 @@ public class Intake extends ExtensionMotor
         {
             setIntakeState(IntakeState.Off);
         }
+    }
+
+    public boolean isAtSpeed()
+    {
+        double targetRpm = switch (_intakeState)
+        {
+            case Forward -> IntakeConstants.INTAKE_VOLTS.in(Volts) / GeneralConstants.MOTOR_VOLTAGE.in(Volts) * 6784;
+            case Reverse -> Math.abs(IntakeConstants.REVERSE_VOLTS.in(Volts)) / GeneralConstants.MOTOR_VOLTAGE.in(Volts) * 6784;
+            case Off -> 0;
+        };
+        return Math.abs(_intakeVelocity) >= targetRpm * 0.9;
     }
 
     @Override
