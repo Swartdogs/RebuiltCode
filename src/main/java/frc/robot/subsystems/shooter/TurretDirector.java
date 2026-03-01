@@ -1,62 +1,71 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.Degrees;
-
-import java.util.List;
-
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
-import edu.wpi.first.units.measure.Angle;
-import frc.robot.Constants.ShooterConstants;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.subsystems.shooter.Turret.TurretState;
 import frc.robot.util.Utilities;
 import limelight.networktables.target.AprilTagFiducial;
 
-public final class TurretDirector
+public class TurretDirector
 {
-    private static final List<Integer> kRedCenterTags  = List.of(3, 5, 9, 11);
-    private static final List<Integer> kBlueCenterTags = List.of(20, 26, 21, 19); // TODO: confirm these tag IDs (red and blue)
-
     private TurretDirector()
     {
     }
 
-    public static List<Integer> getAllianceCenterTags()
+    public static Pose2d calculate(TurretState turretState, SwerveDriveState swerveState, AprilTagFiducial... fiducials)
     {
-        return Utilities.isRedAlliance() ? kRedCenterTags : kBlueCenterTags;
-    }
+        Pose2d ret;
 
-    public static Double averageCenterTagPose(AprilTagFiducial[] fiducials)
-    {
-        if (fiducials == null || fiducials.length == 0)
+        switch (turretState)
         {
-            return null;
+            case Track:
+                // No tags, get angle from current pose to hub
+                if (fiducials.length <= 0)
+                {
+                    var hub        = Utilities.getHubCoordinates();
+                    var robot      = swerveState.Pose.getTranslation();
+                    var robotToHub = hub.minus(robot);
+                    var angle      = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
+
+                    ret = new Pose2d(robotToHub, angle);
+                }
+                else
+                {
+                    var sumX   = 0.0;
+                    var sumY   = 0.0;
+                    var sumCos = 0.0;
+                    var sumSin = 0.0;
+
+                    for (var tag : fiducials)
+                    {
+                        var pose = tag.getTargetPose_CameraSpace2D();
+
+                        sumX   += pose.getX();
+                        sumY   += pose.getY();
+                        sumCos += pose.getRotation().getCos();
+                        sumSin += pose.getRotation().getSin();
+                    }
+
+                    int n = fiducials.length;
+
+                    ret = new Pose2d(sumX / n, sumY / n, new Rotation2d(sumCos, sumSin));
+                }
+                break;
+
+            case Pass:
+                // When passing, magnitude doesn't matter
+                ret = new Pose2d(new Translation2d(), Utilities.isBlueAlliance() ? Rotation2d.kZero : Rotation2d.k180deg);
+                break;
+
+            case Idle:
+            default:
+                ret = new Pose2d();
+                break;
         }
 
-        var    centerTags = getAllianceCenterTags();
-        double sum        = 0;
-        int    count      = 0;
-
-        for (var fiducial : fiducials)
-        {
-            if (!centerTags.contains((int)fiducial.fiducialID))
-            {
-                continue;
-            }
-
-            sum += fiducial.getTargetPose_CameraSpace2D().getTranslation().getNorm();
-            count++;
-        }
-
-        return count > 0 ? sum / count : null;
-    }
-
-    public static Angle passTargetRobotFrame(SwerveDriveState swerveState)
-    {
-        return ShooterConstants.TURRET_PASS_TARGET.minus(swerveState.Pose.getRotation().getMeasure());
-    }
-
-    public static Angle calculateTrackSetpoint(Angle currentRobotAngle, double horizontalOffsetDegrees)
-    {
-        return currentRobotAngle.plus(Degrees.of(horizontalOffsetDegrees));
+        return ret;
     }
 }

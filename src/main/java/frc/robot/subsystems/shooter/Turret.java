@@ -2,8 +2,7 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
@@ -11,28 +10,32 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.MeasureUtil;
+import frc.robot.util.Utilities;
 import limelight.Limelight;
+import limelight.networktables.target.AprilTagFiducial;
 
 @Logged
 public class Turret extends SubsystemBase
@@ -46,10 +49,9 @@ public class Turret extends SubsystemBase
     private final AnalogPotentiometer        _turretSensor;
     private final Supplier<SwerveDriveState> _swerveStateSupplier;
     private final Limelight                  _limelight;
-    private final PositionVoltage            _positionRequest;
+    private final PIDController              _pidController;
     private SwerveDriveState                 _currentSwerveState;
     private TurretState                      _turretState;
-    private List<Integer>                    _activeTagFilter;
     @Logged
     private Angle                            _fieldAngle;
     @Logged
@@ -59,9 +61,13 @@ public class Turret extends SubsystemBase
     @Logged
     private boolean                          _hasSetpoint;
     @Logged
-    private boolean                          _hasTarget;
-    @Logged
     private Voltage                          _motorVoltage;
+    @Logged
+    private Distance                         _hubDistance;
+    @Logged
+    private Pose2d                           _hubCenterTransform;
+    @Logged
+    private boolean                          _hasTarget = false;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -76,10 +82,19 @@ public class Turret extends SubsystemBase
             sensorOffset = sensorOffset.unaryMinus();
         }
 
-        var sensorInput = new AnalogInput(AIOConstants.TURRET_POTENTIOMETER);
-        _turretSensor = new AnalogPotentiometer(sensorInput, sensorRange.in(Degrees), sensorOffset.in(Degrees));
-
-        _turretMotor = new TalonFX(CANConstants.TURRET_MOTOR);
+        _turretMotor        = new TalonFX(CANConstants.TURRET_MOTOR);
+        _turretSensor       = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
+        _limelight          = new Limelight(ShooterConstants.LIMELIGHT_NAME);
+        _pidController      = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
+        _currentSwerveState = new SwerveDriveState();
+        _turretState        = TurretState.Track;
+        _robotAngle         = Degrees.zero();
+        _fieldAngle         = Degrees.zero();
+        _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
+        _hasSetpoint        = false;
+        _motorVoltage       = Volts.zero();
+        _hubDistance        = Meters.zero();
+        _hubCenterTransform = new Pose2d();
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -89,77 +104,72 @@ public class Turret extends SubsystemBase
         outputConfig.NeutralMode = NeutralModeValue.Brake;
         outputConfig.Inverted    = InvertedValue.Clockwise_Positive;
 
-        var slot0 = new Slot0Configs();
-        slot0.kP = ShooterConstants.TURRET_KP;
-        slot0.kI = ShooterConstants.TURRET_KI;
-        slot0.kD = ShooterConstants.TURRET_KD;
+        _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig));
 
-        _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withSlot0(slot0));
+        _pidController.setTolerance(ShooterConstants.TURRET_TOLERANCE.in(Degrees));
+        _pidController.setSetpoint(ShooterConstants.TURRET_HOME_ANGLE.in(Degrees));
 
-        _positionRequest = new PositionVoltage(0).withSlot(0);
+        _limelight.getSettings().withAprilTagOffset(ShooterConstants.CENTER_TAG_TO_HUB_CENTER_OFFSET).withAprilTagIdFilter(ShooterConstants.RED_HUB_TAG_IDS).save();
 
-        seedEncoderFromPotentiometer();
+        var blueTrigger  = new Trigger(Utilities::isBlueAlliance);
+        var redTrigger   = new Trigger(Utilities::isRedAlliance);
+        var emptyTrigger = new Trigger(() -> DriverStation.getAlliance().isEmpty());
 
-        _limelight = new Limelight(ShooterConstants.LIMELIGHT_NAME);
-
-        _currentSwerveState = new SwerveDriveState();
-        _turretState        = TurretState.Idle;
-        _activeTagFilter    = List.of();
-        _robotAngle         = Degrees.zero();
-        _fieldAngle         = Degrees.zero();
-        _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
-        _hasSetpoint        = false;
-        _hasTarget          = false;
-        _motorVoltage       = Volts.zero();
-    }
-
-    public Command stop()
-    {
-        return runOnce(() ->
-        {
-            _turretState    = TurretState.Idle;
-            _hasSetpoint    = false;
-            _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
-            _turretMotor.setVoltage(0.0);
-        });
+        blueTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.BLUE_HUB_TAG_IDS)));
+        redTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.RED_HUB_TAG_IDS)));
+        emptyTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.ALL_HUB_TAG_IDS)));
     }
 
     @Override
     public void periodic()
     {
-        if (_turretMotor.hasResetOccurred())
-        {
-            seedEncoderFromPotentiometer();
-        }
-
-        var latestSwerveState = _swerveStateSupplier.get();
-        if (latestSwerveState != null)
-        {
-            _currentSwerveState = latestSwerveState;
-        }
+        _currentSwerveState = _swerveStateSupplier.get();
 
         _robotAngle   = Degrees.of(_turretSensor.get());
         _fieldAngle   = toFieldFrame(_robotAngle);
         _motorVoltage = _turretMotor.getMotorVoltage().getValue();
 
-        updateVisionFilter();
+        var fiducials   = new AprilTagFiducial[0];
+        var motorOutput = Volts.zero();
 
-        var requestedSetpoint = getRequestedSetpoint();
-
-        if (requestedSetpoint == null)
+        switch (_turretState)
         {
-            _hasSetpoint    = false;
-            _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
-            _turretMotor.setVoltage(0.0);
-        }
-        else
-        {
-            _hasSetpoint    = true;
-            _turretSetpoint = MeasureUtil.clamp(requestedSetpoint, ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+            case Track:
+                var results = _limelight.getLatestResults();
 
-            var target = _turretSetpoint.times(ShooterConstants.TURRET_GEAR_RATIO);
-            _turretMotor.setControl(_positionRequest.withPosition(target.in(Rotations)));
+                if (results.isPresent())
+                {
+                    fiducials = results.get().targets_Fiducials;
+                }
+            case Pass:
+                _hasSetpoint = true;
+                var directorResult = TurretDirector.calculate(_turretState, _currentSwerveState, fiducials);
+
+                _hubCenterTransform = new Pose2d(_currentSwerveState.Pose.getTranslation().plus(directorResult.getTranslation()), directorResult.getRotation());
+
+                _hubDistance = Meters.of(directorResult.getTranslation().getNorm());
+                _turretSetpoint = MeasureUtil.clamp(toRobotFrame(directorResult.getRotation().getMeasure()), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                break;
+
+            case Idle:
+            default:
+                _hasSetpoint = false;
+                _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
+                _hubDistance = Meters.zero();
+                break;
         }
+
+        if (_hasSetpoint)
+        {
+            motorOutput = Volts.of(_pidController.calculate(_robotAngle.in(Degrees), _turretSetpoint.in(Degrees)));
+        }
+
+        _turretMotor.setVoltage(motorOutput.in(Volts));
+    }
+
+    public Distance getHubDistance()
+    {
+        return _hubDistance;
     }
 
     public void setTurretState(TurretState state)
@@ -172,90 +182,21 @@ public class Turret extends SubsystemBase
         return _turretState;
     }
 
-    public boolean hasTarget()
-    {
-        return _hasTarget;
-    }
-
-    public boolean isLinedUp()
-    {
-        if (!_hasSetpoint)
-        {
-            return _turretState == TurretState.Idle;
-        }
-
-        if (_turretState == TurretState.Track && !_hasTarget)
-        {
-            return false;
-        }
-
-        return _robotAngle.isNear(_turretSetpoint, ShooterConstants.TURRET_TOLERANCE);
-    }
-
-    private Angle getRequestedSetpoint()
-    {
-        switch (_turretState)
-        {
-            case Idle:
-                _hasTarget = false;
-                return null;
-
-            case Pass:
-                _hasTarget = false;
-                return TurretDirector.passTargetRobotFrame(_currentSwerveState);
-
-            case Track:
-                var latestResults = _limelight.getLatestResults();
-                if (latestResults.isEmpty())
-                {
-                    _hasTarget = false;
-                    return ShooterConstants.TURRET_HOME_ANGLE;
-                }
-
-                var avgPose = TurretDirector.averageCenterTagPose(latestResults.get().targets_Fiducials);
-                _hasTarget = avgPose != null;
-
-                if (_hasTarget)
-                {
-                    return TurretDirector.calculateTrackSetpoint(_robotAngle, avgPose);
-                }
-
-                return ShooterConstants.TURRET_HOME_ANGLE;
-        }
-
-        return null;
-    }
-
-    private void updateVisionFilter()
-    {
-        if (!DriverStation.isDisabled())
-        {
-            return;
-        }
-
-        updateAllianceTagFilter();
-    }
-
-    private void updateAllianceTagFilter()
-    {
-        var tagFilter = TurretDirector.getAllianceCenterTags();
-        if (_activeTagFilter.equals(tagFilter))
-        {
-            return;
-        }
-
-        var tagOffset = new Translation3d(ShooterConstants.TURRET_CENTER_TAG_TO_HUB_CENTER, Inches.zero(), Inches.zero());
-        _limelight.getSettings().withAprilTagIdFilter(tagFilter).withAprilTagOffset(tagOffset).save();
-        _activeTagFilter = List.copyOf(tagFilter);
-    }
-
-    private void seedEncoderFromPotentiometer()
-    {
-        _turretMotor.setPosition(Degrees.of(_turretSensor.get()).times(ShooterConstants.TURRET_GEAR_RATIO).in(Rotations));
-    }
-
     private Angle toFieldFrame(Angle robotFrameAngle)
     {
-        return robotFrameAngle.plus(_currentSwerveState.Pose.getRotation().getMeasure());
+        return robotFrameAngle.plus(_currentSwerveState.Pose.getRotation().getMeasure()).plus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+    }
+
+    private Angle toRobotFrame(Angle fieldFrameAngle)
+    {
+        return fieldFrameAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+    }
+
+    private void updateFilter(List<Integer> filters)
+    {
+        if (DriverStation.isDisabled())
+        {
+            _limelight.getSettings().withAprilTagIdFilter(filters).save();
+        }
     }
 }

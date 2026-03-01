@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
@@ -12,7 +13,9 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
@@ -20,12 +23,14 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
 // import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
 
@@ -45,13 +50,14 @@ public class RobotContainer
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
     private final TestOperation                  _testop     = new TestOperation();
     private final Autos                          _autos      = new Autos(_drivetrain);
+    private final Turret                         _turret     = new Turret(_drivetrain::getState);
     // private final Dashboard _dashboard = new Dashboard(_intake, _shooter,
     // _shooter._turret);
 
     public RobotContainer()
     {
-        // configureBindings();
-        configureTestBindings();
+        configureBindings();
+        // configureTestBindings();
     }
 
     private void configureBindings()
@@ -66,6 +72,8 @@ public class RobotContainer
                                 .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise with negative X (left)
                 )
         );
+
+        _drivetrain.resetPose(new Pose2d(ShooterConstants.RED_HUB.plus(new Translation2d(Feet.of(6), Feet.of(-7))), Rotation2d.fromDegrees(92)));
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.

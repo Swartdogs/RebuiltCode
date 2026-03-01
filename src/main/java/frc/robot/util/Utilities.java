@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import java.util.List;
 import java.util.stream.Stream;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -116,5 +117,10 @@ public final class Utilities
         if (inactiveFirstAlliance == 'R') return Alliance.Red;
         if (inactiveFirstAlliance == 'B') return Alliance.Blue;
         return null;
+    }
+
+    public static Translation2d getHubCoordinates()
+    {
+        return isBlueAlliance() ? ShooterConstants.BLUE_HUB : ShooterConstants.RED_HUB;
     }
 }
