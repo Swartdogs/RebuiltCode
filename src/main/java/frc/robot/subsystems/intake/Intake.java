@@ -141,12 +141,8 @@ public class Intake extends ExtensionMotor
 
     public boolean isAtSpeed()
     {
-        if (_intakeState != IntakeState.Forward)
-        {
-            return false;
-        }
         double targetRpm = IntakeConstants.INTAKE_VOLTS.in(Volts) / GeneralConstants.MOTOR_VOLTAGE.in(Volts) * 6784;
-        return Math.abs(_intakeVelocity) >= targetRpm * 0.9;
+        return Math.abs(_intakeVelocity) <= targetRpm * 0.9;
     }
 
     @Override
