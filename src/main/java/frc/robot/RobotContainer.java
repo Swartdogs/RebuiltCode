@@ -105,7 +105,8 @@ public class RobotContainer
         // _operator.povUp().onTrue(_turret.setSetpoint(Degrees.of(0)));
         // _operator.povRight().onTrue(_turret.setSetpoint(Degrees.of(-60)));
 
-        _operator.povUp().onTrue(_intake.getToggleCmd());
+        _operator.povDown().onTrue(_intake.getExtendCmd());
+        _operator.povUp().onTrue(_intake.getRetractAtSpeedCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 

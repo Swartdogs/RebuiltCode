@@ -114,25 +114,13 @@ public class Intake extends ExtensionMotor
     {
     }
 
-    @Override
-    @NotLogged
-    public Command getToggleCmd()
+    public Command getRetractAtSpeedCmd()
     {
         return runOnce(() ->
         {
-            if (isExtended())
+            if (isExtended() && isAtSpeed())
             {
-                // Want to retract - only allow if rollers are at speed
-                if (isAtSpeed())
-                {
-                    extend(false);
-                }
-                // else do nothing - wait for operator to spin up rollers first
-            }
-            else
-            {
-                // Extending is always allowed
-                extend(true);
+                extend(false);
             }
         });
     }
