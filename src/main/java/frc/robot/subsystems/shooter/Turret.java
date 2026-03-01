@@ -66,7 +66,7 @@ public class Turret extends SubsystemBase
     @Logged
     private Pose2d                           _targetPose;
     @Logged
-    private Transform2d                      _targetTransform;
+    private Transform2d                      _targetTransform = new Transform2d();
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -86,7 +86,7 @@ public class Turret extends SubsystemBase
         _limelight          = new Limelight(ShooterConstants.LIMELIGHT_NAME);
         _pidController      = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
         _currentSwerveState = new SwerveDriveState();
-        _turretState        = TurretState.Pass;
+        _turretState        = TurretState.Track;
         _robotAngle         = Degrees.zero();
         _fieldAngle         = Degrees.zero();
         _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
@@ -145,10 +145,10 @@ public class Turret extends SubsystemBase
                 var directorResult = TurretDirector.calculate(_turretState, _currentSwerveState, fiducials);
 
                 _targetTransform = directorResult;
-                _targetPose = new Pose2d(_currentSwerveState.Pose.getTranslation().plus(directorResult.getTranslation()), directorResult.getRotation());
+                _targetPose = _currentSwerveState.Pose.plus(directorResult);
 
                 _hubDistance = Meters.of(directorResult.getTranslation().getNorm());
-                _turretSetpoint = MeasureUtil.clamp(toRobotFrame(directorResult.getRotation().getMeasure()), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                _turretSetpoint = MeasureUtil.clamp(directorResult.getRotation().getMeasure().minus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
                 break;
 
             case Idle:

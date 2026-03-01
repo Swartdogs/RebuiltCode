@@ -28,12 +28,13 @@ public class TurretDirector
                 // No tags, get angle from current pose to hub
                 if (fiducials.length <= 0)
                 {
-                    var hub        = Utilities.getHubCoordinates();
-                    var robot      = swerveState.Pose.getTranslation();
-                    var robotToHub = hub.minus(robot);
-                    var angle      = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
+                    var hub                  = Utilities.getHubCoordinates();
+                    var robot                = swerveState.Pose.getTranslation();
+                    var robotToHub           = hub.minus(robot);
+                    var angle                = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
+                    var robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
 
-                    ret = new Transform2d(robotToHub, angle);
+                    ret = new Transform2d(robotToHub.rotateBy(robotAngleCorrection), angle.rotateBy(robotAngleCorrection));
                 }
                 else
                 {
