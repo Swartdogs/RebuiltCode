@@ -77,7 +77,8 @@ public class Intake extends ExtensionMotor
 
     public Intake()
     {
-        super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR);
+        super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR,
+                () -> setIntakeState(IntakeState.Reverse));
 
         _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
@@ -109,6 +110,12 @@ public class Intake extends ExtensionMotor
         super.periodic();
 
         _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
+
+        // Stop intake when fully retracted (only if we were running reverse for retraction)
+        if (_intakeState == IntakeState.Reverse && isRetracted())
+        {
+            setIntakeState(IntakeState.Off);
+        }
     }
 
     @Override
@@ -122,11 +129,6 @@ public class Intake extends ExtensionMotor
 
     public void setIntakeState(IntakeState state)
     {
-        if (state != IntakeState.Off && !isExtended())
-        {
-            state = IntakeState.Off;
-        }
-
         _intakeState = state;
 
         var volts = switch (_intakeState)

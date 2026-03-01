@@ -60,8 +60,14 @@ public class ExtensionMotor extends SubsystemBase
     @Logged
     private boolean                _inSwitchTriggered  = false;
     private Alert                  _limitSwitchAlert;
+    private final Runnable         _onRetract;
 
     public ExtensionMotor(int CANID, Voltage extendOutput, Voltage retractVolts, Per<DistanceUnit, AngleUnit> extensionConversionFactor)
+    {
+        this(CANID, extendOutput, retractVolts, extensionConversionFactor, null);
+    }
+
+    public ExtensionMotor(int CANID, Voltage extendOutput, Voltage retractVolts, Per<DistanceUnit, AngleUnit> extensionConversionFactor, Runnable onRetract)
     {
         // refer to the following url for more hardware info:
         // https://docs.revrobotics.com/brushless/spark-flex/spark-flex-feature-description/data-port
@@ -71,6 +77,7 @@ public class ExtensionMotor extends SubsystemBase
         _inLimitSwitch  = _extendMotor.getReverseLimitSwitch();
         _extendOutput   = extendOutput;
         _retractVolts   = retractVolts;
+        _onRetract      = onRetract;
 
         var config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
@@ -132,6 +139,15 @@ public class ExtensionMotor extends SubsystemBase
     public void extend(boolean finalState)
     {
         _extendMotor.setVoltage(finalState ? _extendOutput : _retractVolts);
+        if (!finalState && _onRetract != null)
+        {
+            _onRetract.run();
+        }
+    }
+
+    public Command getToggleCmd()
+    {
+        return runOnce(() -> extend(!isExtended()));
     }
 
     public Voltage getMotorVoltage()
