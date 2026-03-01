@@ -80,7 +80,7 @@ public class ExtensionMotor extends SubsystemBase
 
         _extendMotor.setVoltage(Volts.zero());
         var limitSwitchConfig = new LimitSwitchConfig();
-        limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION.in(Inches)).forwardLimitSwitchTriggerBehavior(Behavior.kKeepMovingMotorAndSetPosition)
+        limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION.in(Inches)).forwardLimitSwitchTriggerBehavior(Behavior.kStopMovingMotor)
                 .reverseLimitSwitchType(Type.kNormallyOpen).reverseLimitSwitchPosition(IntakeConstants.EXTENSION_MIN_POSITION.in(Inches)).reverseLimitSwitchTriggerBehavior(Behavior.kStopMovingMotorAndSetPosition);
 
         _extendMotor.configure(config.apply(encoderConfig).apply(limitSwitchConfig), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

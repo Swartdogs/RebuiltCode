@@ -17,7 +17,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -30,8 +29,6 @@ import frc.robot.subsystems.TestOperation;
 // import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.Turret;
-import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.util.MeasureUtil;
 
 @Logged
@@ -50,7 +47,7 @@ public class RobotContainer
     private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
     private final TestOperation                  _testop     = new TestOperation();
     private final Autos                          _autos      = new Autos(_drivetrain);
-    private final Turret                         _turret     = new Turret(_drivetrain::getState);
+    // private final Turret _turret = new Turret(_drivetrain::getState);
     // private final Dashboard _dashboard = new Dashboard(_intake, _shooter,
     // _shooter._turret);
 
@@ -67,7 +64,7 @@ public class RobotContainer
         _drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 _drivetrain.applyRequest(
-                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))// Drive forward with negative Y (forward)
+                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))// Drive forward with negative Y (forward).
                                 .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND)) // Drive left with negative X (left)
                                 .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise with negative X (left)
                 )

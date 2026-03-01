@@ -81,13 +81,13 @@ public final class Constants
         public static final LinearVelocity  MAX_SPEED          = TunerConstants.kSpeedAt12Volts.times(0.5); // kSpeedAt12Volts desired top speed
         public static final AngularVelocity MAX_ANGULAR_RATE   = RotationsPerSecond.of(0.75); // 3/4 of a rotation per second max angular velocity
         public static final Dimensionless   TRANSLATE_DEADBAND = Percent.of(8);
-        public static final Dimensionless   ROTATE_DEADBAND    = Percent.of(15);
+        public static final Dimensionless   ROTATE_DEADBAND    = Percent.of(8);
     }
 
     public static class IntakeConstants
     {
-        public static final Voltage                      INTAKE_VOLTS                = Volts.of(8.0);
-        public static final Voltage                      REVERSE_VOLTS               = Volts.of(-4.0);
+        public static final Voltage                      INTAKE_VOLTS                = Volts.of(7.2);
+        public static final Voltage                      REVERSE_VOLTS               = Volts.of(-7.2);
         public static final Current                      CURRENT_LIMIT               = Amps.of(40);
         public static final int                          CAMERA_DEVICE_INDEX         = 0;
         public static final String                       CAMERA_NAME                 = "IntakeCam";
@@ -97,8 +97,8 @@ public final class Constants
         public static final Per<DistanceUnit, AngleUnit> EXTENSION_CONVERSION_FACTOR = Inches.of(12).div(Rotations.of(6));
         public static final Distance                     EXTENSION_MAX_POSITION      = Inches.of(12.0);
         public static final Distance                     EXTENSION_MIN_POSITION      = Inches.of(0);
-        public static final Voltage                      EXTEND_VOLTS                = Volts.of(6.7);
-        public static final Voltage                      RETRACT_VOLTS               = Volts.of(-6.9);
+        public static final Voltage                      EXTEND_VOLTS                = Volts.of(2.04);
+        public static final Voltage                      RETRACT_VOLTS               = Volts.of(-2.04);
     }
 
     public static class GeneralConstants
