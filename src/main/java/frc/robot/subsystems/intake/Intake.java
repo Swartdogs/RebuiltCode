@@ -112,7 +112,6 @@ public class Intake extends ExtensionMotor
     @Override
     protected void onRetract()
     {
-        setIntakeState(IntakeState.Reverse);
     }
 
     @Override
@@ -146,9 +145,7 @@ public class Intake extends ExtensionMotor
         _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
         _intakeVelocity     = _intakeEncoder.getVelocity();
 
-        // Stop intake when fully retracted (only if we were running reverse for
-        // retraction)
-        if (_intakeState == IntakeState.Reverse && isRetracted())
+        if (isRetracted() && _intakeState != IntakeState.Off)
         {
             setIntakeState(IntakeState.Off);
         }
@@ -156,12 +153,11 @@ public class Intake extends ExtensionMotor
 
     public boolean isAtSpeed()
     {
-        double targetRpm = switch (_intakeState)
+        if (_intakeState != IntakeState.Forward)
         {
-            case Forward -> IntakeConstants.INTAKE_VOLTS.in(Volts) / GeneralConstants.MOTOR_VOLTAGE.in(Volts) * 6784;
-            case Reverse -> Math.abs(IntakeConstants.REVERSE_VOLTS.in(Volts)) / GeneralConstants.MOTOR_VOLTAGE.in(Volts) * 6784;
-            case Off -> 0;
-        };
+            return false;
+        }
+        double targetRpm = IntakeConstants.INTAKE_VOLTS.in(Volts) / GeneralConstants.MOTOR_VOLTAGE.in(Volts) * 6784;
         return Math.abs(_intakeVelocity) >= targetRpm * 0.9;
     }
 
