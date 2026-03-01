@@ -4,8 +4,8 @@ import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.subsystems.shooter.Turret.TurretState;
@@ -18,9 +18,9 @@ public class TurretDirector
     {
     }
 
-    public static Pose2d calculate(TurretState turretState, SwerveDriveState swerveState, AprilTagFiducial... fiducials)
+    public static Transform2d calculate(TurretState turretState, SwerveDriveState swerveState, AprilTagFiducial... fiducials)
     {
-        Pose2d ret;
+        Transform2d ret;
 
         switch (turretState)
         {
@@ -33,7 +33,7 @@ public class TurretDirector
                     var robotToHub = hub.minus(robot);
                     var angle      = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
 
-                    ret = new Pose2d(robotToHub, angle);
+                    ret = new Transform2d(robotToHub, angle);
                 }
                 else
                 {
@@ -54,7 +54,7 @@ public class TurretDirector
 
                     int n = fiducials.length;
 
-                    ret = new Pose2d(sumX / n, sumY / n, new Rotation2d(sumCos, sumSin));
+                    ret = new Transform2d(sumX / n, sumY / n, new Rotation2d(sumCos, sumSin));
                 }
                 break;
 
@@ -75,12 +75,12 @@ public class TurretDirector
                     rotation    = Rotation2d.k180deg;
                 }
 
-                ret = new Pose2d(translation, rotation);
+                ret = new Transform2d(translation, rotation);
                 break;
 
             case Idle:
             default:
-                ret = new Pose2d();
+                ret = new Transform2d();
                 break;
         }
 

@@ -19,6 +19,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
@@ -64,6 +65,8 @@ public class Turret extends SubsystemBase
     private Distance                         _hubDistance;
     @Logged
     private Pose2d                           _targetPose;
+    @Logged
+    private Transform2d                      _targetTransform;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -141,6 +144,7 @@ public class Turret extends SubsystemBase
                 _hasSetpoint = true;
                 var directorResult = TurretDirector.calculate(_turretState, _currentSwerveState, fiducials);
 
+                _targetTransform = directorResult;
                 _targetPose = new Pose2d(_currentSwerveState.Pose.getTranslation().plus(directorResult.getTranslation()), directorResult.getRotation());
 
                 _hubDistance = Meters.of(directorResult.getTranslation().getNorm());
