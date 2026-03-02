@@ -138,9 +138,9 @@ public final class Constants
 
         // Turret
         public static final Current       TURRET_CURRENT_LIMIT               = Amps.of(40.0);
-        public static final double        TURRET_KP                          = 2.4;    // TODO: Tune (onboard TalonFX PID)
+        public static final double        TURRET_KP                          = 0.23;    // TODO: Tune (onboard TalonFX PID)
         public static final double        TURRET_KI                          = 0.0;
-        public static final double        TURRET_KD                          = 0.1;
+        public static final double        TURRET_KD                          = 0.0115;
         public static final Dimensionless TURRET_GEAR_RATIO                  = Value.of(13.0 / 1.0); // 13 : 1
         public static final Angle         TURRET_HARD_MIN_ANGLE              = Degrees.of(-180.0); // degrees (full 360 rotation)
         public static final Angle         TURRET_HARD_MAX_ANGLE              = Degrees.of(180.0);  // degrees
