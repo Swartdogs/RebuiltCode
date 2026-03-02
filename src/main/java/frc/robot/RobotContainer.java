@@ -99,6 +99,7 @@ public class RobotContainer
         _operator.x().onTrue(_shooter.setVelocity(RPM.of(3000)));
         _operator.y().onTrue(_shooter.setVelocity(RPM.of(5000)));
         _operator.rightTrigger().whileTrue(_shooter.runFeeder());
+        _operator.leftTrigger().onTrue(_intake.runRollers());
 
         // _operator.povDown().onTrue(_turret.stop());
         // _operator.povLeft().onTrue(_turret.setSetpoint(Degrees.of(60)));

@@ -114,9 +114,9 @@ public final class Constants
     public static class ShooterConstants
     {
         // Flywheel
-        public static final double                                    FLYWHEEL_KP            = 0.0001; // TODO: Tune
+        public static final double                                    FLYWHEEL_KP            = 0.00015; // TODO: Tune
         public static final double                                    FLYWHEEL_KI            = 0.0;    // TODO: Tune
-        public static final double                                    FLYWHEEL_KD            = 0.0;
+        public static final double                                    FLYWHEEL_KD            = 0.0005;
         public static final Voltage                                   FLYWHEEL_KS            = Volts.of(0.0);            // TODO: Tune - static friction voltage
         public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KV            = Volts.of(12.0).div(RPM.of(6784.0));
         public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA            = Volts.of(0).per(RotationsPerSecondPerSecond);            // TODO: Tune - acceleration voltage
