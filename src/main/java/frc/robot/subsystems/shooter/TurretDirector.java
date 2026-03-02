@@ -31,10 +31,9 @@ public class TurretDirector
                     Translation2d hub                  = Utilities.getHubCoordinates();
                     Translation2d robot                = swerveState.Pose.getTranslation();
                     Translation2d robotToHub           = hub.minus(robot);
-                    Rotation2d    angle                = Rotation2d.fromRadians(Math.atan2(robotToHub.getY(), robotToHub.getX()));
                     Rotation2d    robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
 
-                    ret = robotToHub.rotateBy(angle).rotateBy(robotAngleCorrection);
+                    ret = robotToHub.rotateBy(robotAngleCorrection);
                 }
                 else
                 {
@@ -60,20 +59,23 @@ public class TurretDirector
                 break;
 
             case Pass:
+                Rotation2d robotAngle = swerveState.Pose.getRotation();
                 Rotation2d rotation;
                 Translation2d translation;
 
+                // The distance we need to aim for is determined by the robot's pose and the
+                // alliance we're on.
+                // The direction we need to aim is based on the alliance.
+                // Describe the translation as a forward vector rotated by the robot's rotation
                 if (Utilities.isBlueAlliance())
                 {
-                    // Only worry about X distance. Shoot perpendicular to driver station
-                    translation = new Translation2d(Meters.of(-swerveState.Pose.getX()), Meters.zero());
-                    rotation    = Rotation2d.kZero;
+                    translation = new Translation2d(Meters.of(swerveState.Pose.getX()), Meters.zero());
+                    rotation    = Rotation2d.k180deg.minus(robotAngle);
                 }
                 else
                 {
-                    // Only worry about X distance. Shoot perpendicular to driver station
                     translation = new Translation2d(GeneralConstants.FIELD_SIZE_X.minus(swerveState.Pose.getMeasureX()), Meters.zero());
-                    rotation    = Rotation2d.k180deg;
+                    rotation    = robotAngle.unaryMinus();
                 }
 
                 ret = translation.rotateBy(rotation);
