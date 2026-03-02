@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
@@ -13,16 +12,12 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.TestOperation;
@@ -39,7 +34,6 @@ public class RobotContainer
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric     drive       = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake       = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt    point       = new SwerveRequest.PointWheelsAt();
     private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
     private final CommandJoystick                _driver     = new CommandJoystick(0);
     private final CommandXboxController          _operator   = new CommandXboxController(1);
@@ -65,52 +59,35 @@ public class RobotContainer
         _drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 _drivetrain.applyRequest(
-                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))// Drive forward with negative Y (forward).
-                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND)) // Drive left with negative X (left)
-                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND)) // Drive counterclockwise with negative X (left)
+                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))
+                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND))
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND))
                 )
         );
 
-        _drivetrain.resetPose(new Pose2d(ShooterConstants.RED_HUB.plus(new Translation2d(Feet.of(-6), Feet.of(-7))), Rotation2d.fromDegrees(92)));
-
-        // Idle while the robot is disabled. This ensures the configured
-        // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
-
         RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(_drivetrain.applyRequest(() -> brake));
-        _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> point.withModuleDirection(new Rotation2d(-_driver.getY(), -_driver.getX()))));
-
-        // Run SysId routines when holding back/start and X/Y.
-        // Note that each routine should be run exactly once in a single log.
-        _driver.button(3).whileTrue(_drivetrain.sysIdDynamic(Direction.kForward));
-        _driver.button(4).whileTrue(_drivetrain.sysIdDynamic(Direction.kReverse));
-        _driver.button(5).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kForward));
-        _driver.button(6).whileTrue(_drivetrain.sysIdQuasistatic(Direction.kReverse));
-
-        // Reset the field-centric heading on left bumper press.
+        _driver.button(1).whileTrue(_shooter.smartShootCmd(_turret::getHubDistance, () -> _shooter._flywheel.atSpeed() && _turret.isLinedUp()));
+        _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> brake));
         _driver.button(7).onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
-
-        _operator.rightBumper().onTrue(_shooter.modVelocity(RPM.of(100)));
-        _operator.leftBumper().onTrue(_shooter.modVelocity(RPM.of(-100)));
-        _operator.a().onTrue(_shooter.stopCmd());
-        _operator.b().onTrue(_shooter.setVelocity(RPM.of(1000)));
-        _operator.x().onTrue(_shooter.setVelocity(RPM.of(3000)));
-        _operator.y().onTrue(_shooter.setVelocity(RPM.of(5000)));
-        _operator.rightTrigger().whileTrue(_shooter.runFeeder());
-        _operator.leftTrigger().onTrue(_intake.runRollers());
-
-        // _operator.povDown().onTrue(_turret.stop());
-        // _operator.povLeft().onTrue(_turret.setSetpoint(Degrees.of(60)));
-        // _operator.povUp().onTrue(_turret.setSetpoint(Degrees.of(0)));
-        // _operator.povRight().onTrue(_turret.setSetpoint(Degrees.of(-60)));
-
-        _operator.povDown().onTrue(_intake.getExtendCmd());
-        _operator.povUp().onTrue(_intake.getRetractAtSpeedCmd());
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 
+        _operator.a().onTrue(_intake.getToggleCmd());
+        _operator.leftTrigger().whileTrue(_intake.startRollers());
+        _operator.leftBumper().whileTrue(_intake.reverseRollers());
+        _operator.povDown().onTrue(_intake.getExtendCmd());
+        _operator.povUp().onTrue(_intake.getRetractCmd());
+
+        _operator.y().onTrue(_shooter.setVelocity(RPM.of(3500)));
+        _operator.x().onTrue(_shooter.stopCmd());
+
+        _operator.rightBumper().whileTrue(_turret.getTrackCmd());
+        _operator.b().whileTrue(Commands.parallel(_turret.getPassCmd(), _shooter.passCmd()));
+        _operator.start().onTrue(_turret.getIdleCmd());
+
+        _operator.rightTrigger().whileTrue(_shooter.runFeeder());
     }
 
     private void configureTestBindings()

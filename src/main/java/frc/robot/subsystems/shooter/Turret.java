@@ -25,6 +25,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -181,6 +182,26 @@ public class Turret extends SubsystemBase
         return _turretState;
     }
 
+    public boolean isLinedUp()
+    {
+        return _hasSetpoint && _pidController.atSetpoint();
+    }
+
+    public Command getTrackCmd()
+    {
+        return startEnd(() -> setTurretState(TurretState.Track), () -> setTurretState(TurretState.Idle));
+    }
+
+    public Command getPassCmd()
+    {
+        return startEnd(() -> setTurretState(TurretState.Pass), () -> setTurretState(TurretState.Idle));
+    }
+
+    public Command getIdleCmd()
+    {
+        return runOnce(() -> setTurretState(TurretState.Idle));
+    }
+
     private Angle toFieldFrame(Angle robotFrameAngle)
     {
         return robotFrameAngle.plus(_currentSwerveState.Pose.getRotation().getMeasure()).plus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD);
@@ -194,8 +215,8 @@ public class Turret extends SubsystemBase
     private void updateFilter(List<Integer> filters)
     {
         if (DriverStation.isDisabled())
-        {
-            _limelight.getSettings().withAprilTagIdFilter(filters).save();
+    {
+        _limelight.getSettings().withAprilTagIdFilter(filters).save();
         }
     }
 }
