@@ -131,7 +131,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      * @param drivetrainConstants Drivetrain-wide constants for the swerve drive
      * @param modules             Constants for each specific module
      */
-    public Drive(SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules)
+    public Drive(final SwerveDrivetrainConstants drivetrainConstants, final SwerveModuleConstants<?, ?, ?>... modules)
     {
         super(drivetrainConstants, modules);
         if (Utils.isSimulation())
@@ -154,7 +154,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *                                CAN FD, and 100 Hz on CAN 2.0.
      * @param modules                 Constants for each specific module
      */
-    public Drive(SwerveDrivetrainConstants drivetrainConstants, double odometryUpdateFrequency, SwerveModuleConstants<?, ?, ?>... modules)
+    public Drive(final SwerveDrivetrainConstants drivetrainConstants, final double odometryUpdateFrequency, final SwerveModuleConstants<?, ?, ?>... modules)
     {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
         if (Utils.isSimulation())
@@ -184,7 +184,13 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *                                  units in meters and radians
      * @param modules                   Constants for each specific module
      */
-    public Drive(SwerveDrivetrainConstants drivetrainConstants, double odometryUpdateFrequency, Matrix<N3, N1> odometryStandardDeviation, Matrix<N3, N1> visionStandardDeviation, SwerveModuleConstants<?, ?, ?>... modules)
+    public Drive(
+                 final SwerveDrivetrainConstants drivetrainConstants,
+                 final double odometryUpdateFrequency,
+                 final Matrix<N3, N1> odometryStandardDeviation,
+                 final Matrix<N3, N1> visionStandardDeviation,
+                 final SwerveModuleConstants<?, ?, ?>... modules
+    )
     {
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation, modules);
         if (Utils.isSimulation())
@@ -201,7 +207,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *
      * @return         Command to run
      */
-    public Command applyRequest(Supplier<SwerveRequest> request)
+    public Command applyRequest(final Supplier<SwerveRequest> request)
     {
         return run(() -> this.setControl(request.get()));
     }
@@ -214,7 +220,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *
      * @return           Command to run
      */
-    public Command sysIdQuasistatic(SysIdRoutine.Direction direction)
+    public Command sysIdQuasistatic(final SysIdRoutine.Direction direction)
     {
         return m_sysIdRoutineToApply.quasistatic(direction);
     }
@@ -227,7 +233,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *
      * @return           Command to run
      */
-    public Command sysIdDynamic(SysIdRoutine.Direction direction)
+    public Command sysIdDynamic(final SysIdRoutine.Direction direction)
     {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
@@ -282,7 +288,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *                              seconds.
      */
     @Override
-    public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds)
+    public void addVisionMeasurement(final Pose2d visionRobotPoseMeters, final double timestampSeconds)
     {
         super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
     }
@@ -304,7 +310,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *                                 units in meters and radians.
      */
     @Override
-    public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds, Matrix<N3, N1> visionMeasurementStdDevs)
+    public void addVisionMeasurement(final Pose2d visionRobotPoseMeters, final double timestampSeconds, final Matrix<N3, N1> visionMeasurementStdDevs)
     {
         super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
     }
@@ -318,7 +324,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
      *                          if the buffer is empty).
      */
     @Override
-    public Optional<Pose2d> samplePoseAt(double timestampSeconds)
+    public Optional<Pose2d> samplePoseAt(final double timestampSeconds)
     {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
     }
@@ -399,7 +405,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             }
         }
 
-        private boolean processLimelight(LimelightPoseEstimator poseEstimator, double lastTimestamp)
+        private boolean processLimelight(final LimelightPoseEstimator poseEstimator, final double lastTimestamp)
         {
             Optional<PoseEstimate> estimate = poseEstimator.getPoseEstimate();
 
