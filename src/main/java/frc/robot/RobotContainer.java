@@ -13,7 +13,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -67,6 +66,7 @@ public class RobotContainer
 
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
+        _turret.setTurretState(Turret.TurretState.Idle);
 
         _driver.button(1).whileTrue(_shooter.smartShootCmd(_turret::getHubDistance, () -> _shooter._flywheel.atSpeed() && _turret.isLinedUp()));
         _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> brake));
@@ -74,18 +74,15 @@ public class RobotContainer
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 
-        _operator.a().onTrue(_intake.getToggleCmd());
         _operator.leftTrigger().whileTrue(_intake.startRollers());
         _operator.leftBumper().whileTrue(_intake.reverseRollers());
         _operator.povDown().onTrue(_intake.getExtendCmd());
         _operator.povUp().onTrue(_intake.getRetractCmd());
 
         _operator.y().onTrue(_shooter.setVelocity(RPM.of(3500)));
+        _operator.b().onTrue(_shooter.modVelocity(RPM.of(200)));
+        _operator.a().onTrue(_shooter.modVelocity(RPM.of(-200)));
         _operator.x().onTrue(_shooter.stopCmd());
-
-        _operator.rightBumper().whileTrue(_turret.getTrackCmd());
-        _operator.b().whileTrue(Commands.parallel(_turret.getPassCmd(), _shooter.passCmd()));
-        _operator.start().onTrue(_turret.getIdleCmd());
 
         _operator.rightTrigger().whileTrue(_shooter.runFeeder());
     }
