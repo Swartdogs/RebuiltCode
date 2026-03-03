@@ -21,7 +21,7 @@ public class Autos
     private final PIDController              _yController          = new PIDController(0.0, 0.0, 0.0);
     private final PIDController              _headingController    = new PIDController(0.0, 0.0, 0.0);
 
-    public Autos(Drive driveSubsystem)
+    public Autos(final Drive driveSubsystem)
     {
         _driveSubsystem = driveSubsystem;
 
@@ -37,7 +37,7 @@ public class Autos
         // @formatter:on
     }
 
-    private void followTrajectory(SwerveSample sample)
+    private void followTrajectory(final SwerveSample sample)
     {
         // Get the current pose of the robot
         Pose2d pose = _driveSubsystem.getState().Pose;
@@ -54,7 +54,7 @@ public class Autos
         _driveSubsystem.setControl(_autoFollowingRequest);
     }
 
-    public Command followPath(String pathName)
+    public Command followPath(final String pathName)
     {
         // @formatter:off
         return Commands.sequence

@@ -34,7 +34,7 @@ public class Hood
 
         public final Angle targetAngle;
 
-        private HoodPosition(Angle angle)
+        private HoodPosition(final Angle angle)
         {
             targetAngle = angle;
         }
@@ -123,12 +123,12 @@ public class Hood
         setHoodMotorVoltage(Volts.zero());
     }
 
-    private void setHoodMotorVoltage(Voltage voltage)
+    private void setHoodMotorVoltage(final Voltage voltage)
     {
         _hoodMotor.setVoltage(MeasureUtil.clamp(voltage, GeneralConstants.MOTOR_VOLTAGE.unaryMinus(), GeneralConstants.MOTOR_VOLTAGE));
     }
 
-    public void setHoodPosition(HoodPosition hoodPosition)
+    public void setHoodPosition(final HoodPosition hoodPosition)
     {
         if (hoodPosition == HoodPosition.Undefined)
         {
@@ -161,7 +161,7 @@ public class Hood
         }
 
         @Override
-        public void setRate(double rate)
+        public void setRate(final double rate)
         {
             setHoodMotorVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }

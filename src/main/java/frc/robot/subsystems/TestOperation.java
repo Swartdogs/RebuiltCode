@@ -81,19 +81,19 @@ public class TestOperation extends SubsystemBase
         _shiftMod = 0;
     }
 
-    public void add(String name, TestHook hook)
+    public void add(final String name, final TestHook hook)
     {
         if (name == null || hook == null) return;
         _hooks.put(name, hook);
     }
 
-    public void connect(int slot, String name)
+    public void connect(final int slot, final String name)
     {
         if (slot < 0 || slot >= _slots.length) return;
         _slots[slot] = _hooks.get(name);
     }
 
-    public void connect(int slot, String name, String shift_name)
+    public void connect(final int slot, final String name, final String shift_name)
     {
         if (slot < 0 || slot + 4 >= _slots.length) return;
         _slots[slot]     = _hooks.get(name);
@@ -170,7 +170,7 @@ public class TestOperation extends SubsystemBase
         _rate = Math.max(_rate - 0.1, 0.1);
     }
 
-    public void do_select(int slot)
+    public void do_select(final int slot)
     {
         if (slot < 0 || slot + _shiftMod >= _slots.length) return;
         if (_current != null)

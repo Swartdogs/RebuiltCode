@@ -103,7 +103,7 @@ public class Flywheel
         _leadMotorSim.iterate(velocity, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
     }
 
-    public void setVelocity(AngularVelocity targetVelocity)
+    public void setVelocity(final AngularVelocity targetVelocity)
     {
         if (targetVelocity == null)
         {
@@ -140,7 +140,7 @@ public class Flywheel
         }
 
         @Override
-        public void setRate(double rate)
+        public void setRate(final double rate)
         {
             _leadMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }

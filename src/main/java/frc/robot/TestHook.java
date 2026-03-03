@@ -6,7 +6,7 @@ public class TestHook
     {
     }
 
-    public void setRate(double rate)
+    public void setRate(final double rate)
     {
     }
 

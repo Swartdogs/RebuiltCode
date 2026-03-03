@@ -61,7 +61,7 @@ public class ExtensionMotor extends SubsystemBase
     private boolean                _inSwitchTriggered  = false;
     private Alert                  _limitSwitchAlert;
 
-    public ExtensionMotor(int CANID, Voltage extendOutput, Voltage retractVolts, Per<DistanceUnit, AngleUnit> extensionConversionFactor)
+    public ExtensionMotor(final int CANID, final Voltage extendOutput, final Voltage retractVolts, final Per<DistanceUnit, AngleUnit> extensionConversionFactor)
     {
         // refer to the following url for more hardware info:
         // https://docs.revrobotics.com/brushless/spark-flex/spark-flex-feature-description/data-port
@@ -129,7 +129,7 @@ public class ExtensionMotor extends SubsystemBase
         }
     }
 
-    public void extend(boolean finalState)
+    public void extend(final boolean finalState)
     {
         _extendMotor.setVoltage(finalState ? _extendOutput : _retractVolts);
     }
@@ -174,7 +174,7 @@ public class ExtensionMotor extends SubsystemBase
         }
 
         @Override
-        public void setRate(double rate)
+        public void setRate(final double rate)
         {
             _extendMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }
