@@ -80,7 +80,7 @@ public class Turret extends SubsystemBase
     @Logged
     private Angle                      _targetHorizontalOffset;
 
-    public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
+    public Turret(final Supplier<SwerveDriveState> swerveStateSupplier)
     {
         // Setting up motor
         _turretMotor = new TalonFX(CANConstants.TURRET_MOTOR);
@@ -200,7 +200,7 @@ public class Turret extends SubsystemBase
         _turretSensorSim.setVoltage(RoboRioSim.getUserVoltage5V() * normalized.in(Value));
     }
 
-    public void setTurretState(TurretState state)
+    public void setTurretState(final TurretState state)
     {
         _turretState = state;
     }
@@ -243,7 +243,7 @@ public class Turret extends SubsystemBase
         }
 
         @Override
-        public void setRate(double rate)
+        public void setRate(final double rate)
         {
             _turretMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.in(Volts) * rate * _polarity);
         }

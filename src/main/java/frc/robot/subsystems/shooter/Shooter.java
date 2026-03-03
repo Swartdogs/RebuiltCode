@@ -35,12 +35,12 @@ public class Shooter extends SubsystemBase
         return runOnce(this::stop);
     }
 
-    public Command startCmd(AngularVelocity velocity)
+    public Command startCmd(final AngularVelocity velocity)
     {
         return runOnce(() -> start(velocity));
     }
 
-    public Command setShootModeCmd(Hood.HoodPosition mode)
+    public Command setShootModeCmd(final Hood.HoodPosition mode)
     {
         return runOnce(() ->
         {
@@ -56,7 +56,7 @@ public class Shooter extends SubsystemBase
         return startEnd(this::pass, this::stop);
     }
 
-    public Command setVelocity(AngularVelocity velocity)
+    public Command setVelocity(final AngularVelocity velocity)
     {
         return runOnce(() ->
         {
@@ -65,7 +65,7 @@ public class Shooter extends SubsystemBase
         });
     }
 
-    public Command modVelocity(AngularVelocity mod)
+    public Command modVelocity(final AngularVelocity mod)
     {
         return runOnce(() ->
         {
@@ -156,7 +156,7 @@ public class Shooter extends SubsystemBase
         // _turret.simulationPeriodic();
     }
 
-    public void start(AngularVelocity velocity)
+    public void start(final AngularVelocity velocity)
     {
         if (_state == ShooterState.Idle)
         {

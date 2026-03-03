@@ -39,7 +39,7 @@ public class Feeder
         _feederMotorVoltage = Volts.of(_feederMotor.getAppliedOutput() * _feederMotor.getBusVoltage());
     }
 
-    public void set(boolean on)
+    public void set(final boolean on)
     {
         Voltage targetVoltage = on ? ShooterConstants.FEEDER_VOLTAGE : Volts.zero();
         _feederMotor.setVoltage(targetVoltage.in(Volts));
@@ -54,7 +54,7 @@ public class Feeder
         }
 
         @Override
-        public void setRate(double rate)
+        public void setRate(final double rate)
         {
             _feederMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }
