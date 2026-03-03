@@ -29,7 +29,7 @@ public class Telemetry
      *
      * @param maxSpeed Maximum speed in meters per second
      */
-    public Telemetry(double maxSpeed)
+    public Telemetry(final double maxSpeed)
     {
         MaxSpeed = maxSpeed;
         SignalLogger.start();
@@ -76,7 +76,7 @@ public class Telemetry
      * Accept the swerve drive state and telemeterize it to SmartDashboard and
      * SignalLogger.
      */
-    public void telemeterize(SwerveDriveState state)
+    public void telemeterize(final SwerveDriveState state)
     {
         /* Telemeterize the swerve drive state */
         drivePose.set(state.Pose);
