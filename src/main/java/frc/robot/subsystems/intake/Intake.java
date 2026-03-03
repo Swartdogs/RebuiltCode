@@ -12,15 +12,10 @@ import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.UsbCamera;
-import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -46,84 +41,29 @@ public class Intake extends ExtensionMotor
      * COMMANDS *
      ************/
 
-    public Command startRollers()
+    public Command runRollersForward()
     {
-        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
+        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off));
     }
 
-    public Command reverseRollers()
+    public Command runRollersReverse()
     {
-        return startEnd(() -> setIntakeState(IntakeState.Reverse), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
+        return startEnd(() -> setIntakeState(IntakeState.Reverse), () -> setIntakeState(IntakeState.Off));
+    }
+
+    public Command startRollersForward()
+    {
+        return runOnce(() -> setIntakeState(IntakeState.Forward));
+    }
+
+    public Command startRollersReverse()
+    {
+        return runOnce(() -> setIntakeState(IntakeState.Reverse));
     }
 
     public Command stopRollers()
     {
         return runOnce(() -> setIntakeState(IntakeState.Off));
-    }
-
-    public Command runRollers()
-    {
-        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off));
-    }
-
-    /*************
-     * SUBSYSTEM *
-     *************/
-    private final SparkFlex       _intakeMotor;
-    private final RelativeEncoder _intakeEncoder;
-    private final SparkFlexSim    _intakeMotorSim;
-    private final UsbCamera       _camera;
-    private final DCMotor         _neoVortex;
-    @Logged
-    private IntakeState           _intakeState        = IntakeState.Off;
-    @Logged
-    private Voltage               _intakeMotorVoltage = Volts.of(0.0);
-    @Logged
-    private double                _intakeVelocity     = 0.0;
-
-    public Intake()
-    {
-        super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR);
-
-        _intakeMotor   = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
-        _intakeEncoder = _intakeMotor.getEncoder();
-
-        var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
-
-        _intakeMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-        if (RobotBase.isReal())
-        {
-            _camera = CameraServer.startAutomaticCapture(IntakeConstants.CAMERA_NAME, IntakeConstants.CAMERA_DEVICE_INDEX);
-            _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
-            _camera.setResolution(IntakeConstants.CAMERA_WIDTH, IntakeConstants.CAMERA_HEIGHT);
-            _camera.setFPS(IntakeConstants.CAMERA_FPS);
-            _neoVortex      = null;
-            _intakeMotorSim = null;
-        }
-        else
-        {
-            _camera         = null;
-            _neoVortex      = DCMotor.getNeoVortex(1);
-            _intakeMotorSim = new SparkFlexSim(_intakeMotor, _neoVortex);
-        }
-    }
-
-    @Override
-    protected void onRetract()
-    {
-    }
-
-    public Command getRetractAtSpeedCmd()
-    {
-        return runOnce(() ->
-        {
-            if (isExtended() && isAtSpeed())
-            {
-                extend(false);
-            }
-        });
     }
 
     public Command getRetractWithNudgeCmd()
@@ -132,24 +72,46 @@ public class Intake extends ExtensionMotor
                 .andThen(Commands.waitUntil(this::isRetracted));
     }
 
+    /*************
+     * SUBSYSTEM *
+     *************/
+    private final SparkFlex    _intakeMotor;
+    private final SparkFlexSim _intakeMotorSim;
+    private final DCMotor      _neoVortex;
+    @Logged
+    private IntakeState        _intakeState        = IntakeState.Off;
+    @Logged
+    private Voltage            _intakeMotorVoltage = Volts.of(0.0);
+
+    public Intake()
+    {
+        super(CANConstants.INTAKE_EXTEND, IntakeConstants.EXTEND_VOLTS, IntakeConstants.RETRACT_VOLTS, IntakeConstants.EXTENSION_CONVERSION_FACTOR);
+
+        _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
+
+        var config = new SparkFlexConfig();
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
+
+        _intakeMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        if (RobotBase.isReal())
+        {
+            _neoVortex      = null;
+            _intakeMotorSim = null;
+        }
+        else
+        {
+            _neoVortex      = DCMotor.getNeoVortex(1);
+            _intakeMotorSim = new SparkFlexSim(_intakeMotor, _neoVortex);
+        }
+    }
+
     @Override
     public void periodic()
     {
         super.periodic();
 
         _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
-        _intakeVelocity     = _intakeEncoder.getVelocity();
-
-        if (isRetracted() && _intakeState != IntakeState.Off)
-        {
-            setIntakeState(IntakeState.Off);
-        }
-    }
-
-    public boolean isAtSpeed()
-    {
-        double targetRpm = IntakeConstants.INTAKE_VOLTS.in(Volts) / GeneralConstants.MOTOR_VOLTAGE.in(Volts) * 6784;
-        return Math.abs(_intakeVelocity) <= targetRpm * 0.9;
     }
 
     @Override

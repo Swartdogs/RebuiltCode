@@ -23,7 +23,6 @@ import com.revrobotics.spark.config.LimitSwitchConfig.Behavior;
 import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
@@ -53,13 +52,17 @@ public class ExtensionMotor extends SubsystemBase
     private final Voltage          _retractVolts;
     private final DCMotor          _neoVortexx;
     @Logged
-    private Distance               _currentExtension   = Inches.zero();
+    private Distance               _currentExtension      = Inches.zero();
     @Logged
-    private Voltage                _motorVoltage       = Volts.zero();
+    private Voltage                _extensionMotorVoltage = Volts.zero();
     @Logged
-    private boolean                _outSwitchTriggered = false;
+    private boolean                _outSwitchTriggered    = false;
     @Logged
-    private boolean                _inSwitchTriggered  = false;
+    private boolean                _inSwitchTriggered     = false;
+    @Logged
+    private boolean                _extending             = false;
+    @Logged
+    private boolean                _retracting            = false;
     private Alert                  _limitSwitchAlert;
 
     public ExtensionMotor(int CANID, Voltage extendOutput, Voltage retractVolts, Per<DistanceUnit, AngleUnit> extensionConversionFactor)
@@ -103,11 +106,14 @@ public class ExtensionMotor extends SubsystemBase
     public void periodic()
     {
         // TODO: Read sensors/encoders to update _currentRotation/_currentExtension.
-        _outSwitchTriggered = _outLimitSwitch.isPressed();
-        _inSwitchTriggered  = _inLimitSwitch.isPressed();
-        _limitSwitchAlert.set(_outSwitchTriggered && _inSwitchTriggered);
+        _outSwitchTriggered    = _outLimitSwitch.isPressed();
+        _inSwitchTriggered     = _inLimitSwitch.isPressed();
+        _extensionMotorVoltage = Volts.of(_extendMotor.getAppliedOutput() * _extendMotor.getBusVoltage());
+        _currentExtension      = Inches.of(_extendMotor.getEncoder().getPosition());
+        _extending             = _extensionMotorVoltage.gt(Volts.zero());
+        _retracting            = _extensionMotorVoltage.lt(Volts.zero());
 
-        _currentExtension = Inches.of(_extendMotor.getEncoder().getPosition());
+        _limitSwitchAlert.set(_outSwitchTriggered && _inSwitchTriggered);
     }
 
     @Override
@@ -133,20 +139,6 @@ public class ExtensionMotor extends SubsystemBase
     public void extend(boolean finalState)
     {
         _extendMotor.setVoltage(finalState ? _extendOutput : _retractVolts);
-        if (!finalState)
-        {
-            onRetract();
-        }
-    }
-
-    protected void onRetract()
-    {
-    }
-
-    @NotLogged
-    public Command getToggleCmd()
-    {
-        return runOnce(() -> extend(!isExtended()));
     }
 
     public Voltage getMotorVoltage()
@@ -167,6 +159,16 @@ public class ExtensionMotor extends SubsystemBase
     public boolean isRetracted()
     {
         return _inSwitchTriggered;
+    }
+
+    public boolean extending()
+    {
+        return _extending;
+    }
+
+    public boolean retracting()
+    {
+        return _retracting;
     }
 
     /* COMMANDS */
