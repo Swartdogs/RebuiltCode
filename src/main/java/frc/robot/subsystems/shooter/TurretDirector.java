@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
-import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants.GeneralConstants;
@@ -39,21 +39,25 @@ public class TurretDirector
                 }
                 else
                 {
-                    double sumX = 0.0;
-                    double sumY = 0.0;
+                    double avgX = 0.0;
+                    double avgZ = 0.0;
 
                     for (AprilTagFiducial tag : fiducials)
                     {
-                        Pose2d pose = tag.getTargetPose_CameraSpace2D();
+                        Pose3d pose = tag.getTargetPose_CameraSpace();
 
-                        sumX += pose.getX();
-                        sumY += pose.getY();
+                        avgX += pose.getX();
+                        avgZ += pose.getZ();
                     }
 
                     int n = fiducials.length;
 
+                    avgX /= n;
+                    avgZ /= n;
+
                     // ret is now a translation from the camera to the target
-                    var localCameraToTarget = new Translation2d(sumX / n, sumY / n);
+                    // For some dumb reason, Z is forward and X is left/right
+                    var localCameraToTarget = new Translation2d(avgZ, avgX);
 
                     // now, modify ret to account for the turret being offset and at an angle
                     // get translation from the center of the robot to the camera

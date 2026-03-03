@@ -191,16 +191,16 @@ public final class Constants
         public static final String         RIGHT_CAMERA_NAME   = "limelight-right";
         public static final Distance       MAX_DETECTION_RANGE = Meters.of(6.0);
         public static final Distance       XY_STD_DEV          = Meters.of(0.7);
-        public static final Angle          THETA_STD_DEV       = Degrees.of(9999.0); // Trust gyro for heading, not vision
+        public static final Angle          THETA_STD_DEV       = Degrees.of(0.7); // Trust gyro for heading, not vision
         public static final Matrix<N3, N1> STD_DEVS            = VecBuilder.fill(XY_STD_DEV.in(Meters), XY_STD_DEV.in(Meters), THETA_STD_DEV.in(Degrees));
 
         // Camera translations
-        public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(10.67), Inches.of(10.67), Inches.of(7.625));
-        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(10.67), Inches.of(-10.67), Inches.of(7.5));
+        public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(-10.67), Inches.of(10.67), Inches.of(9.25));
+        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(-10.67), Inches.of(-10.67), Inches.of(9.25));
 
         // Camera rotations
-        public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(13), Degrees.of(-45));
-        public static final Rotation3d RIGHT_CAMERA_ROTATION = new Rotation3d(Degrees.of(0), Degrees.of(13), Degrees.of(45));
+        public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(13), Degrees.of(135));
+        public static final Rotation3d RIGHT_CAMERA_ROTATION = new Rotation3d(Degrees.of(0), Degrees.of(13), Degrees.of(-135));
 
         // Camera offsets
         public static final Pose3d LEFT_CAMERA_OFFSET  = new Pose3d(LEFT_CAMERA_TRANSLATION, LEFT_CAMERA_ROTATION);

@@ -45,6 +45,7 @@ import limelight.networktables.PoseEstimate;
  * the 2026 Tuner X Swerve Project Generator
  * https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/tuner-swerve/index.html
  */
+@Logged
 public class Drive extends TunerSwerveDrivetrain implements Subsystem
 {
     private static final double kSimLoopPeriod  = 0.004; // 4 ms
@@ -323,15 +324,20 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
     }
 
-    private class DriveVision
+    @Logged
+    public class DriveVision
     {
         private final Limelight              _limelightLeft;
         private final Limelight              _limelightRight;
         private final LimelightPoseEstimator _poseEstimatorLeft;
         private final LimelightPoseEstimator _poseEstimatorRight;
+        @Logged
         private double                       _lastTimestampLeft  = 0.0;
+        @Logged
         private double                       _lastTimestampRight = 0.0;
+        @Logged
         private boolean                      _hasVisionLeft      = false;
+        @Logged
         private boolean                      _hasVisionRight     = false;
 
         public DriveVision()
@@ -341,8 +347,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 _limelightLeft  = new Limelight(VisionConstants.LEFT_CAMERA_NAME);
                 _limelightRight = new Limelight(VisionConstants.RIGHT_CAMERA_NAME);
 
-                _poseEstimatorLeft  = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG2);
-                _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG2);
+                _poseEstimatorLeft  = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG1);
+                _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG1);
 
                 _limelightLeft.getSettings().withCameraOffset(VisionConstants.LEFT_CAMERA_OFFSET).save();
                 _limelightRight.getSettings().withCameraOffset(VisionConstants.RIGHT_CAMERA_OFFSET).save();
@@ -361,13 +367,6 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             if (_limelightLeft == null)
             {
-                return;
-            }
-
-            if (isRotatingTooFast() || isOnBump())
-            {
-                _hasVisionLeft  = false;
-                _hasVisionRight = false;
                 return;
             }
 
@@ -408,31 +407,11 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 return false;
             }
 
-            PoseEstimate poseEstimate       = estimate.get();
-            Distance     averageTagDistance = Meters.of(poseEstimate.avgTagDist);
-
-            if (poseEstimate.tagCount == 0 || averageTagDistance.gt(VisionConstants.MAX_DETECTION_RANGE) || poseEstimate.timestampSeconds == lastTimestamp)
-            {
-                return false;
-            }
+            PoseEstimate poseEstimate = estimate.get();
 
             addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds);
 
             return true;
-        }
-
-        private boolean isRotatingTooFast()
-        {
-            var rate = DegreesPerSecond.of(Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()));
-            return rate.gt(VisionConstants.MAX_ANGULAR_RATE_FOR_VISION);
-        }
-
-        private boolean isOnBump()
-        {
-            var   rotation = getPigeon2().getRotation3d();
-            Angle pitch    = Degrees.of(Math.abs(Math.toDegrees(rotation.getY())));
-            Angle roll     = Degrees.of(Math.abs(Math.toDegrees(rotation.getX())));
-            return pitch.gt(VisionConstants.MAX_TILT_FOR_VISION) || roll.gt(VisionConstants.MAX_TILT_FOR_VISION);
         }
     }
 }

@@ -16,11 +16,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.UsbCamera;
-import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -72,7 +68,6 @@ public class Intake extends ExtensionMotor
     private final SparkFlex       _intakeMotor;
     private final RelativeEncoder _intakeEncoder;
     private final SparkFlexSim    _intakeMotorSim;
-    private final UsbCamera       _camera;
     private final DCMotor         _neoVortex;
     @Logged
     private IntakeState           _intakeState        = IntakeState.Off;
@@ -95,16 +90,11 @@ public class Intake extends ExtensionMotor
 
         if (RobotBase.isReal())
         {
-            _camera = CameraServer.startAutomaticCapture(IntakeConstants.CAMERA_NAME, IntakeConstants.CAMERA_DEVICE_INDEX);
-            _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
-            _camera.setResolution(IntakeConstants.CAMERA_WIDTH, IntakeConstants.CAMERA_HEIGHT);
-            _camera.setFPS(IntakeConstants.CAMERA_FPS);
             _neoVortex      = null;
             _intakeMotorSim = null;
         }
         else
         {
-            _camera         = null;
             _neoVortex      = DCMotor.getNeoVortex(1);
             _intakeMotorSim = new SparkFlexSim(_intakeMotor, _neoVortex);
         }

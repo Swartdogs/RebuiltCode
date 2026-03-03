@@ -13,6 +13,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -24,6 +25,7 @@ import frc.robot.subsystems.TestOperation;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Turret;
+import frc.robot.subsystems.shooter.Turret.TurretState;
 import frc.robot.util.MeasureUtil;
 
 @Logged
@@ -66,7 +68,6 @@ public class RobotContainer
 
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
-        _turret.setTurretState(Turret.TurretState.Idle);
 
         _driver.button(1).whileTrue(_shooter.smartShootCmd());
         _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> brake));
@@ -74,7 +75,7 @@ public class RobotContainer
 
         _drivetrain.registerTelemetry(_logger::telemeterize);
 
-        _operator.leftTrigger().whileTrue(_intake.startRollers());
+        _operator.leftTrigger().whileTrue(_intake.runRollers());
         _operator.leftBumper().whileTrue(_intake.reverseRollers());
         _operator.povDown().onTrue(_intake.getRetractWithNudgeCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
@@ -87,7 +88,7 @@ public class RobotContainer
         _operator.rightTrigger().whileTrue(_shooter.runFeeder());
         _operator.povRight().whileTrue(_turret.getTurnTo0Cmd());
         _operator.povLeft().whileTrue(_turret.getTurnTo90Cmd());
-
+        _operator.start().whileTrue(Commands.startEnd(() -> _turret.setTurretState(TurretState.Track), () -> _turret.setTurretState(TurretState.Idle), _turret).ignoringDisable(true));
     }
 
     private void configureTestBindings()
