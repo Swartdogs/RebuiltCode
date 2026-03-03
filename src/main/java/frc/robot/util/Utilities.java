@@ -3,6 +3,7 @@ package frc.robot.util;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import edu.wpi.first.math.geometry.Translation2d;
@@ -35,7 +36,7 @@ public final class Utilities
 
     public static boolean isHubActive()
     {
-        var timeRemaining = Seconds.of(DriverStation.getMatchTime());
+        Time timeRemaining = Seconds.of(DriverStation.getMatchTime());
         if (timeRemaining.lt(Seconds.zero()))
         {
             return true;
@@ -51,7 +52,7 @@ public final class Utilities
         Alliance inactiveFirst = getInactiveFirstAlliance(gameData);
         if (inactiveFirst == null) return true;
 
-        var alliance = DriverStation.getAlliance();
+        Optional<Alliance> alliance = DriverStation.getAlliance();
         if (alliance.isEmpty()) return true;
 
         boolean inactiveFirstActiveShift = (shift % 2) == 0; // Shifts 2 and 4
@@ -71,7 +72,7 @@ public final class Utilities
      */
     public static boolean isBlueAlliance()
     {
-        var alliance = DriverStation.getAlliance();
+        Optional<Alliance> alliance = DriverStation.getAlliance();
         return alliance.isPresent() && alliance.get() == Alliance.Blue;
     }
 
@@ -80,7 +81,7 @@ public final class Utilities
      */
     public static boolean isRedAlliance()
     {
-        var alliance = DriverStation.getAlliance();
+        Optional<Alliance> alliance = DriverStation.getAlliance();
         return alliance.isPresent() && alliance.get() == Alliance.Red;
     }
 
@@ -90,7 +91,7 @@ public final class Utilities
      */
     public static List<Integer> getOurHubTagIds()
     {
-        var alliance = DriverStation.getAlliance();
+        Optional<Alliance> alliance = DriverStation.getAlliance();
         if (alliance.isEmpty()) return kAllHubTagIds;
         if (isRedAlliance())
         {

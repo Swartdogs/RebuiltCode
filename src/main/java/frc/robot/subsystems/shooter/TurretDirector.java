@@ -9,6 +9,8 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Turret.TurretState;
@@ -59,18 +61,18 @@ public class TurretDirector
 
                     // Tx and Ty are now the average pitch and yaw to the target.
                     // Now calculate distance from pitch
-                    var tyMeasure = Degrees.of(avgTy);
-                    var distance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
+                    Angle    tyMeasure = Degrees.of(avgTy);
+                    Distance distance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
 
                     // We have a distance and an angle. We can now describe the camera → target
                     // translation as a forward vector with magnitude "distance" rotated by angle
                     // "avgTx"
 
-                    var localCameraToTarget = new Translation2d(distance, Inches.zero()).rotateBy(Rotation2d.fromDegrees(-avgTx));
+                    Translation2d localCameraToTarget = new Translation2d(distance, Inches.zero()).rotateBy(Rotation2d.fromDegrees(-avgTx));
 
                     // now, calculate ret and account for the turret being offset and at an angle
                     // get translation from the center of the robot to the camera
-                    var cameraPosition = ShooterConstants.TURRET_POSITION.plus(ShooterConstants.TURRET_CAMERA_POSITION.rotateBy(localTurretAngle));
+                    Translation2d cameraPosition = ShooterConstants.TURRET_POSITION.plus(ShooterConstants.TURRET_CAMERA_POSITION.rotateBy(localTurretAngle));
                     ret = cameraPosition.plus(localCameraToTarget.rotateBy(localTurretAngle).rotateBy(Rotation2d.fromDegrees(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD.in(Degrees))));
                 }
                 break;

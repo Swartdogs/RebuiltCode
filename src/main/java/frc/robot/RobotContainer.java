@@ -74,7 +74,7 @@ public class RobotContainer
                 _drive.applyRequest(() -> _fieldCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate()))
         );
 
-        final var idle = new SwerveRequest.Idle();
+        final SwerveRequest idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drive.applyRequest(() -> idle).ignoringDisable(true));
 
         _driver.button(1).whileTrue(Commands.either(_shooter.manualShoot(), _shooter.shoot(), _shooter::inManualMode));

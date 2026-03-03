@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -39,6 +40,7 @@ import frc.robot.util.MeasureUtil;
 import frc.robot.util.Utilities;
 import limelight.Limelight;
 import limelight.networktables.target.AprilTagFiducial;
+import limelight.networktables.LimelightResults;
 
 @Logged
 public class Turret
@@ -74,8 +76,8 @@ public class Turret
     {
         _swerveStateSupplier = swerveStateSupplier;
 
-        var sensorRange  = ShooterConstants.TURRET_HARD_MAX_ANGLE.minus(ShooterConstants.TURRET_HARD_MIN_ANGLE);
-        var sensorOffset = ShooterConstants.TURRET_HARD_MIN_ANGLE;
+        Angle sensorRange  = ShooterConstants.TURRET_HARD_MAX_ANGLE.minus(ShooterConstants.TURRET_HARD_MIN_ANGLE);
+        Angle sensorOffset = ShooterConstants.TURRET_HARD_MIN_ANGLE;
 
         if (ShooterConstants.TURRET_SENSOR_INVERTED)
         {
@@ -97,11 +99,11 @@ public class Turret
         _targetPose         = new Pose2d();
         _disabled           = false;
 
-        var currentConfig = new CurrentLimitsConfigs();
+        CurrentLimitsConfigs currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
         currentConfig.StatorCurrentLimitEnable = true;
 
-        var outputConfig = new MotorOutputConfigs();
+        MotorOutputConfigs outputConfig = new MotorOutputConfigs();
         outputConfig.NeutralMode = NeutralModeValue.Brake;
         outputConfig.Inverted    = InvertedValue.Clockwise_Positive;
 
@@ -112,9 +114,9 @@ public class Turret
 
         _limelight.getSettings().withAprilTagOffset(ShooterConstants.CENTER_TAG_TO_HUB_CENTER_OFFSET).withAprilTagIdFilter(ShooterConstants.RED_HUB_TAG_IDS).save();
 
-        var blueTrigger  = new Trigger(Utilities::isBlueAlliance);
-        var redTrigger   = new Trigger(Utilities::isRedAlliance);
-        var emptyTrigger = new Trigger(() -> DriverStation.getAlliance().isEmpty());
+        Trigger blueTrigger  = new Trigger(Utilities::isBlueAlliance);
+        Trigger redTrigger   = new Trigger(Utilities::isRedAlliance);
+        Trigger emptyTrigger = new Trigger(() -> DriverStation.getAlliance().isEmpty());
 
         blueTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.BLUE_HUB_TAG_IDS)));
         redTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.RED_HUB_TAG_IDS)));
@@ -128,15 +130,15 @@ public class Turret
         _turretAngle  = Degrees.of(_turretSensor.get());
         _motorVoltage = _turretMotor.getMotorVoltage().getValue();
 
-        var fiducials   = new AprilTagFiducial[0];
-        var motorOutput = Volts.zero();
-        var rawSetpoint = Degrees.zero();
+        AprilTagFiducial[] fiducials   = new AprilTagFiducial[0];
+        Voltage            motorOutput = Volts.zero();
+        Angle              rawSetpoint = Degrees.zero();
 
         switch (_turretState)
         {
             case Track:
                 _hasSetpoint = true;
-                var results = _limelight.getLatestResults();
+                Optional<LimelightResults> results = _limelight.getLatestResults();
 
                 if (results.isPresent())
                 {
@@ -145,10 +147,10 @@ public class Turret
 
                 if (fiducials.length <= 0)
                 {
-                    var hub                  = Utilities.getHubCoordinates();
-                    var robot                = _currentSwerveState.Pose.getTranslation();
-                    var robotToHub           = hub.minus(robot);
-                    var robotAngleCorrection = _currentSwerveState.Pose.getRotation().getMeasure().plus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                    Translation2d hub                  = Utilities.getHubCoordinates();
+                    Translation2d robot                = _currentSwerveState.Pose.getTranslation();
+                    Translation2d robotToHub           = hub.minus(robot);
+                    Angle         robotAngleCorrection = _currentSwerveState.Pose.getRotation().getMeasure().plus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
 
                     _targetDistance = Meters.of(robotToHub.getNorm());
                     rawSetpoint     = robotToHub.getAngle().getMeasure().minus(robotAngleCorrection);
@@ -174,7 +176,7 @@ public class Turret
 
                     // Tx and Ty are now the average pitch and yaw to the target.
                     // Now calculate distance from pitch
-                    var tyMeasure = Degrees.of(avgTy);
+                    Angle tyMeasure = Degrees.of(avgTy);
                     _targetDistance = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
                     rawSetpoint     = _turretAngle.minus(Degrees.of(avgTx));
                 }
@@ -206,9 +208,9 @@ public class Turret
                 break;
         }
 
-        var forwardTranslation    = new Translation2d(_targetDistance, Meters.zero());
-        var rotatedByTurretOffset = forwardTranslation.rotateBy(new Rotation2d(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD));
-        var rotatedBySetpoint     = rotatedByTurretOffset.rotateBy(new Rotation2d(rawSetpoint));
+        Translation2d forwardTranslation    = new Translation2d(_targetDistance, Meters.zero());
+        Translation2d rotatedByTurretOffset = forwardTranslation.rotateBy(new Rotation2d(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD));
+        Translation2d rotatedBySetpoint     = rotatedByTurretOffset.rotateBy(new Rotation2d(rawSetpoint));
 
         _targetPose     = _currentSwerveState.Pose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
         _turretSetpoint = MeasureUtil.clamp(moduloAngle(rawSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
@@ -264,7 +266,7 @@ public class Turret
     // handle this rollover
     private Angle moduloAngle(Angle angle)
     {
-        var degrees = angle.in(Degrees);
+        double degrees = angle.in(Degrees);
 
         return Degrees.of(MathUtil.inputModulus(degrees, -180, 180));
     }

@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -31,6 +32,7 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 import limelight.Limelight;
 import limelight.networktables.LimelightPoseEstimator;
+import limelight.networktables.LimelightResults;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 import limelight.networktables.PoseEstimate;
 
@@ -372,7 +374,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
         private boolean processLimelight(Limelight limelight, LimelightPoseEstimator poseEstimator, double lastTimestamp)
         {
-            var results = limelight.getLatestResults();
+            Optional<LimelightResults> results = limelight.getLatestResults();
 
             if (results.isEmpty() || results.get().targets_Fiducials.length <= 0)
             {
@@ -392,7 +394,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 return false;
             }
 
-            var pose = poseEstimate.pose.toPose2d();
+            Pose2d pose = poseEstimate.pose.toPose2d();
 
             // Somehow, bad data can still get through here
             // check for a zero pose and throw it out
