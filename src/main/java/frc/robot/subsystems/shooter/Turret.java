@@ -215,8 +215,8 @@ public class Turret extends SubsystemBase
     private void updateFilter(List<Integer> filters)
     {
         if (DriverStation.isDisabled())
-    {
-        _limelight.getSettings().withAprilTagIdFilter(filters).save();
+        {
+            _limelight.getSettings().withAprilTagIdFilter(filters).save();
         }
     }
 }
