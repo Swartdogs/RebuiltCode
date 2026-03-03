@@ -61,7 +61,7 @@ public class Flywheel
             _followMotor.setCANTimeout(250);
         }
 
-        var config = new SparkFlexConfig();
+        SparkFlexConfig config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kCoast).smartCurrentLimit((int)ShooterConstants.FLYWHEEL_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
         config.closedLoop.p(ShooterConstants.FLYWHEEL_KP).d(ShooterConstants.FLYWHEEL_KD);
         config.closedLoop.feedForward.kS(ShooterConstants.FLYWHEEL_KS.in(Volts)).kV(ShooterConstants.FLYWHEEL_KV.in(Volts.per(RPM))).kA(ShooterConstants.FLYWHEEL_KA.in(Volts.per(RotationsPerSecondPerSecond)));
@@ -82,7 +82,7 @@ public class Flywheel
         }
         else
         {
-            var gearbox = DCMotor.getNeoVortex(2);
+            DCMotor gearbox = DCMotor.getNeoVortex(2);
             _leadMotorSim = new SparkFlexSim(_leadMotor, DCMotor.getNeoVortex(2));
             _flywheelSim  = new FlywheelSim(LinearSystemId.createFlywheelSystem(gearbox, 0.001, 1), gearbox);
         }
@@ -98,7 +98,7 @@ public class Flywheel
     {
         _flywheelSim.setInputVoltage(_flywheelVoltage.in(Volts));
         _flywheelSim.update(GeneralConstants.LOOP_PERIOD.in(Seconds));
-        var velocity = _flywheelSim.getAngularVelocity().in(RPM);
+        double velocity = _flywheelSim.getAngularVelocity().in(RPM);
         _leadMotorSim.getRelativeEncoderSim().setVelocity(velocity);
         _leadMotorSim.iterate(velocity, RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
     }

@@ -76,7 +76,7 @@ public class Intake extends ExtensionMotor
 
         _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
-        var config = new SparkFlexConfig();
+        SparkFlexConfig config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
         _intakeMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -124,7 +124,7 @@ public class Intake extends ExtensionMotor
 
         _intakeState = state;
 
-        var volts = switch (_intakeState)
+        Voltage volts = switch (_intakeState)
         {
             case Forward -> IntakeConstants.INTAKE_VOLTS;
             case Reverse -> IntakeConstants.REVERSE_VOLTS;
