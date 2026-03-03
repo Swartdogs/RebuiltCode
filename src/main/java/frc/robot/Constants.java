@@ -137,28 +137,30 @@ public final class Constants
         public static final Angle         PASS_HOOD_ANGLE  = Degrees.of(20.0);   // TODO: Tune
 
         // Turret
-        public static final Current       TURRET_CURRENT_LIMIT               = Amps.of(40.0);
-        public static final double        TURRET_KP                          = 0.23;    // TODO: Tune (onboard TalonFX PID)
-        public static final double        TURRET_KI                          = 0.0;
-        public static final double        TURRET_KD                          = 0.0115;
-        public static final Dimensionless TURRET_GEAR_RATIO                  = Value.of(13.0 / 1.0); // 13 : 1
-        public static final Angle         TURRET_HARD_MIN_ANGLE              = Degrees.of(-180.0); // degrees (full 360 rotation)
-        public static final Angle         TURRET_HARD_MAX_ANGLE              = Degrees.of(180.0);  // degrees
-        public static final Angle         TURRET_SOFT_MIN_ANGLE              = Degrees.of(-180.0); // degrees (full 360 rotation)
-        public static final Angle         TURRET_SOFT_MAX_ANGLE              = Degrees.of(180.0);  // degrees
-        public static final boolean       TURRET_SENSOR_INVERTED             = true;
-        public static final Angle         TURRET_HOME_ANGLE                  = Degrees.of(0.0);   // Forward-facing when no target
-        public static final Angle         TURRET_TOLERANCE                   = Degrees.of(2.0);   // degrees
-        public static final String        LIMELIGHT_NAME                     = "limelight-shooter";
-        public static final Angle         TURRET_PASS_TARGET                 = Degrees.of(180.0); // TODO: Validate in driver practice
-        public static final Distance      TURRET_CENTER_TAG_TO_HUB_CENTER    = Inches.of(23.5);
-        public static final List<Integer> BLUE_HUB_TAG_IDS                   = List.of(18, 20, 21, 26);
-        public static final List<Integer> RED_HUB_TAG_IDS                    = List.of(2, 4, 5, 10);
-        public static final List<Integer> ALL_HUB_TAG_IDS                    = Stream.concat(BLUE_HUB_TAG_IDS.stream(), RED_HUB_TAG_IDS.stream()).toList();
-        public static final Translation3d CENTER_TAG_TO_HUB_CENTER_OFFSET    = new Translation3d(Inches.of(-23.5), Inches.zero(), Inches.zero());
-        public static final Angle         HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD = Degrees.of(90); // Hub "zero" is 90 degrees left of robot forward
-        public static final Translation2d BLUE_HUB                           = new Translation2d(Inches.of(182.1), Inches.of(158.85));
-        public static final Translation2d RED_HUB                            = new Translation2d(Inches.of(469.1), Inches.of(158.85));
+        public static final Current       TURRET_CURRENT_LIMIT                  = Amps.of(40.0);
+        public static final double        TURRET_KP                             = 0.23;    // TODO: Tune (onboard TalonFX PID)
+        public static final double        TURRET_KI                             = 0.0;
+        public static final double        TURRET_KD                             = 0.0115;
+        public static final Dimensionless TURRET_GEAR_RATIO                     = Value.of(13.0 / 1.0); // 13 : 1
+        public static final Angle         TURRET_HARD_MIN_ANGLE                 = Degrees.of(-180.0); // degrees (full 360 rotation)
+        public static final Angle         TURRET_HARD_MAX_ANGLE                 = Degrees.of(180.0);  // degrees
+        public static final Angle         TURRET_SOFT_MIN_ANGLE                 = Degrees.of(-180.0); // degrees (full 360 rotation)
+        public static final Angle         TURRET_SOFT_MAX_ANGLE                 = Degrees.of(180.0);  // degrees
+        public static final boolean       TURRET_SENSOR_INVERTED                = true;
+        public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(0.0);   // Forward-facing when no target
+        public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0);   // degrees
+        public static final String        LIMELIGHT_NAME                        = "limelight-shooter";
+        public static final Angle         TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice
+        public static final Distance      TURRET_CENTER_TAG_TO_HUB_CENTER       = Inches.of(23.5);
+        public static final List<Integer> BLUE_HUB_TAG_IDS                      = List.of(18, 20, 21, 26);
+        public static final List<Integer> RED_HUB_TAG_IDS                       = List.of(2, 4, 5, 10);
+        public static final List<Integer> ALL_HUB_TAG_IDS                       = Stream.concat(BLUE_HUB_TAG_IDS.stream(), RED_HUB_TAG_IDS.stream()).toList();
+        public static final Translation3d CENTER_TAG_TO_HUB_CENTER_OFFSET       = new Translation3d(Inches.of(-23.5), Inches.zero(), Inches.zero());
+        public static final Angle         TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD = Degrees.of(90); // Hub "zero" is 90 degrees left of robot forward
+        public static final Translation2d BLUE_HUB                              = new Translation2d(Inches.of(182.1), Inches.of(158.85));
+        public static final Translation2d RED_HUB                               = new Translation2d(Inches.of(469.1), Inches.of(158.85));
+        public static final Translation2d TURRET_POSITION                       = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
+        public static final Translation2d TURRET_CAMERA_POSITION                = new Translation2d(Inches.zero(), Inches.of(8.0));
 
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries

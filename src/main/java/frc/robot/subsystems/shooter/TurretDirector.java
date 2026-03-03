@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -8,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants.GeneralConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Turret.TurretState;
 import frc.robot.util.Utilities;
 import limelight.networktables.target.AprilTagFiducial;
@@ -18,7 +20,7 @@ public class TurretDirector
     {
     }
 
-    public static Translation2d calculate(TurretState turretState, SwerveDriveState swerveState, AprilTagFiducial... fiducials)
+    public static Translation2d calculate(TurretState turretState, Rotation2d localTurretAngle, SwerveDriveState swerveState, AprilTagFiducial... fiducials)
     {
         Translation2d ret;
 
@@ -37,24 +39,26 @@ public class TurretDirector
                 }
                 else
                 {
-                    double sumX   = 0.0;
-                    double sumY   = 0.0;
-                    double sumCos = 0.0;
-                    double sumSin = 0.0;
+                    double sumX = 0.0;
+                    double sumY = 0.0;
 
                     for (AprilTagFiducial tag : fiducials)
                     {
                         Pose2d pose = tag.getTargetPose_CameraSpace2D();
 
-                        sumX   += pose.getX();
-                        sumY   += pose.getY();
-                        sumCos += pose.getRotation().getCos();
-                        sumSin += pose.getRotation().getSin();
+                        sumX += pose.getX();
+                        sumY += pose.getY();
                     }
 
                     int n = fiducials.length;
 
-                    ret = new Translation2d(sumX / n, sumY / n).rotateBy(new Rotation2d(sumCos, sumSin));
+                    // ret is now a translation from the camera to the target
+                    var localCameraToTarget = new Translation2d(sumX / n, sumY / n);
+
+                    // now, modify ret to account for the turret being offset and at an angle
+                    // get translation from the center of the robot to the camera
+                    var cameraPosition = ShooterConstants.TURRET_POSITION.plus(ShooterConstants.TURRET_CAMERA_POSITION.rotateBy(localTurretAngle));
+                    ret = cameraPosition.plus(localCameraToTarget.rotateBy(localTurretAngle).rotateBy(Rotation2d.fromDegrees(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD.in(Degrees))));
                 }
                 break;
 

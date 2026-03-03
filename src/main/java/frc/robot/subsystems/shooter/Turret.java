@@ -19,6 +19,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -53,9 +54,7 @@ public class Turret extends SubsystemBase
     private SwerveDriveState                 _currentSwerveState;
     private TurretState                      _turretState;
     @Logged
-    private Angle                            _fieldAngle;
-    @Logged
-    private Angle                            _robotAngle;
+    private Angle                            _turretAngle;
     @Logged
     private Angle                            _turretSetpoint;
     @Logged
@@ -90,8 +89,7 @@ public class Turret extends SubsystemBase
         _pidController      = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
         _currentSwerveState = new SwerveDriveState();
         _turretState        = TurretState.Idle;
-        _robotAngle         = Degrees.zero();
-        _fieldAngle         = Degrees.zero();
+        _turretAngle        = Degrees.zero();
         _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
         _hasSetpoint        = false;
         _motorVoltage       = Volts.zero();
@@ -127,8 +125,7 @@ public class Turret extends SubsystemBase
     {
         _currentSwerveState = _swerveStateSupplier.get();
 
-        _robotAngle   = Degrees.of(_turretSensor.get());
-        _fieldAngle   = toFieldFrame(_robotAngle);
+        _turretAngle  = Degrees.of(_turretSensor.get());
         _motorVoltage = _turretMotor.getMotorVoltage().getValue();
 
         var fiducials   = new AprilTagFiducial[0];
@@ -145,12 +142,12 @@ public class Turret extends SubsystemBase
                 }
             case Pass:
                 _hasSetpoint = true;
-                var directorResult = TurretDirector.calculate(_turretState, _currentSwerveState, fiducials);
+                var directorResult = TurretDirector.calculate(_turretState, Rotation2d.fromDegrees(_turretAngle.in(Degrees)), _currentSwerveState, fiducials);
 
                 _targetPose = _currentSwerveState.Pose.plus(new Transform2d(directorResult, directorResult.getAngle()));
 
                 _hubDistance = Meters.of(directorResult.getNorm());
-                _turretSetpoint = MeasureUtil.clamp(directorResult.getAngle().getMeasure().minus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                _turretSetpoint = MeasureUtil.clamp(directorResult.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
                 break;
 
             case Idle:
@@ -168,7 +165,7 @@ public class Turret extends SubsystemBase
 
         if (_hasSetpoint)
         {
-            motorOutput = Volts.of(_pidController.calculate(_robotAngle.in(Degrees), _turretSetpoint.in(Degrees)));
+            motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
 
         _turretMotor.setVoltage(motorOutput.in(Volts));
@@ -226,16 +223,6 @@ public class Turret extends SubsystemBase
     public Command getTurnTo90Cmd()
     {
         return getTurnToAngleCmd(Degrees.of(90));
-    }
-
-    private Angle toFieldFrame(Angle robotFrameAngle)
-    {
-        return robotFrameAngle.plus(_currentSwerveState.Pose.getRotation().getMeasure()).plus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD);
-    }
-
-    private Angle toRobotFrame(Angle fieldFrameAngle)
-    {
-        return fieldFrameAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.HUB_ZERO_OFFSET_FROM_ROBOT_FORWARD);
     }
 
     private void updateFilter(List<Integer> filters)
