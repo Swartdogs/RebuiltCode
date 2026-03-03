@@ -81,14 +81,15 @@ public class RobotContainer
         _operator.povUp().onTrue(_intake.getExtendCmd());
 
         _operator.y().onTrue(_shooter.setVelocity(RPM.of(3500)));
-        _operator.b().onTrue(_shooter.modVelocity(RPM.of(200)));
-        _operator.x().onTrue(_shooter.modVelocity(RPM.of(-200)));
+        _operator.b().onTrue(_shooter.modVelocity(RPM.of(50)));
+        _operator.x().onTrue(_shooter.modVelocity(RPM.of(-50)));
         _operator.a().onTrue(_shooter.stopCmd());
 
         _operator.rightTrigger().whileTrue(_shooter.runFeeder());
         _operator.povRight().whileTrue(_turret.getTurnTo0Cmd());
         _operator.povLeft().whileTrue(_turret.getTurnTo90Cmd());
-        _operator.start().whileTrue(Commands.startEnd(() -> _turret.setTurretState(TurretState.Track), () -> _turret.setTurretState(TurretState.Idle), _turret).ignoringDisable(true));
+        _operator.start().onTrue(_turret.runOnce(() -> _turret.setTurretState(TurretState.Track)).ignoringDisable(true));
+        _operator.back().onTrue(_turret.runOnce(() -> _turret.setTurretState(TurretState.Idle)).ignoringDisable(true));
     }
 
     private void configureTestBindings()

@@ -27,43 +27,45 @@ public class TurretDirector
         switch (turretState)
         {
             case Track:
-                // No tags, get angle from current pose to hub
-                if (fiducials.length <= 0)
-                {
-                    Translation2d hub                  = Utilities.getHubCoordinates();
-                    Translation2d robot                = swerveState.Pose.getTranslation();
-                    Translation2d robotToHub           = hub.minus(robot);
-                    Rotation2d    robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
+            // No tags, get angle from current pose to hub
+            // if (fiducials.length <= 0)
+            {
+                Translation2d hub                  = Utilities.getHubCoordinates();
+                Translation2d robot                = swerveState.Pose.getTranslation();
+                Translation2d robotToHub           = hub.minus(robot);
+                Rotation2d    robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
 
-                    ret = robotToHub.rotateBy(robotAngleCorrection);
-                }
-                else
-                {
-                    double avgX = 0.0;
-                    double avgZ = 0.0;
+                ret = robotToHub.rotateBy(robotAngleCorrection);
+            }
+                // else
+                // {
+                // double avgX = 0.0;
+                // double avgZ = 0.0;
 
-                    for (AprilTagFiducial tag : fiducials)
-                    {
-                        Pose3d pose = tag.getTargetPose_CameraSpace();
+                // for (AprilTagFiducial tag : fiducials)
+                // {
+                // Pose3d pose = tag.getTargetPose_CameraSpace();
 
-                        avgX += pose.getX();
-                        avgZ += pose.getZ();
-                    }
+                // avgX += pose.getX();
+                // avgZ += pose.getZ();
+                // }
 
-                    int n = fiducials.length;
+                // int n = fiducials.length;
 
-                    avgX /= n;
-                    avgZ /= n;
+                // avgX /= n;
+                // avgZ /= n;
 
-                    // ret is now a translation from the camera to the target
-                    // For some dumb reason, Z is forward and X is left/right
-                    var localCameraToTarget = new Translation2d(avgZ, avgX);
+                // // ret is now a translation from the camera to the target
+                // // For some dumb reason, Z is forward and X is left/right
+                // var localCameraToTarget = new Translation2d(avgZ, avgX);
 
-                    // now, modify ret to account for the turret being offset and at an angle
-                    // get translation from the center of the robot to the camera
-                    var cameraPosition = ShooterConstants.TURRET_POSITION.plus(ShooterConstants.TURRET_CAMERA_POSITION.rotateBy(localTurretAngle));
-                    ret = cameraPosition.plus(localCameraToTarget.rotateBy(localTurretAngle).rotateBy(Rotation2d.fromDegrees(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD.in(Degrees))));
-                }
+                // // now, modify ret to account for the turret being offset and at an angle
+                // // get translation from the center of the robot to the camera
+                // var cameraPosition =
+                // ShooterConstants.TURRET_POSITION.plus(ShooterConstants.TURRET_CAMERA_POSITION.rotateBy(localTurretAngle));
+                // ret =
+                // cameraPosition.plus(localCameraToTarget.rotateBy(localTurretAngle).rotateBy(Rotation2d.fromDegrees(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD.in(Degrees))));
+                // }
                 break;
 
             case Pass:
