@@ -98,7 +98,7 @@ public final class Utilities
         return ShooterConstants.BLUE_HUB_TAG_IDS;
     }
 
-    private static int getAllianceShift(Time timeRemaining)
+    private static int getAllianceShift(final Time timeRemaining)
     {
         if (timeRemaining.gt(kTransitionShiftEndTimeSecs)) return 0; // Transition Shift
         if (timeRemaining.gt(kShift1EndTimeSecs)) return 1;
@@ -108,7 +108,7 @@ public final class Utilities
         return 5; // End Game
     }
 
-    private static Alliance getInactiveFirstAlliance(String gameData)
+    private static Alliance getInactiveFirstAlliance(final String gameData)
     {
         if (gameData == null || gameData.isEmpty()) return null;
 
