@@ -134,7 +134,7 @@ public class Intake extends ExtensionMotor
         setIntakeVoltage(volts);
     }
 
-    private void setIntakeVoltage(Voltage volts)
+    private void setIntakeVoltage(final Voltage volts)
     {
         _intakeMotor.setVoltage(volts);
 
@@ -158,7 +158,7 @@ public class Intake extends ExtensionMotor
         }
 
         @Override
-        public void setRate(double rate)
+        public void setRate(final double rate)
         {
             setIntakeVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }
