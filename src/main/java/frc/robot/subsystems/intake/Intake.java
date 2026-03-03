@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.MotorHook;
 import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
@@ -123,6 +124,12 @@ public class Intake extends ExtensionMotor
                 extend(false);
             }
         });
+    }
+
+    public Command getRetractWithNudgeCmd()
+    {
+        return runOnce(() -> extend(false)).andThen(Commands.waitUntil(this::isRetracted)).andThen(runOnce(() -> extend(true))).andThen(Commands.waitSeconds(0.4)).andThen(runOnce(() -> extend(false)))
+                .andThen(Commands.waitUntil(this::isRetracted));
     }
 
     @Override

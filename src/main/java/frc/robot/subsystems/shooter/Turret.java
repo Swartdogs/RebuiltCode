@@ -42,7 +42,7 @@ public class Turret extends SubsystemBase
 {
     public enum TurretState
     {
-        Idle, Track, Pass
+        Idle, Track, Pass, ManualAngle
     }
 
     private final TalonFX                    _turretMotor;
@@ -68,6 +68,8 @@ public class Turret extends SubsystemBase
     private Pose2d                           _targetPose;
     @Logged
     private Transform2d                      _targetTransform = new Transform2d();
+    @Logged
+    private Angle                            _manualAngle     = Degrees.zero();
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -157,6 +159,11 @@ public class Turret extends SubsystemBase
                 _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 _hubDistance = Meters.zero();
                 break;
+
+            case ManualAngle:
+                _hasSetpoint = true;
+                _turretSetpoint = MeasureUtil.clamp(_manualAngle, ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                break;
         }
 
         if (_hasSetpoint)
@@ -200,6 +207,25 @@ public class Turret extends SubsystemBase
     public Command getIdleCmd()
     {
         return runOnce(() -> setTurretState(TurretState.Idle));
+    }
+
+    public Command getTurnToAngleCmd(Angle angle)
+    {
+        return startEnd(() ->
+        {
+            _manualAngle = angle;
+            setTurretState(TurretState.ManualAngle);
+        }, () -> setTurretState(TurretState.Idle));
+    }
+
+    public Command getTurnTo0Cmd()
+    {
+        return getTurnToAngleCmd(Degrees.zero());
+    }
+
+    public Command getTurnTo90Cmd()
+    {
+        return getTurnToAngleCmd(Degrees.of(90));
     }
 
     private Angle toFieldFrame(Angle robotFrameAngle)

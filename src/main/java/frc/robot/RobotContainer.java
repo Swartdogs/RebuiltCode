@@ -68,7 +68,7 @@ public class RobotContainer
         RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
         _turret.setTurretState(Turret.TurretState.Idle);
 
-        _driver.button(1).whileTrue(_shooter.smartShootCmd(_turret::getHubDistance, () -> _shooter._flywheel.atSpeed() && _turret.isLinedUp()));
+        _driver.button(1).whileTrue(_shooter.smartShootCmd());
         _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> brake));
         _driver.button(7).onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
@@ -76,15 +76,18 @@ public class RobotContainer
 
         _operator.leftTrigger().whileTrue(_intake.startRollers());
         _operator.leftBumper().whileTrue(_intake.reverseRollers());
-        _operator.povDown().onTrue(_intake.getExtendCmd());
-        _operator.povUp().onTrue(_intake.getRetractCmd());
+        _operator.povDown().onTrue(_intake.getRetractWithNudgeCmd());
+        _operator.povUp().onTrue(_intake.getExtendCmd());
 
         _operator.y().onTrue(_shooter.setVelocity(RPM.of(3500)));
         _operator.b().onTrue(_shooter.modVelocity(RPM.of(200)));
-        _operator.a().onTrue(_shooter.modVelocity(RPM.of(-200)));
-        _operator.x().onTrue(_shooter.stopCmd());
+        _operator.x().onTrue(_shooter.modVelocity(RPM.of(-200)));
+        _operator.a().onTrue(_shooter.stopCmd());
 
         _operator.rightTrigger().whileTrue(_shooter.runFeeder());
+        _operator.povRight().whileTrue(_turret.getTurnTo0Cmd());
+        _operator.povLeft().whileTrue(_turret.getTurnTo90Cmd());
+
     }
 
     private void configureTestBindings()
@@ -93,14 +96,14 @@ public class RobotContainer
         _testop.add("intake-extend", _intake.getHookExt());
         _testop.add("feeder", _shooter._feeder.getHook());
         _testop.add("flywheel", _shooter._flywheel.getHook());
-        _testop.add("hood", _shooter._hood.getHook());
+        // _testop.add("hood", _shooter._hood.getHook());
         // _testop.add("turret", _shooter._turret.getHook());
         // climber
 
         _testop.connect(0, "intake", "intake-extend");
         _testop.connect(1, "feeder");
         _testop.connect(2, "turret");
-        _testop.connect(3, "flywheel", "hood");
+        _testop.connect(3, "flywheel"/* , "hood" */);
 
         _operator.leftBumper().whileTrue(_testop.cmd_shift());
         _operator.a().onTrue(_testop.cmd_button_04());

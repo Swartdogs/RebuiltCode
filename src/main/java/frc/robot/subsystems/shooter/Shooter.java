@@ -2,18 +2,16 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.RPM;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.subsystems.shooter.Hood.HoodPosition;
+// import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.subsystems.shooter.Turret.TurretState;
 
 @Logged
@@ -42,25 +40,25 @@ public class Shooter extends SubsystemBase
         return runOnce(() -> start(velocity));
     }
 
-    public Command setShootModeCmd(Hood.HoodPosition mode)
-    {
-        return runOnce(() ->
-        {
-            if (_state != ShooterState.Firing)
-            {
-                _hood.setHoodPosition(mode);
-            }
-        });
-    }
+    // public Command setShootModeCmd(Hood.HoodPosition mode)
+    // {
+    // return runOnce(() ->
+    // {
+    // if (_state != ShooterState.Firing)
+    // {
+    // _hood.setHoodPosition(mode);
+    // }
+    // });
+    // }
 
-    public Command passCmd()
-    {
-        return startEnd(this::pass, () ->
-        {
-            stop();
-            _hood.setHoodPosition(HoodPosition.Shoot);
-        });
-    }
+    // public Command passCmd()
+    // {
+    // return startEnd(this::pass, () ->
+    // {
+    // stop();
+    // _hood.setHoodPosition(HoodPosition.Shoot);
+    // });
+    // }
 
     public Command setVelocity(AngularVelocity velocity)
     {
@@ -85,15 +83,13 @@ public class Shooter extends SubsystemBase
         return startEnd(() -> _feeder.set(true), () -> _feeder.set(false));
     }
 
-    public Command smartShootCmd(Supplier<Distance> distanceSupplier, BooleanSupplier readySupplier)
+    public Command smartShootCmd()
     {
         return run(() ->
         {
-            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distanceSupplier.get()));
-            _feeder.set(readySupplier.getAsBoolean());
+            _feeder.set(_flywheel.atSpeed());
         }).finallyDo(() ->
         {
-            stop();
             _feeder.set(false);
         });
     }
@@ -103,7 +99,7 @@ public class Shooter extends SubsystemBase
      *************/
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
-    public final Hood     _hood;
+    // public final Hood _hood;
     // public final Turret _turret;
     private ShooterState    _state;
     @Logged
@@ -113,11 +109,11 @@ public class Shooter extends SubsystemBase
     {
         _flywheel = new Flywheel();
         _feeder   = new Feeder();
-        _hood     = new Hood();
+        // _hood = new Hood();
         // _turret = new Turret(swerveStateSupplier);
         _state = ShooterState.Idle;
 
-        _hood.setHoodPosition(HoodPosition.Shoot);
+        // _hood.setHoodPosition(HoodPosition.Shoot);
         _feeder.set(false);
         _flywheel.stop();
         // _turret.setTurretState(TurretState.Idle);
@@ -164,14 +160,14 @@ public class Shooter extends SubsystemBase
         // _turret.periodic();
         _flywheel.periodic();
         _feeder.periodic();
-        _hood.periodic();
+        // _hood.periodic();
     }
 
     @Override
     public void simulationPeriodic()
     {
         _flywheel.simulationPeriodic();
-        _hood.simulationPeriodic();
+        // _hood.simulationPeriodic();
         // _turret.simulationPeriodic();
     }
 
@@ -201,11 +197,10 @@ public class Shooter extends SubsystemBase
 
     public void pass()
     {
-        if (_state != ShooterState.Firing)
-        {
-            _hood.setHoodPosition(HoodPosition.Pass);
-        }
-
+        // if (_state != ShooterState.Firing)
+        // {
+        // _hood.setHoodPosition(HoodPosition.Pass);
+        // }
         _flywheel.setVelocity(ShooterConstants.PASS_FLYWHEEL_VELOCITY);
         _state = ShooterState.Priming;
     }
