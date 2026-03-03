@@ -1,6 +1,10 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -8,7 +12,6 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -16,9 +19,11 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -28,10 +33,8 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
 import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-
 import limelight.Limelight;
 import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
@@ -376,12 +379,12 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             // distances,
             // ambiguity values) instead of relying on the pre-computed pose estimate.
 
-            var rotation        = getPigeon2().getRotation3d();
-            var angularVelocity = new AngularVelocity3d(
+            Rotation3d        rotation        = getPigeon2().getRotation3d();
+            AngularVelocity3d angularVelocity = new AngularVelocity3d(
                     DegreesPerSecond.of(getPigeon2().getAngularVelocityXWorld().getValueAsDouble()), DegreesPerSecond.of(getPigeon2().getAngularVelocityYWorld().getValueAsDouble()),
                     DegreesPerSecond.of(getPigeon2().getAngularVelocityZWorld().getValueAsDouble())
             );
-            var orientation     = new Orientation3d(rotation, angularVelocity);
+            Orientation3d     orientation     = new Orientation3d(rotation, angularVelocity);
 
             _limelightLeft.getSettings().withRobotOrientation(orientation).save();
             _limelightRight.getSettings().withRobotOrientation(orientation).save();
@@ -423,15 +426,15 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
         private boolean isRotatingTooFast()
         {
-            var rate = DegreesPerSecond.of(Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()));
+            AngularVelocity rate = DegreesPerSecond.of(Math.abs(getPigeon2().getAngularVelocityZWorld().getValueAsDouble()));
             return rate.gt(VisionConstants.MAX_ANGULAR_RATE_FOR_VISION);
         }
 
         private boolean isOnBump()
         {
-            var   rotation = getPigeon2().getRotation3d();
-            Angle pitch    = Degrees.of(Math.abs(Math.toDegrees(rotation.getY())));
-            Angle roll     = Degrees.of(Math.abs(Math.toDegrees(rotation.getX())));
+            Rotation3d rotation = getPigeon2().getRotation3d();
+            Angle      pitch    = Degrees.of(Math.abs(Math.toDegrees(rotation.getY())));
+            Angle      roll     = Degrees.of(Math.abs(Math.toDegrees(rotation.getX())));
             return pitch.gt(VisionConstants.MAX_TILT_FOR_VISION) || roll.gt(VisionConstants.MAX_TILT_FOR_VISION);
         }
     }

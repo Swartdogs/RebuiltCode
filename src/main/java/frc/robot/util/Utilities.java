@@ -3,12 +3,12 @@ package frc.robot.util;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-
 import frc.robot.Constants.ShooterConstants;
 
 /**
@@ -79,7 +79,7 @@ public final class Utilities
      */
     public static boolean isRedAlliance()
     {
-        var alliance = DriverStation.getAlliance();
+        Optional<Alliance> alliance = DriverStation.getAlliance();
         return alliance.isPresent() && alliance.get() == Alliance.Red;
     }
 
@@ -89,7 +89,7 @@ public final class Utilities
      */
     public static List<Integer> getOurHubTagIds()
     {
-        var alliance = DriverStation.getAlliance();
+        Optional<Alliance> alliance = DriverStation.getAlliance();
         if (alliance.isEmpty()) return kAllHubTagIds;
         if (isRedAlliance())
         {

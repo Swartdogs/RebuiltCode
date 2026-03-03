@@ -9,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Dimensionless;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -99,7 +100,7 @@ public class Hood
 
         setHoodMotorVoltage(voltageOutput);
 
-        for (var position : HoodPosition.values())
+        for (HoodPosition position : HoodPosition.values())
         {
             if (position.targetAngle == null || _hoodAngle.isNear(position.targetAngle, ShooterConstants.HOOD_TOLERANCE))
             {
@@ -111,8 +112,8 @@ public class Hood
 
     public void simulationPeriodic()
     {
-        var percentOutput = Volts.of(_hoodMotor.getMotorOutputVoltage()).div(GeneralConstants.MOTOR_VOLTAGE);
-        var delta         = RadiansPerSecond.of(_motorModel.freeSpeedRadPerSec).times(percentOutput).times(ShooterConstants.HOOD_GEAR_RATIO).times(GeneralConstants.LOOP_PERIOD);
+        Dimensionless percentOutput = Volts.of(_hoodMotor.getMotorOutputVoltage()).div(GeneralConstants.MOTOR_VOLTAGE);
+        Angle         delta         = RadiansPerSecond.of(_motorModel.freeSpeedRadPerSec).times(percentOutput).times(ShooterConstants.HOOD_GEAR_RATIO).times(GeneralConstants.LOOP_PERIOD);
         _simAngleDeg = MeasureUtil.clamp(_simAngleDeg.plus(delta), ShooterConstants.HOOD_MIN_ANGLE, ShooterConstants.HOOD_MAX_ANGLE);
         _hoodSensorSim.set(_simAngleDeg.in(Degrees));
     }
