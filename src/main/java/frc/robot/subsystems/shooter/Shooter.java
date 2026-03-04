@@ -8,8 +8,10 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.ShooterConstants;
 // import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.subsystems.shooter.Turret.TurretState;
@@ -17,6 +19,8 @@ import frc.robot.subsystems.shooter.Turret.TurretState;
 @Logged
 public class Shooter extends SubsystemBase
 {
+    private static final AngularVelocity SMART_SHOOT_RPM_BIAS = RPM.of(100.0);
+
     public enum ShooterState
     {
         Idle, Preparing, Ready, Firing, Priming;
@@ -87,10 +91,26 @@ public class Shooter extends SubsystemBase
     {
         return run(() ->
         {
-            _feeder.set(_flywheel.atSpeed());
+            var readyToFeed = _flywheel.atSpeed();
+            _feeder.set(readyToFeed);
         }).finallyDo(() ->
         {
             _feeder.set(false);
+        });
+    }
+
+    public Command smartShootCmd(Supplier<Distance> distanceSupplier)
+    {
+        return run(() ->
+        {
+            _targetVelocity = Constants.ShooterConstants.getFlywheelSpeedForDistance(distanceSupplier.get()).plus(SMART_SHOOT_RPM_BIAS);
+            _flywheel.setVelocity(_targetVelocity);
+            var readyToFeed = _flywheel.atSpeed();
+            _feeder.set(readyToFeed);
+        }).finallyDo(() ->
+        {
+            _feeder.set(false);
+            _flywheel.stop();
         });
     }
 

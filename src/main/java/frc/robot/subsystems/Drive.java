@@ -385,21 +385,28 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             _limelightLeft.getSettings().withRobotOrientation(orientation).save();
             _limelightRight.getSettings().withRobotOrientation(orientation).save();
 
-            _hasVisionLeft = processLimelight(_poseEstimatorLeft, _lastTimestampLeft);
+            _hasVisionLeft = processLimelight(_limelightLeft, _poseEstimatorLeft, _lastTimestampLeft);
             if (_hasVisionLeft)
             {
                 _lastTimestampLeft = _poseEstimatorLeft.getPoseEstimate().map(e -> e.timestampSeconds).orElse(_lastTimestampLeft);
             }
 
-            _hasVisionRight = processLimelight(_poseEstimatorRight, _lastTimestampRight);
+            _hasVisionRight = processLimelight(_limelightRight, _poseEstimatorRight, _lastTimestampRight);
             if (_hasVisionRight)
             {
                 _lastTimestampRight = _poseEstimatorRight.getPoseEstimate().map(e -> e.timestampSeconds).orElse(_lastTimestampRight);
             }
         }
 
-        private boolean processLimelight(LimelightPoseEstimator poseEstimator, double lastTimestamp)
+        private boolean processLimelight(Limelight limelight, LimelightPoseEstimator poseEstimator, double lastTimestamp)
         {
+            var results = limelight.getLatestResults();
+
+            if (results.isEmpty() || results.get().targets_Fiducials.length <= 0)
+            {
+                return false;
+            }
+
             Optional<PoseEstimate> estimate = poseEstimator.getPoseEstimate();
 
             if (estimate.isEmpty())
@@ -408,6 +415,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             }
 
             PoseEstimate poseEstimate = estimate.get();
+            if (poseEstimate.timestampSeconds <= lastTimestamp)
+            {
+                return false;
+            }
 
             addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds);
 

@@ -31,19 +31,20 @@ import frc.robot.util.MeasureUtil;
 @Logged
 public class RobotContainer
 {
+    private static final double SLOW_MODE_SCALE = 0.35;
 
     /* Setting up bindings for necessary control of the swerve drive platform */
-    private final SwerveRequest.FieldCentric     drive       = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake brake       = new SwerveRequest.SwerveDriveBrake();
-    private final Telemetry                      _logger     = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
-    private final CommandJoystick                _driver     = new CommandJoystick(0);
-    private final CommandXboxController          _operator   = new CommandXboxController(1);
-    private final Drive                          _drivetrain = TunerConstants.createDrivetrain();
-    private final Intake                         _intake     = new Intake();
-    private final Shooter                        _shooter    = new Shooter(_drivetrain::getState);
-    private final TestOperation                  _testop     = new TestOperation();
-    private final Autos                          _autos      = new Autos(_drivetrain);
-    private final Turret                         _turret     = new Turret(_drivetrain::getState);
+    private final SwerveRequest.FieldCentric drive        = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+    private final SwerveRequest.RobotCentric robotCentric = new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private final Telemetry                  _logger      = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
+    private final CommandJoystick            _driver      = new CommandJoystick(0);
+    private final CommandXboxController      _operator    = new CommandXboxController(1);
+    private final Drive                      _drivetrain  = TunerConstants.createDrivetrain();
+    private final Intake                     _intake      = new Intake();
+    private final Shooter                    _shooter     = new Shooter(_drivetrain::getState);
+    private final TestOperation              _testop      = new TestOperation();
+    private final Autos                      _autos       = new Autos(_drivetrain);
+    private final Turret                     _turret      = new Turret(_drivetrain::getState);
     // private final Dashboard _dashboard = new Dashboard(_intake, _shooter,
     // _shooter._turret);
 
@@ -69,8 +70,21 @@ public class RobotContainer
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(_shooter.smartShootCmd());
-        _driver.button(2).whileTrue(_drivetrain.applyRequest(() -> brake));
+        _driver.button(1).whileTrue(_shooter.smartShootCmd(_turret::getHubDistance));
+        _driver.button(2).whileTrue(
+                _drivetrain.applyRequest(
+                        () -> drive.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY() * SLOW_MODE_SCALE)), DriveConstants.TRANSLATE_DEADBAND))
+                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX() * SLOW_MODE_SCALE)), DriveConstants.TRANSLATE_DEADBAND))
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist() * SLOW_MODE_SCALE)), DriveConstants.ROTATE_DEADBAND))
+                )
+        );
+        _driver.button(3).whileTrue(
+                _drivetrain.applyRequest(
+                        () -> robotCentric.withVelocityX(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())), DriveConstants.TRANSLATE_DEADBAND))
+                                .withVelocityY(MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())), DriveConstants.TRANSLATE_DEADBAND))
+                                .withRotationalRate(MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())), DriveConstants.ROTATE_DEADBAND))
+                )
+        );
         _driver.button(7).onTrue(_drivetrain.runOnce(_drivetrain::seedFieldCentric));
 
         _drivetrain.registerTelemetry(_logger::telemeterize);

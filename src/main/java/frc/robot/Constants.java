@@ -165,12 +165,11 @@ public final class Constants
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
         (
-            Map.entry(0.0, 3000.0),
-            Map.entry(2.0, 3000.0),
-            Map.entry(3.5, 3500.0),
-            Map.entry(5.0, 4000.0),
-            Map.entry(6.5, 4500.0),
-            Map.entry(7.0, 5000.0)
+            Map.entry(52.0, 2840.0),
+            Map.entry(69.0, 3000.0),
+            Map.entry(94.0, 3450.0),
+            Map.entry(114.0, 4175.0),
+            Map.entry(156.0, 5290.0)
         );
         // @formatter:on
 
@@ -181,7 +180,7 @@ public final class Constants
         // TODO: Tune these values with testing!
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
         {
-            return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Meters)));
+            return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Inches)));
         }
     }
 
