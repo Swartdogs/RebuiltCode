@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
@@ -19,8 +20,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
@@ -31,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
+import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.MeasureUtil;
 import frc.robot.util.Utilities;
@@ -125,36 +125,86 @@ public class Turret extends SubsystemBase
 
         var fiducials   = new AprilTagFiducial[0];
         var motorOutput = Volts.zero();
+        var rawSetpoint = Degrees.zero();
 
         switch (_turretState)
         {
             case Track:
+                _hasSetpoint = true;
                 var results = _limelight.getLatestResults();
 
                 if (results.isPresent())
                 {
                     fiducials = results.get().targets_Fiducials;
                 }
+
+                if (fiducials.length <= 0)
+                {
+                    var hub                  = Utilities.getHubCoordinates();
+                    var robot                = _currentSwerveState.Pose.getTranslation();
+                    var robotToHub           = hub.minus(robot);
+                    var robotAngleCorrection = _currentSwerveState.Pose.getRotation().getMeasure().plus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+
+                    _targetDistance = Meters.of(robotToHub.getNorm());
+                    rawSetpoint     = robotToHub.getAngle().getMeasure().minus(robotAngleCorrection);
+                }
+                else
+                {
+                    double avgTx = 0.0;
+                    double avgTy = 0.0;
+
+                    for (AprilTagFiducial tag : fiducials)
+                    {
+                        // subtract the values instead of adding them
+                        // our limelight is mounted upside down so we
+                        // need the inverse of these measurements
+                        avgTx -= tag.tx;
+                        avgTy -= tag.ty;
+                    }
+
+                    int n = fiducials.length;
+
+                    avgTx /= n;
+                    avgTy /= n;
+
+                    // Tx and Ty are now the average pitch and yaw to the target.
+                    // Now calculate distance from pitch
+                    var tyMeasure = Degrees.of(avgTy);
+                    _targetDistance = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
+                    rawSetpoint     = _turretAngle.minus(Degrees.of(avgTx));
+                }
+                break;
+
             case Pass:
                 _hasSetpoint = true;
-                var directorResult = TurretDirector.calculate(_turretState, Rotation2d.fromDegrees(_turretAngle.in(Degrees)), _currentSwerveState, fiducials);
+                Angle initialAngle;
 
-                _targetPose = _currentSwerveState.Pose.plus(new Transform2d(directorResult, directorResult.getAngle()));
+                if (Utilities.isBlueAlliance())
+                {
+                    _targetDistance = _currentSwerveState.Pose.getMeasureX();
+                    initialAngle    = Degrees.of(180).minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                }
+                else
+                {
+                    _targetDistance = GeneralConstants.FIELD_SIZE_X.minus(_currentSwerveState.Pose.getMeasureX());
+                    initialAngle    = Degrees.zero();
+                }
 
-                _targetDistance = Meters.of(directorResult.getNorm());
-                _turretSetpoint = MeasureUtil.clamp(directorResult.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                rawSetpoint = initialAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
                 break;
 
             case Idle:
             default:
                 _hasSetpoint = false;
-                _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
+                rawSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 _targetDistance = Meters.zero();
                 break;
         }
 
         if (_hasSetpoint)
         {
+            _turretSetpoint = MeasureUtil.clamp(rawSetpoint, ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+
             motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
 
