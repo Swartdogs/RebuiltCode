@@ -161,6 +161,10 @@ public final class Constants
         public static final Translation2d RED_HUB                               = new Translation2d(Inches.of(469.1), Inches.of(158.85));
         public static final Translation2d TURRET_POSITION                       = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
         public static final Translation2d TURRET_CAMERA_POSITION                = new Translation2d(Inches.zero(), Inches.of(8.0));
+        public static final Distance      TURRET_LIMELIGHT_HEIGHT               = Inches.of(24.625); // 24 5/8"
+        public static final Distance      HUB_TAG_HEIGHT                        = Inches.of(44.25);
+        public static final Distance      TURRET_TO_HUB_HEIGHT_DELTA            = HUB_TAG_HEIGHT.minus(TURRET_LIMELIGHT_HEIGHT);
+        public static final Angle         TURRET_LIMELIGHT_PITCH                = Degrees.zero();
 
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries

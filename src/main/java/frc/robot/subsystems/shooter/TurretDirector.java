@@ -1,11 +1,12 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants.GeneralConstants;
@@ -27,45 +28,53 @@ public class TurretDirector
         switch (turretState)
         {
             case Track:
-            // No tags, get angle from current pose to hub
-            // if (fiducials.length <= 0)
-            {
-                Translation2d hub                  = Utilities.getHubCoordinates();
-                Translation2d robot                = swerveState.Pose.getTranslation();
-                Translation2d robotToHub           = hub.minus(robot);
-                Rotation2d    robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
+                // No tags, get angle from current pose to hub
+                if (fiducials.length <= 0)
+                {
+                    Translation2d hub                  = Utilities.getHubCoordinates();
+                    Translation2d robot                = swerveState.Pose.getTranslation();
+                    Translation2d robotToHub           = hub.minus(robot);
+                    Rotation2d    robotAngleCorrection = swerveState.Pose.getRotation().unaryMinus();
 
-                ret = robotToHub.rotateBy(robotAngleCorrection);
-            }
-                // else
-                // {
-                // double avgX = 0.0;
-                // double avgZ = 0.0;
+                    ret = robotToHub.rotateBy(robotAngleCorrection);
+                }
+                else
+                {
+                    double avgTx = 0.0;
+                    double avgTy = 0.0;
 
-                // for (AprilTagFiducial tag : fiducials)
-                // {
-                // Pose3d pose = tag.getTargetPose_CameraSpace();
+                    for (AprilTagFiducial tag : fiducials)
+                    {
+                        // subtract the values instead of adding them
+                        // our limelight is mounted upside down so we
+                        // need the inverse of these measurements
+                        avgTx -= tag.tx;
+                        avgTy -= tag.ty;
+                    }
 
-                // avgX += pose.getX();
-                // avgZ += pose.getZ();
-                // }
+                    int n = fiducials.length;
 
-                // int n = fiducials.length;
+                    avgTx /= n;
+                    avgTy /= n;
 
-                // avgX /= n;
-                // avgZ /= n;
+                    System.out.println(String.format("X: %6.2f, Y: %6.2f", avgTx, avgTy));
 
-                // // ret is now a translation from the camera to the target
-                // // For some dumb reason, Z is forward and X is left/right
-                // var localCameraToTarget = new Translation2d(avgZ, avgX);
+                    // Tx and Ty are now the average pitch and yaw to the target.
+                    // Now calculate distance from pitch
+                    var tyMeasure = Degrees.of(avgTy);
+                    var distance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
 
-                // // now, modify ret to account for the turret being offset and at an angle
-                // // get translation from the center of the robot to the camera
-                // var cameraPosition =
-                // ShooterConstants.TURRET_POSITION.plus(ShooterConstants.TURRET_CAMERA_POSITION.rotateBy(localTurretAngle));
-                // ret =
-                // cameraPosition.plus(localCameraToTarget.rotateBy(localTurretAngle).rotateBy(Rotation2d.fromDegrees(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD.in(Degrees))));
-                // }
+                    // We have a distance and an angle. We can now describe the camera → target
+                    // translation as a forward vector with magnitude "distance" rotated by angle
+                    // "avgTx"
+
+                    var localCameraToTarget = new Translation2d(distance, Inches.zero()).rotateBy(Rotation2d.fromDegrees(-avgTx));
+
+                    // now, calculate ret and account for the turret being offset and at an angle
+                    // get translation from the center of the robot to the camera
+                    var cameraPosition = ShooterConstants.TURRET_POSITION.plus(ShooterConstants.TURRET_CAMERA_POSITION.rotateBy(localTurretAngle));
+                    ret = cameraPosition.plus(localCameraToTarget.rotateBy(localTurretAngle).rotateBy(Rotation2d.fromDegrees(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD.in(Degrees))));
+                }
                 break;
 
             case Pass:

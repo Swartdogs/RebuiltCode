@@ -168,8 +168,8 @@ public class Turret extends SubsystemBase
             motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
 
-        // _turretMotor.setVoltage(motorOutput.in(Volts));
-        _turretMotor.setVoltage(0);
+        _turretMotor.setVoltage(motorOutput.in(Volts));
+        // _turretMotor.setVoltage(0);
     }
 
     public Distance getHubDistance()
