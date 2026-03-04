@@ -57,8 +57,6 @@ public class TurretDirector
                     avgTx /= n;
                     avgTy /= n;
 
-                    System.out.println(String.format("X: %6.2f, Y: %6.2f", avgTx, avgTy));
-
                     // Tx and Ty are now the average pitch and yaw to the target.
                     // Now calculate distance from pitch
                     var tyMeasure = Degrees.of(avgTy);

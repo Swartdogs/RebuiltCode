@@ -2,13 +2,13 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.security.Timestamp;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -18,8 +18,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -33,10 +31,8 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 import limelight.Limelight;
-import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
-import limelight.networktables.Orientation3d;
 import limelight.networktables.PoseEstimate;
 
 /**
@@ -48,13 +44,9 @@ import limelight.networktables.PoseEstimate;
 @Logged
 public class Drive extends TunerSwerveDrivetrain implements Subsystem
 {
-    private static final double kSimLoopPeriod  = 0.004; // 4 ms
-    private Notifier            m_simNotifier   = null;
+    private static final double kSimLoopPeriod = 0.004; // 4 ms
+    private Notifier            m_simNotifier  = null;
     private double              m_lastSimTime;
-    @Logged
-    private boolean             _hasVisionLeft  = false;
-    @Logged
-    private boolean             _hasVisionRight = false;
     private DriveVision         _vision;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
@@ -339,6 +331,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         private boolean                      _hasVisionLeft      = false;
         @Logged
         private boolean                      _hasVisionRight     = false;
+        @Logged
+        private Pose2d                       _leftPose           = new Pose2d();
+        @Logged
+        private Pose2d                       _rightPose          = new Pose2d();
 
         public DriveVision()
         {
@@ -365,37 +361,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
         public void update()
         {
-            if (_limelightLeft == null)
-            {
-                return;
-            }
-
-            // TODO: Learn how Limelight MegaTag2 works internally and consider implementing
-            // our own pose prediction using the raw fiducial data (tag positions,
-            // distances,
-            // ambiguity values) instead of relying on the pre-computed pose estimate.
-
-            var rotation        = getPigeon2().getRotation3d();
-            var angularVelocity = new AngularVelocity3d(
-                    DegreesPerSecond.of(getPigeon2().getAngularVelocityXWorld().getValueAsDouble()), DegreesPerSecond.of(getPigeon2().getAngularVelocityYWorld().getValueAsDouble()),
-                    DegreesPerSecond.of(getPigeon2().getAngularVelocityZWorld().getValueAsDouble())
-            );
-            var orientation     = new Orientation3d(rotation, angularVelocity);
-
-            _limelightLeft.getSettings().withRobotOrientation(orientation).save();
-            _limelightRight.getSettings().withRobotOrientation(orientation).save();
-
-            _hasVisionLeft = processLimelight(_limelightLeft, _poseEstimatorLeft, _lastTimestampLeft);
-            if (_hasVisionLeft)
-            {
-                _lastTimestampLeft = _poseEstimatorLeft.getPoseEstimate().map(e -> e.timestampSeconds).orElse(_lastTimestampLeft);
-            }
-
+            _hasVisionLeft  = processLimelight(_limelightLeft, _poseEstimatorLeft, _lastTimestampLeft);
             _hasVisionRight = processLimelight(_limelightRight, _poseEstimatorRight, _lastTimestampRight);
-            if (_hasVisionRight)
-            {
-                _lastTimestampRight = _poseEstimatorRight.getPoseEstimate().map(e -> e.timestampSeconds).orElse(_lastTimestampRight);
-            }
         }
 
         private boolean processLimelight(Limelight limelight, LimelightPoseEstimator poseEstimator, double lastTimestamp)
@@ -420,7 +387,29 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 return false;
             }
 
-            addVisionMeasurement(poseEstimate.pose.toPose2d(), poseEstimate.timestampSeconds);
+            var pose = poseEstimate.pose.toPose2d();
+
+            // Somehow, bad data can still get through here
+            // check for a zero pose and throw it out
+            // (the origin is outside where we can physically drive)
+
+            if (Math.abs(pose.getX()) < 1e-6 && Math.abs(pose.getY()) < 1e-6)
+            {
+                return false;
+            }
+
+            addVisionMeasurement(pose, poseEstimate.timestampSeconds);
+
+            if (limelight == _limelightLeft)
+            {
+                _lastTimestampLeft = poseEstimate.timestampSeconds;
+                _leftPose          = pose;
+            }
+            else
+            {
+                _lastTimestampRight = poseEstimate.timestampSeconds;
+                _rightPose          = pose;
+            }
 
             return true;
         }

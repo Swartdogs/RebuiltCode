@@ -82,6 +82,8 @@ public final class Constants
         public static final AngularVelocity MAX_ANGULAR_RATE   = RotationsPerSecond.of(0.75); // 3/4 of a rotation per second max angular velocity
         public static final Dimensionless   TRANSLATE_DEADBAND = Percent.of(8);
         public static final Dimensionless   ROTATE_DEADBAND    = Percent.of(8);
+        public static final Dimensionless   SLOW_MODE_SCALE    = Percent.of(35);
+        public static final Dimensionless   FULL_SPEED_SCALE   = Percent.of(100);
     }
 
     public static class IntakeConstants
@@ -123,6 +125,7 @@ public final class Constants
         public static final Dimensionless                             FLYWHEEL_TOLERANCE     = Percent.of(15);
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
+        private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(100.0);
 
         // Hood (VictorSPX with analog potentiometer)
         public static final double        HOOD_KP          = 3.0;
@@ -184,7 +187,7 @@ public final class Constants
         // TODO: Tune these values with testing!
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
         {
-            return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Inches)));
+            return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Inches))).plus(SMART_SHOOT_RPM_BIAS);
         }
     }
 
@@ -198,8 +201,8 @@ public final class Constants
         public static final Matrix<N3, N1> STD_DEVS            = VecBuilder.fill(XY_STD_DEV.in(Meters), XY_STD_DEV.in(Meters), THETA_STD_DEV.in(Degrees));
 
         // Camera translations
-        public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(-10.67), Inches.of(10.67), Inches.of(9.25));
-        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(-10.67), Inches.of(-10.67), Inches.of(9.25));
+        public static final Translation3d LEFT_CAMERA_TRANSLATION  = new Translation3d(Inches.of(-10.67), Inches.of(-10.67), Inches.of(9.25));
+        public static final Translation3d RIGHT_CAMERA_TRANSLATION = new Translation3d(Inches.of(-10.67), Inches.of(10.67), Inches.of(9.25));
 
         // Camera rotations
         public static final Rotation3d LEFT_CAMERA_ROTATION  = new Rotation3d(Degrees.of(0), Degrees.of(13), Degrees.of(135));

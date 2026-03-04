@@ -26,7 +26,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -43,7 +42,7 @@ public class Turret extends SubsystemBase
 {
     public enum TurretState
     {
-        Idle, Track, Pass, ManualAngle
+        Idle, Track, Pass
     }
 
     private final TalonFX                    _turretMotor;
@@ -62,13 +61,9 @@ public class Turret extends SubsystemBase
     @Logged
     private Voltage                          _motorVoltage;
     @Logged
-    private Distance                         _hubDistance;
+    private Distance                         _targetDistance;
     @Logged
     private Pose2d                           _targetPose;
-    @Logged
-    private Transform2d                      _targetTransform = new Transform2d();
-    @Logged
-    private Angle                            _manualAngle     = Degrees.zero();
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -93,7 +88,7 @@ public class Turret extends SubsystemBase
         _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
         _hasSetpoint        = false;
         _motorVoltage       = Volts.zero();
-        _hubDistance        = Meters.zero();
+        _targetDistance     = Meters.zero();
         _targetPose         = new Pose2d();
 
         var currentConfig = new CurrentLimitsConfigs();
@@ -146,7 +141,7 @@ public class Turret extends SubsystemBase
 
                 _targetPose = _currentSwerveState.Pose.plus(new Transform2d(directorResult, directorResult.getAngle()));
 
-                _hubDistance = Meters.of(directorResult.getNorm());
+                _targetDistance = Meters.of(directorResult.getNorm());
                 _turretSetpoint = MeasureUtil.clamp(directorResult.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
                 break;
 
@@ -154,12 +149,7 @@ public class Turret extends SubsystemBase
             default:
                 _hasSetpoint = false;
                 _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
-                _hubDistance = Meters.zero();
-                break;
-
-            case ManualAngle:
-                _hasSetpoint = true;
-                _turretSetpoint = MeasureUtil.clamp(_manualAngle, ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+                _targetDistance = Meters.zero();
                 break;
         }
 
@@ -169,12 +159,11 @@ public class Turret extends SubsystemBase
         }
 
         _turretMotor.setVoltage(motorOutput.in(Volts));
-        // _turretMotor.setVoltage(0);
     }
 
-    public Distance getHubDistance()
+    public Distance getTargetDistance()
     {
-        return _hubDistance;
+        return _targetDistance;
     }
 
     public void setTurretState(TurretState state)
@@ -190,40 +179,6 @@ public class Turret extends SubsystemBase
     public boolean isLinedUp()
     {
         return _hasSetpoint && _pidController.atSetpoint();
-    }
-
-    public Command getTrackCmd()
-    {
-        return startEnd(() -> setTurretState(TurretState.Track), () -> setTurretState(TurretState.Idle));
-    }
-
-    public Command getPassCmd()
-    {
-        return startEnd(() -> setTurretState(TurretState.Pass), () -> setTurretState(TurretState.Idle));
-    }
-
-    public Command getIdleCmd()
-    {
-        return runOnce(() -> setTurretState(TurretState.Idle));
-    }
-
-    public Command getTurnToAngleCmd(Angle angle)
-    {
-        return startEnd(() ->
-        {
-            _manualAngle = angle;
-            setTurretState(TurretState.ManualAngle);
-        }, () -> setTurretState(TurretState.Idle));
-    }
-
-    public Command getTurnTo0Cmd()
-    {
-        return getTurnToAngleCmd(Degrees.zero());
-    }
-
-    public Command getTurnTo90Cmd()
-    {
-        return getTurnToAngleCmd(Degrees.of(90));
     }
 
     private void updateFilter(List<Integer> filters)
