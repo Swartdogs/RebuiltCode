@@ -74,7 +74,7 @@ public class ExtensionMotor extends SubsystemBase
         _retractVolts   = retractVolts;
 
         var config = new SparkFlexConfig();
-        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
+        config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.EXTENSION_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
         var encoderConfig = new EncoderConfig();
         encoderConfig.positionConversionFactor(extensionConversionFactor.in(Inches.per(Rotation)));

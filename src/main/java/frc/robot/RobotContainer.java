@@ -4,6 +4,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -21,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.intake.Intake;
@@ -75,7 +77,7 @@ public class RobotContainer
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drive.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(_shooter.shoot());
+        _driver.button(1).whileTrue(Commands.either(_shooter.manualShoot(), _shooter.shoot(), _shooter::inManualMode));
         _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier = DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier = DriveConstants.FULL_SPEED_SCALE));
         _driver.button(3).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
         _driver.button(5).whileTrue(_shooter.pass());
@@ -88,6 +90,17 @@ public class RobotContainer
         _operator.rightTrigger().whileTrue(_intake.jiggle());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
+
+        // start and back enables manual mode
+        // start without back enables auto mode
+        _operator.start().and(_operator.back()).onTrue(_shooter.setManualMode(true));
+        _operator.start().and(_operator.back().negate()).onTrue(_shooter.setManualMode(false));
+
+        _operator.y().onTrue(_shooter.setFlywheelVelocity(ShooterConstants.MANUAL_SHOOT_RPM));
+        _operator.b().onTrue(_shooter.modFlywheelVelocity(RPM.of(100)));
+        _operator.x().onTrue(_shooter.modFlywheelVelocity(RPM.of(-100)));
+        _operator.a().onTrue(_shooter.stopFlywheel());
+        _operator.rightBumper().whileTrue(_shooter.runFeeder());
     }
 
     public Command getAutonomousCommand()

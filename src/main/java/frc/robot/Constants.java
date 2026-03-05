@@ -88,9 +88,10 @@ public final class Constants
 
     public static class IntakeConstants
     {
-        public static final Voltage                      INTAKE_VOLTS                = Volts.of(6.0);
-        public static final Voltage                      REVERSE_VOLTS               = Volts.of(-4.0);
-        public static final Current                      CURRENT_LIMIT               = Amps.of(40);
+        public static final Voltage                      INTAKE_VOLTS                = Volts.of(9.0);
+        public static final Voltage                      REVERSE_VOLTS               = Volts.of(-9.0);
+        public static final Current                      ROLLER_CURRENT_LIMIT        = Amps.of(80);
+        public static final Current                      EXTENSION_CURRENT_LIMIT     = Amps.of(40);
         public static final int                          CAMERA_DEVICE_INDEX         = 0;
         public static final String                       CAMERA_NAME                 = "IntakeCam";
         public static final int                          CAMERA_WIDTH                = 320;
@@ -124,6 +125,7 @@ public final class Constants
         public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA            = Volts.of(0).per(RotationsPerSecondPerSecond);            // TODO: Tune - acceleration voltage
         public static final Dimensionless                             FLYWHEEL_TOLERANCE     = Percent.of(15);
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
+        public static final AngularVelocity                           MANUAL_SHOOT_RPM       = RPM.of(3500.0);
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
         private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(100.0);
 
@@ -150,7 +152,7 @@ public final class Constants
         public static final Angle         TURRET_SOFT_MIN_ANGLE                 = Degrees.of(-160.0); // degrees (full 360 rotation)
         public static final Angle         TURRET_SOFT_MAX_ANGLE                 = Degrees.of(160.0);  // degrees
         public static final boolean       TURRET_SENSOR_INVERTED                = true;
-        public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(0.0);   // Forward-facing when no target
+        public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(90.0);   // Forward-facing when no target
         public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0);   // degrees
         public static final String        LIMELIGHT_NAME                        = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice

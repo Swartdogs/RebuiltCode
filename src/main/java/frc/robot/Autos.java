@@ -1,10 +1,13 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import java.util.stream.IntStream;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,20 +25,22 @@ public class Autos extends SubsystemBase
     private enum StartPosition
     {
         // @formatter:off
-        LeftTrench ("Left Trench",  ChoreoVars.Poses.LeftTrench),
-        LeftBump   ("Left Bump",    ChoreoVars.Poses.LeftBump),
-        HubStart   ("Hub",          ChoreoVars.Poses.HubStart),
-        RightBump  ("Right Bump",   ChoreoVars.Poses.RightBump),
-        RightTrench("Right Trench", ChoreoVars.Poses.RightTrench);
+        LeftTrench ("Left Trench",  ChoreoVars.Poses.LeftTrench,  RPM.of(4500)),
+        LeftBump   ("Left Bump",    ChoreoVars.Poses.LeftBump,    RPM.of(3200)),
+        HubStart   ("Hub",          ChoreoVars.Poses.HubStart,    RPM.zero()),
+        RightBump  ("Right Bump",   ChoreoVars.Poses.RightBump,   RPM.of(3200)),
+        RightTrench("Right Trench", ChoreoVars.Poses.RightTrench, RPM.of(4500));
         // @formatter:on
 
-        public String displayName;
-        public Pose2d pose;
+        public String          displayName;
+        public Pose2d          pose;
+        public AngularVelocity flywheelVelocity;
 
-        private StartPosition(String name, Pose2d bluePose)
+        private StartPosition(String name, Pose2d bluePose, AngularVelocity velocity)
         {
-            displayName = name;
-            pose        = bluePose;
+            displayName      = name;
+            pose             = bluePose;
+            flywheelVelocity = velocity;
         }
     }
 
@@ -134,12 +139,29 @@ public class Autos extends SubsystemBase
 
     public Command buildAuto()
     {
+        var start = _startChooser.getSelected();
+
         // @formatter:off
         return Commands.sequence
         (
-            Commands.runOnce(() -> _driveSubsystem.resetPose(flip(_startChooser.getSelected().pose))),
+            Commands.runOnce(() ->
+            {
+                _driveSubsystem.resetPose(flip(start.pose));
+                _shooterSubsystem._turret.setDisabled(true);
+            }),
             Commands.waitSeconds(_autoDelay.getSelected()),
-            _shooterSubsystem.shoot().onlyIf(() -> SmartDashboard.getBoolean(_shootNTKey, false))
+            Commands.sequence
+            (
+                _shooterSubsystem.setFlywheelVelocity(start.flywheelVelocity),
+                Commands.waitUntil(() -> _shooterSubsystem._flywheel.atSpeed()),
+                _shooterSubsystem.runFeeder()
+            )
+            .onlyIf(() -> SmartDashboard.getBoolean(_shootNTKey, false) && start != StartPosition.HubStart)
+            .finallyDo(() ->
+            {
+                _shooterSubsystem._turret.setDisabled(false);
+                _shooterSubsystem._flywheel.stop();
+            })
         );
         // @formatter:on
     }
