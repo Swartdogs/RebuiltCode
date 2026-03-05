@@ -207,12 +207,11 @@ public class Turret
         var rotatedByTurretOffset = forwardTranslation.rotateBy(new Rotation2d(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD));
         var rotatedBySetpoint     = rotatedByTurretOffset.rotateBy(new Rotation2d(rawSetpoint));
 
-        _targetPose = _currentSwerveState.Pose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
+        _targetPose     = _currentSwerveState.Pose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
+        _turretSetpoint = MeasureUtil.clamp(moduloAngle(rawSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
 
         if (_hasSetpoint)
         {
-            _turretSetpoint = MeasureUtil.clamp(moduloAngle(rawSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
-
             motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
 
