@@ -18,8 +18,12 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
@@ -199,9 +203,15 @@ public class Turret
                 break;
         }
 
+        var forwardTranslation    = new Translation2d(_targetDistance, Meters.zero());
+        var rotatedByTurretOffset = forwardTranslation.rotateBy(new Rotation2d(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD));
+        var rotatedBySetpoint     = rotatedByTurretOffset.rotateBy(new Rotation2d(rawSetpoint));
+
+        _targetPose = _currentSwerveState.Pose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
+
         if (_hasSetpoint)
         {
-            _turretSetpoint = MeasureUtil.clamp(rawSetpoint, ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+            _turretSetpoint = MeasureUtil.clamp(moduloAngle(rawSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
 
             motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
@@ -239,5 +249,16 @@ public class Turret
         {
             _limelight.getSettings().withAprilTagIdFilter(filters).save();
         }
+    }
+
+    // Depending on the geometry of the field and where we need to shoot to,
+    // sometimes we might get an angle that's like -300 degrees. We can point
+    // to it (it's the same as 60 degrees), but MeasureUtil.clamp doesn't
+    // handle this rollover
+    private Angle moduloAngle(Angle angle)
+    {
+        var degrees = angle.in(Degrees);
+
+        return Degrees.of(MathUtil.inputModulus(degrees, -180, 180));
     }
 }
