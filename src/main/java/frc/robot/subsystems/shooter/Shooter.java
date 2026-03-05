@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
@@ -15,7 +16,7 @@ public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, Preparing, Ready, Firing;
+        Idle, Preparing, Ready, Firing, Manual
     }
 
     /************
@@ -49,6 +50,36 @@ public class Shooter extends SubsystemBase
     public Command stop()
     {
         return runOnce(this::stopShooter);
+    }
+
+    // Manual commands below
+    public Command setManualMode(boolean manual)
+    {
+        return runOnce(() ->
+        {
+            _state = manual ? ShooterState.Manual : ShooterState.Idle;
+            _turret.setDisabled(manual);
+        });
+    }
+
+    public Command setFlywheelVelocity(AngularVelocity velocity)
+    {
+        return runOnce(() -> _flywheel.setVelocity(velocity)).onlyIf(this::inManualMode);
+    }
+
+    public Command modFlywheelVelocity(AngularVelocity mod)
+    {
+        return runOnce(() -> _flywheel.setVelocity(_flywheel.getTargetVelocity().plus(mod))).onlyIf(this::inManualMode);
+    }
+
+    public Command stopFlywheel()
+    {
+        return runOnce(() -> _flywheel.stop()).onlyIf(this::inManualMode);
+    }
+
+    public Command runFeeder()
+    {
+        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
     }
 
     /*************
@@ -105,6 +136,12 @@ public class Shooter extends SubsystemBase
             case Firing:
                 _feeder.set(true);
                 primeShot();
+                break;
+
+            case Manual:
+                // Do nothing. The different parts of the
+                // shooter will be controlled directly through
+                // commands
                 break;
 
             case Idle:
@@ -167,5 +204,10 @@ public class Shooter extends SubsystemBase
             var distance = _turret.getTargetDistance();
             _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
         }
+    }
+
+    private boolean inManualMode()
+    {
+        return _state == ShooterState.Manual;
     }
 }

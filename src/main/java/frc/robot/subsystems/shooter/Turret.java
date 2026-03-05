@@ -67,6 +67,8 @@ public class Turret
     private Distance                         _targetDistance;
     @Logged
     private Pose2d                           _targetPose;
+    @Logged
+    private boolean                          _disabled;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -93,6 +95,7 @@ public class Turret
         _motorVoltage       = Volts.zero();
         _targetDistance     = Meters.zero();
         _targetPose         = new Pose2d();
+        _disabled           = false;
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -210,7 +213,7 @@ public class Turret
         _targetPose     = _currentSwerveState.Pose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
         _turretSetpoint = MeasureUtil.clamp(moduloAngle(rawSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
 
-        if (_hasSetpoint)
+        if (_hasSetpoint && !_disabled)
         {
             motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
@@ -240,6 +243,11 @@ public class Turret
     public boolean isLinedUp()
     {
         return _hasSetpoint && _pidController.atSetpoint();
+    }
+
+    public void setDisabled(boolean disabled)
+    {
+        _disabled = disabled;
     }
 
     private void updateFilter(List<Integer> filters)

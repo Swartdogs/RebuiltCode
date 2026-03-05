@@ -4,6 +4,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -88,6 +89,17 @@ public class RobotContainer
         _operator.rightTrigger().whileTrue(_intake.jiggle());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
+
+        // start and back enables manual mode
+        // start without back enables auto mode
+        _operator.start().and(_operator.back()).onTrue(_shooter.setManualMode(true));
+        _operator.start().and(_operator.back().negate()).onTrue(_shooter.setManualMode(false));
+
+        _operator.y().onTrue(_shooter.setFlywheelVelocity(RPM.of(3500)));
+        _operator.b().onTrue(_shooter.modFlywheelVelocity(RPM.of(100)));
+        _operator.x().onTrue(_shooter.modFlywheelVelocity(RPM.of(-100)));
+        _operator.a().onTrue(_shooter.stopFlywheel());
+        _operator.rightBumper().whileTrue(_shooter.runFeeder());
     }
 
     public Command getAutonomousCommand()
