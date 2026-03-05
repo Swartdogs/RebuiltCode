@@ -124,6 +124,7 @@ public final class Constants
         public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA            = Volts.of(0).per(RotationsPerSecondPerSecond);            // TODO: Tune - acceleration voltage
         public static final Dimensionless                             FLYWHEEL_TOLERANCE     = Percent.of(15);
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
+        public static final AngularVelocity                           MANUAL_SHOOT_RPM       = RPM.of(3500.0);
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
         private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(100.0);
 

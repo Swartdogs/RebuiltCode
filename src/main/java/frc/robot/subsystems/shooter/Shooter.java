@@ -7,6 +7,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.Turret.TurretState;
@@ -80,6 +81,15 @@ public class Shooter extends SubsystemBase
     public Command runFeeder()
     {
         return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
+    }
+
+    public Command manualShoot()
+    {
+        return Commands.sequence(
+            runOnce(() -> _flywheel.setVelocity(ShooterConstants.MANUAL_SHOOT_RPM)),
+            Commands.waitUntil(_flywheel::atSpeed),
+            startEnd(() -> _feeder.set(true), () -> _feeder.set(false))
+        ).onlyIf(this::inManualMode);
     }
 
     /*************
@@ -206,7 +216,7 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    private boolean inManualMode()
+    public boolean inManualMode()
     {
         return _state == ShooterState.Manual;
     }
