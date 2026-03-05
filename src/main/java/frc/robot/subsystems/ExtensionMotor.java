@@ -108,6 +108,7 @@ public class ExtensionMotor extends SubsystemBase
         _limitSwitchAlert.set(_outSwitchTriggered && _inSwitchTriggered);
 
         _currentExtension = Inches.of(_extendMotor.getEncoder().getPosition());
+        _motorVoltage     = Volts.of(_extendMotor.getAppliedOutput() * _extendMotor.getBusVoltage());
     }
 
     @Override
@@ -133,20 +134,6 @@ public class ExtensionMotor extends SubsystemBase
     public void extend(boolean finalState)
     {
         _extendMotor.setVoltage(finalState ? _extendOutput : _retractVolts);
-        if (!finalState)
-        {
-            onRetract();
-        }
-    }
-
-    protected void onRetract()
-    {
-    }
-
-    @NotLogged
-    public Command getToggleCmd()
-    {
-        return runOnce(() -> extend(!isExtended()));
     }
 
     public Voltage getMotorVoltage()
@@ -170,11 +157,13 @@ public class ExtensionMotor extends SubsystemBase
     }
 
     /* COMMANDS */
+    @NotLogged
     public Command getExtendCmd()
     {
         return runOnce(() -> extend(true));
     }
 
+    @NotLogged
     public Command getRetractCmd()
     {
         return runOnce(() -> extend(false));

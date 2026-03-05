@@ -124,7 +124,6 @@ public class Shooter extends SubsystemBase
     public void simulationPeriodic()
     {
         _flywheel.simulationPeriodic();
-        _turret.simulationPeriodic();
     }
 
     public void startShoot(boolean autoShoot)

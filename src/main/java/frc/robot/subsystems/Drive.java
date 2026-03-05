@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.security.Timestamp;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -45,9 +44,9 @@ import limelight.networktables.PoseEstimate;
 public class Drive extends TunerSwerveDrivetrain implements Subsystem
 {
     private static final double kSimLoopPeriod = 0.004; // 4 ms
+    private final DriveVision   _vision;
     private Notifier            m_simNotifier  = null;
     private double              m_lastSimTime;
-    private DriveVision         _vision;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -131,6 +130,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
+
         _vision = new DriveVision();
     }
 
@@ -154,6 +154,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
+
         _vision = new DriveVision();
     }
 
@@ -184,6 +185,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             startSimThread();
         }
+
+        _vision = new DriveVision();
     }
 
     /**
@@ -361,6 +364,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
         public void update()
         {
+            if (RobotBase.isSimulation()) return;
+
             _hasVisionLeft  = processLimelight(_limelightLeft, _poseEstimatorLeft, _lastTimestampLeft);
             _hasVisionRight = processLimelight(_limelightRight, _poseEstimatorRight, _lastTimestampRight);
         }

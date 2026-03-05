@@ -80,9 +80,10 @@ public class RobotContainer
 
         _drive.registerTelemetry(_logger::telemeterize);
 
-        _operator.leftTrigger().whileTrue(_intake.runRollers());
-        _operator.leftBumper().whileTrue(_intake.reverseRollers());
-        _operator.povDown().onTrue(_intake.getRetractWithNudgeCmd());
+        _operator.leftTrigger().whileTrue(_intake.runRollersForward());
+        _operator.leftBumper().whileTrue(_intake.runRollersReverse());
+        _operator.rightTrigger().whileTrue(_intake.jiggle());
+        _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
     }
 
