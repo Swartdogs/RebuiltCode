@@ -15,15 +15,13 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.UsbCamera;
-import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.MotorHook;
 import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
@@ -43,14 +41,24 @@ public class Intake extends ExtensionMotor
      * COMMANDS *
      ************/
 
-    public Command startRollers()
+    public Command runRollersForward()
     {
-        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
+        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off));
     }
 
-    public Command reverseRollers()
+    public Command startRollersForward()
     {
-        return startEnd(() -> setIntakeState(IntakeState.Reverse), () -> setIntakeState(IntakeState.Off)).onlyIf(this::isExtended);
+        return runOnce(() -> setIntakeState(IntakeState.Forward));
+    }
+
+    public Command runRollersReverse()
+    {
+        return startEnd(() -> setIntakeState(IntakeState.Reverse), () -> setIntakeState(IntakeState.Off));
+    }
+
+    public Command startRollersReverse()
+    {
+        return runOnce(() -> setIntakeState(IntakeState.Reverse));
     }
 
     public Command stopRollers()
@@ -58,12 +66,48 @@ public class Intake extends ExtensionMotor
         return runOnce(() -> setIntakeState(IntakeState.Off));
     }
 
+    public Command jiggle()
+    {
+        // @formatter:off
+        return
+            runOnce(() -> setIntakeState(IntakeState.Forward))
+            .andThen
+            (
+                Commands.repeatingSequence
+                (
+                    getExtendCmd(),
+                    Commands.waitSeconds(0.4),
+                    super.getRetractCmd(),
+                    Commands.waitUntil(this::isRetracted)
+                )
+            )
+            .finallyDo(() -> {
+                setIntakeState(IntakeState.Off);
+                extend(false);
+            })
+            .onlyIf(this::isRetracted);
+        // @formatter:on
+    }
+
+    @Override
+    public Command getRetractCmd()
+    {
+        // @formatter:off
+        return
+            Commands.sequence
+            (
+                startRollersForward(),
+                super.getRetractCmd(),
+                Commands.waitUntil(this::isRetracted)
+            ).finallyDo(() -> setIntakeState(IntakeState.Off));
+        // @formatter:on
+    }
+
     /*************
      * SUBSYSTEM *
      *************/
     private final SparkFlex    _intakeMotor;
     private final SparkFlexSim _intakeMotorSim;
-    private final UsbCamera    _camera;
     private final DCMotor      _neoVortex;
     @Logged
     private IntakeState        _intakeState        = IntakeState.Off;
@@ -83,16 +127,11 @@ public class Intake extends ExtensionMotor
 
         if (RobotBase.isReal())
         {
-            _camera = CameraServer.startAutomaticCapture(IntakeConstants.CAMERA_NAME, IntakeConstants.CAMERA_DEVICE_INDEX);
-            _camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
-            _camera.setResolution(IntakeConstants.CAMERA_WIDTH, IntakeConstants.CAMERA_HEIGHT);
-            _camera.setFPS(IntakeConstants.CAMERA_FPS);
             _neoVortex      = null;
             _intakeMotorSim = null;
         }
         else
         {
-            _camera         = null;
             _neoVortex      = DCMotor.getNeoVortex(1);
             _intakeMotorSim = new SparkFlexSim(_intakeMotor, _neoVortex);
         }
@@ -117,11 +156,6 @@ public class Intake extends ExtensionMotor
 
     public void setIntakeState(IntakeState state)
     {
-        if (state != IntakeState.Off && !isExtended())
-        {
-            state = IntakeState.Off;
-        }
-
         _intakeState = state;
 
         var volts = switch (_intakeState)

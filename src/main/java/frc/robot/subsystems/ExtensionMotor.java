@@ -23,6 +23,7 @@ import com.revrobotics.spark.config.LimitSwitchConfig.Behavior;
 import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
@@ -80,7 +81,7 @@ public class ExtensionMotor extends SubsystemBase
 
         _extendMotor.setVoltage(Volts.zero());
         var limitSwitchConfig = new LimitSwitchConfig();
-        limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION.in(Inches)).forwardLimitSwitchTriggerBehavior(Behavior.kKeepMovingMotorAndSetPosition)
+        limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION.in(Inches)).forwardLimitSwitchTriggerBehavior(Behavior.kStopMovingMotor)
                 .reverseLimitSwitchType(Type.kNormallyOpen).reverseLimitSwitchPosition(IntakeConstants.EXTENSION_MIN_POSITION.in(Inches)).reverseLimitSwitchTriggerBehavior(Behavior.kStopMovingMotorAndSetPosition);
 
         _extendMotor.configure(config.apply(encoderConfig).apply(limitSwitchConfig), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -107,6 +108,7 @@ public class ExtensionMotor extends SubsystemBase
         _limitSwitchAlert.set(_outSwitchTriggered && _inSwitchTriggered);
 
         _currentExtension = Inches.of(_extendMotor.getEncoder().getPosition());
+        _motorVoltage     = Volts.of(_extendMotor.getAppliedOutput() * _extendMotor.getBusVoltage());
     }
 
     @Override
@@ -155,11 +157,13 @@ public class ExtensionMotor extends SubsystemBase
     }
 
     /* COMMANDS */
+    @NotLogged
     public Command getExtendCmd()
     {
         return runOnce(() -> extend(true));
     }
 
+    @NotLogged
     public Command getRetractCmd()
     {
         return runOnce(() -> extend(false));

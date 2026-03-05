@@ -1,17 +1,13 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.RPM;
-
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.subsystems.shooter.Hood.HoodPosition;
 import frc.robot.subsystems.shooter.Turret.TurretState;
 
 @Logged
@@ -19,64 +15,40 @@ public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, Preparing, Ready, Firing, Priming;
+        Idle, Preparing, Ready, Firing;
     }
 
     /************
      * COMMANDS *
      ************/
-    public Command fireCmd()
+    public Command startShooter()
     {
-        return runOnce(this::fire);
+        return runOnce(() -> startShoot(false));
     }
 
-    public Command stopCmd()
+    public Command fire()
     {
-        return runOnce(this::stop);
+        return runOnce(this::commenceFiring);
     }
 
-    public Command startCmd(AngularVelocity velocity)
+    public Command shoot()
     {
-        return runOnce(() -> start(velocity));
+        return startEnd(() -> startShoot(true), () -> stopShooter());
     }
 
-    public Command setShootModeCmd(Hood.HoodPosition mode)
+    public Command startPass()
     {
-        return runOnce(() ->
-        {
-            if (_state != ShooterState.Firing)
-            {
-                _hood.setHoodPosition(mode);
-            }
-        });
+        return runOnce(() -> startPass(false));
     }
 
-    public Command passCmd()
+    public Command pass()
     {
-        return startEnd(this::pass, this::stop);
+        return startEnd(() -> startPass(true), () -> stopShooter());
     }
 
-    public Command setVelocity(AngularVelocity velocity)
+    public Command stop()
     {
-        return runOnce(() ->
-        {
-            _targetVelocity = velocity;
-            _flywheel.setVelocity(_targetVelocity);
-        });
-    }
-
-    public Command modVelocity(AngularVelocity mod)
-    {
-        return runOnce(() ->
-        {
-            _targetVelocity = _targetVelocity.plus(mod);
-            _flywheel.setVelocity(_targetVelocity);
-        });
-    }
-
-    public Command runFeeder()
-    {
-        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false));
+        return runOnce(this::stopShooter);
     }
 
     /*************
@@ -84,95 +56,103 @@ public class Shooter extends SubsystemBase
      *************/
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
-    public final Hood     _hood;
-    // public final Turret _turret;
-    private ShooterState    _state;
+    public final Turret   _turret;
     @Logged
-    private AngularVelocity _targetVelocity = RPM.zero();
+    private ShooterState  _state;
+    @Logged
+    private boolean       _autoShootEnabled;
 
     public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
     {
-        _flywheel = new Flywheel();
-        _feeder   = new Feeder();
-        _hood     = new Hood();
-        // _turret = new Turret(swerveStateSupplier);
-        _state = ShooterState.Idle;
+        _flywheel         = new Flywheel();
+        _feeder           = new Feeder();
+        _turret           = new Turret(swerveStateSupplier);
+        _state            = ShooterState.Idle;
+        _autoShootEnabled = false;
 
-        _hood.setHoodPosition(HoodPosition.Shoot);
         _feeder.set(false);
         _flywheel.stop();
-        // _turret.setTurretState(TurretState.Idle);
+        _turret.setTurretState(TurretState.Idle);
     }
 
     @Override
     public void periodic()
     {
-        // switch (_state)
-        // {
-        // case Preparing:
-        // _feeder.set(false);
-        // if (_flywheel.atSpeed() && _hood.atSetpoint())
-        // {
-        // _state = ShooterState.Ready;
-        // }
-        // break;
+        switch (_state)
+        {
+            case Preparing:
+            case Ready:
+                _feeder.set(false);
+                primeShot();
 
-        // case Priming:
-        // _feeder.set(false);
-        // if (_flywheel.atSpeed() && _hood.atSetpoint())
-        // {
-        // _state = ShooterState.Firing;
-        // }
-        // break;
+                if (_flywheel.atSpeed() && _turret.isLinedUp())
+                {
+                    if (_autoShootEnabled)
+                    {
+                        _state = ShooterState.Firing;
+                    }
+                    else
+                    {
+                        _state = ShooterState.Ready;
+                    }
+                }
+                else
+                {
+                    _state = ShooterState.Preparing;
+                }
+                break;
 
-        // case Ready:
-        // _feeder.set(false);
-        // if (!_flywheel.atSpeed())
-        // {
-        // _state = ShooterState.Preparing;
-        // }
-        // break;
+            case Firing:
+                _feeder.set(true);
+                primeShot();
+                break;
 
-        // case Firing:
-        // _feeder.set(true);
-        // break;
-        // case Idle:
-        // default:
-        // _flywheel.stop();
-        // _feeder.set(false);
-        // break;
-        // }
-        // _turret.periodic();
+            case Idle:
+            default:
+                _flywheel.stop();
+                _feeder.set(false);
+                _turret.setTurretState(TurretState.Idle);
+                break;
+        }
+
+        _turret.periodic();
         _flywheel.periodic();
         _feeder.periodic();
-        _hood.periodic();
     }
 
     @Override
     public void simulationPeriodic()
     {
         _flywheel.simulationPeriodic();
-        _hood.simulationPeriodic();
-        // _turret.simulationPeriodic();
     }
 
-    public void start(AngularVelocity velocity)
+    public void startShoot(boolean autoShoot)
+    {
+        beginShootingSequence(TurretState.Track, autoShoot);
+    }
+
+    public void startPass(boolean autoShoot)
+    {
+        beginShootingSequence(TurretState.Pass, autoShoot);
+    }
+
+    private void beginShootingSequence(TurretState turretState, boolean autoShoot)
     {
         if (_state == ShooterState.Idle)
         {
-            _state = ShooterState.Preparing;
+            _turret.setTurretState(turretState);
+            _autoShootEnabled = autoShoot;
+            _state            = ShooterState.Preparing;
         }
-
-        _flywheel.setVelocity(velocity);
     }
 
-    public void stop()
+    public void stopShooter()
     {
-        _state = ShooterState.Idle;
-        _flywheel.stop();
+        _state            = ShooterState.Idle;
+        _autoShootEnabled = false;
     }
 
-    public void fire()
+    public void commenceFiring()
     {
         if (_state == ShooterState.Ready)
         {
@@ -180,14 +160,12 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    public void pass()
+    private void primeShot()
     {
-        if (_state != ShooterState.Firing)
+        if (_state != ShooterState.Idle)
         {
-            _hood.setHoodPosition(HoodPosition.Pass);
+            var distance = _turret.getTargetDistance();
+            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
         }
-
-        _flywheel.setVelocity(ShooterConstants.PASS_FLYWHEEL_VELOCITY);
-        _state = ShooterState.Priming;
     }
 }
