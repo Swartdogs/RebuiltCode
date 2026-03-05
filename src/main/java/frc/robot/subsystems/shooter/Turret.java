@@ -26,7 +26,6 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
@@ -38,7 +37,7 @@ import limelight.Limelight;
 import limelight.networktables.target.AprilTagFiducial;
 
 @Logged
-public class Turret extends SubsystemBase
+public class Turret
 {
     public enum TurretState
     {
@@ -115,7 +114,6 @@ public class Turret extends SubsystemBase
         emptyTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.ALL_HUB_TAG_IDS)));
     }
 
-    @Override
     public void periodic()
     {
         _currentSwerveState = _swerveStateSupplier.get();
@@ -177,20 +175,20 @@ public class Turret extends SubsystemBase
 
             case Pass:
                 _hasSetpoint = true;
-                Angle initialAngle;
+                Angle fieldTargetAngle;
 
                 if (Utilities.isBlueAlliance())
                 {
-                    _targetDistance = _currentSwerveState.Pose.getMeasureX();
-                    initialAngle    = Degrees.of(180).minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                    _targetDistance  = _currentSwerveState.Pose.getMeasureX();
+                    fieldTargetAngle = Degrees.of(180);
                 }
                 else
                 {
-                    _targetDistance = GeneralConstants.FIELD_SIZE_X.minus(_currentSwerveState.Pose.getMeasureX());
-                    initialAngle    = Degrees.zero();
+                    _targetDistance  = GeneralConstants.FIELD_SIZE_X.minus(_currentSwerveState.Pose.getMeasureX());
+                    fieldTargetAngle = Degrees.zero();
                 }
 
-                rawSetpoint = initialAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                rawSetpoint = fieldTargetAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
                 break;
 
             case Idle:
@@ -209,6 +207,10 @@ public class Turret extends SubsystemBase
         }
 
         _turretMotor.setVoltage(motorOutput.in(Volts));
+    }
+
+    public void simulationPeriodic()
+    {
     }
 
     public Distance getTargetDistance()
