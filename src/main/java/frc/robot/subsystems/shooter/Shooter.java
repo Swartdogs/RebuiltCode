@@ -85,11 +85,16 @@ public class Shooter extends SubsystemBase
 
     public Command manualShoot()
     {
-        return Commands.sequence(
+        // @formatter:off
+        return Commands.sequence
+        (
             runOnce(() -> _flywheel.setVelocity(ShooterConstants.MANUAL_SHOOT_RPM)),
             Commands.waitUntil(_flywheel::atSpeed),
             startEnd(() -> _feeder.set(true), () -> _feeder.set(false))
-        ).onlyIf(this::inManualMode);
+        )
+        .finallyDo(() -> _flywheel.stop())
+        .onlyIf(this::inManualMode);
+        // @formatter:on
     }
 
     /*************
@@ -108,12 +113,13 @@ public class Shooter extends SubsystemBase
         _flywheel         = new Flywheel();
         _feeder           = new Feeder();
         _turret           = new Turret(swerveStateSupplier);
-        _state            = ShooterState.Idle;
+        _state            = ShooterState.Manual;
         _autoShootEnabled = false;
 
         _feeder.set(false);
         _flywheel.stop();
         _turret.setTurretState(TurretState.Idle);
+        _turret.setDisabled(true);
     }
 
     @Override

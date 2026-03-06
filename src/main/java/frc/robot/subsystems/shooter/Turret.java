@@ -200,7 +200,7 @@ public class Turret
 
             case Idle:
             default:
-                _hasSetpoint = false;
+                _hasSetpoint = true;
                 rawSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 _targetDistance = Meters.zero();
                 break;
