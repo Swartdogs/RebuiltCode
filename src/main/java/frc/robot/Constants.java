@@ -151,7 +151,7 @@ public final class Constants
         public static final Angle         TURRET_SOFT_MIN_ANGLE                 = Degrees.of(-160.0); // degrees (full 360 rotation)
         public static final Angle         TURRET_SOFT_MAX_ANGLE                 = Degrees.of(160.0);  // degrees
         public static final boolean       TURRET_SENSOR_INVERTED                = true;
-        public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(0.0);   // Forward-facing when no target
+        public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(90.0);   // Forward-facing when no target
         public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0);   // degrees
         public static final String        LIMELIGHT_NAME                        = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice
