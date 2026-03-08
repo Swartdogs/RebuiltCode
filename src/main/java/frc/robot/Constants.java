@@ -90,7 +90,8 @@ public final class Constants
     {
         public static final Voltage                      INTAKE_VOLTS                = Volts.of(9.0);
         public static final Voltage                      REVERSE_VOLTS               = Volts.of(-9.0);
-        public static final Current                      CURRENT_LIMIT               = Amps.of(80);
+        public static final Current                      ROLLER_CURRENT_LIMIT        = Amps.of(80);
+        public static final Current                      EXTENSION_CURRENT_LIMIT     = Amps.of(40);
         public static final int                          CAMERA_DEVICE_INDEX         = 0;
         public static final String                       CAMERA_NAME                 = "IntakeCam";
         public static final int                          CAMERA_WIDTH                = 320;
