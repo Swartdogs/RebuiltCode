@@ -24,7 +24,7 @@ jobs:
       - name: Checkout repo (Pull Request)
         #Checks if the event was trigged by a pull request, this step will be skipped if not.
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           #Sets up branch system properly per https://github.com/marketplace/actions/add-commit#working-with-prs
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -32,11 +32,11 @@ jobs:
       - name: Checkout repo (Manually Run)
         #Only runs if triggered manually
         if: ${{github.event_name == 'workflow_dispatch' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       - name: Checkout repo (Push to main)
         #Only runs if triggered manually
         if: ${{github.event_name == 'push' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
