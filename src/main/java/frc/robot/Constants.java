@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Milliseconds;
 import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Rotations;
@@ -36,6 +37,7 @@ import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Dimensionless;
@@ -55,13 +57,13 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE          = 14;  // Vortex
-        public static final int INTAKE_EXTEND   = 15;  // Vortex
-        public static final int FEEDER_MOTOR    = 16;  // Vortex
-        public static final int TURRET_MOTOR    = 17;  // Talon
-        public static final int FLYWHEEL_LEAD   = 18;  // Vortex
-        public static final int FLYWHEEL_FOLLOW = 19;  // Vortex
-        public static final int HOOD_MOTOR      = 20;  // Victor
+        public static final int INTAKE          = 14; // Vortex
+        public static final int INTAKE_EXTEND   = 15; // Vortex
+        public static final int FEEDER_MOTOR    = 16; // Vortex
+        public static final int TURRET_MOTOR    = 17; // Talon
+        public static final int FLYWHEEL_LEAD   = 18; // Vortex
+        public static final int FLYWHEEL_FOLLOW = 19; // Vortex
+        public static final int HOOD_MOTOR      = 20; // Victor
         public static final int CLIMBER_EXTEND  = 21;
         public static final int CLIMBER_ROTATE  = 22;
     }
@@ -78,12 +80,23 @@ public final class Constants
 
     public static class DriveConstants
     {
-        public static final LinearVelocity  MAX_SPEED          = TunerConstants.kSpeedAt12Volts.times(0.5); // kSpeedAt12Volts desired top speed
-        public static final AngularVelocity MAX_ANGULAR_RATE   = RotationsPerSecond.of(0.75); // 3/4 of a rotation per second max angular velocity
-        public static final Dimensionless   TRANSLATE_DEADBAND = Percent.of(8);
-        public static final Dimensionless   ROTATE_DEADBAND    = Percent.of(8);
-        public static final Dimensionless   SLOW_MODE_SCALE    = Percent.of(35);
-        public static final Dimensionless   FULL_SPEED_SCALE   = Percent.of(100);
+        public static final LinearVelocity MAX_SPEED = TunerConstants.kSpeedAt12Volts.times(0.5); // kSpeedAt12Volts
+        // desired top speed
+        public static final AngularVelocity     MAX_ANGULAR_RATE                      = RotationsPerSecond.of(0.75); // 3/4 of a rotation per
+                                                                                                                     // second max angular
+                                                                                                                     // velocity
+        public static final Dimensionless       TRANSLATE_DEADBAND                    = Percent.of(8);
+        public static final Dimensionless       ROTATE_DEADBAND                       = Percent.of(8);
+        public static final Dimensionless       SLOW_MODE_SCALE                       = Percent.of(35);
+        public static final Dimensionless       FULL_SPEED_SCALE                      = Percent.of(100);
+        public static final double              SNAKE_HEADING_KP                      = 4.5;
+        public static final double              SNAKE_HEADING_KD                      = 0.2;
+        public static final LinearVelocity      SNAKE_MIN_TRANSLATE_FOR_HEADING       = MetersPerSecond.of(0.2);
+        public static final double              SNAKE_ROTATION_OVERRIDE_AXIS_DEADBAND = 0.12;
+        public static final AngularVelocity     SNAKE_MAX_ANGULAR_RATE                = MAX_ANGULAR_RATE;
+        public static final AngularAcceleration SNAKE_MAX_ANGULAR_ACCELERATION        = RotationsPerSecondPerSecond.of(1.5);
+        public static final Angle               SNAKE_INTAKE_HEADING_OFFSET           = Degrees.of(180.0); // Intake faces the rear
+        public static final Angle               SNAKE_HEADING_TOLERANCE               = Degrees.of(2.0);
     }
 
     public static class IntakeConstants
@@ -118,11 +131,11 @@ public final class Constants
     {
         // Flywheel
         public static final double                                    FLYWHEEL_KP            = 0.00015; // TODO: Tune
-        public static final double                                    FLYWHEEL_KI            = 0.0;    // TODO: Tune
+        public static final double                                    FLYWHEEL_KI            = 0.0; // TODO: Tune
         public static final double                                    FLYWHEEL_KD            = 0.0005;
-        public static final Voltage                                   FLYWHEEL_KS            = Volts.of(0.0);            // TODO: Tune - static friction voltage
+        public static final Voltage                                   FLYWHEEL_KS            = Volts.of(0.0); // TODO: Tune - static friction voltage
         public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KV            = Volts.of(12.0).div(RPM.of(6784.0));
-        public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA            = Volts.of(0).per(RotationsPerSecondPerSecond);            // TODO: Tune - acceleration voltage
+        public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA            = Volts.of(0).per(RotationsPerSecondPerSecond); // TODO: Tune - acceleration voltage
         public static final Dimensionless                             FLYWHEEL_TOLERANCE     = Percent.of(15);
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
         public static final AngularVelocity                           MANUAL_SHOOT_RPM       = RPM.of(3500.0);
@@ -132,18 +145,18 @@ public final class Constants
         // Hood (VictorSPX with analog potentiometer)
         public static final double        HOOD_KP          = 3.0;
         public static final double        HOOD_KI          = 0.0;
-        public static final double        HOOD_KD          = 0.0;   // TODO: Tune
-        public static final Angle         HOOD_MIN_ANGLE   = Degrees.of(0.0);   // TODO: Confirm min angle (degrees)
-        public static final Angle         HOOD_MAX_ANGLE   = Degrees.of(90.0);  // TODO: Confirm max angle (degrees)
+        public static final double        HOOD_KD          = 0.0; // TODO: Tune
+        public static final Angle         HOOD_MIN_ANGLE   = Degrees.of(0.0); // TODO: Confirm min angle (degrees)
+        public static final Angle         HOOD_MAX_ANGLE   = Degrees.of(90.0); // TODO: Confirm max angle (degrees)
         public static final Dimensionless HOOD_GEAR_RATIO  = Value.of(1.0 / 12.0);
         public static final Angle         HOOD_SHOOT_ANGLE = Degrees.of(90); // TODO: Find the degree needed to shoot from.
         public static final Angle         HOOD_PASS_ANGLE  = Degrees.of(78); // TODO: Find the degree to pass from.
         public static final Angle         HOOD_TOLERANCE   = Degrees.of(2);
-        public static final Angle         PASS_HOOD_ANGLE  = Degrees.of(20.0);   // TODO: Tune
+        public static final Angle         PASS_HOOD_ANGLE  = Degrees.of(20.0); // TODO: Tune
 
         // Turret
         public static final Current       TURRET_CURRENT_LIMIT                  = Amps.of(40.0);
-        public static final double        TURRET_KP                             = 0.12;    // TODO: Tune (onboard TalonFX PID)
+        public static final double        TURRET_KP                             = 0.04; // TODO: Tune (onboard TalonFX PID)
         public static final double        TURRET_KI                             = 0.0;
         public static final double        TURRET_KD                             = 0.0115;
         public static final Dimensionless TURRET_GEAR_RATIO                     = Value.of(13.0 / 1.0); // 13 : 1
@@ -152,8 +165,9 @@ public final class Constants
         public static final Angle         TURRET_SOFT_MIN_ANGLE                 = Degrees.of(-160.0); // degrees (full 360 rotation)
         public static final Angle         TURRET_SOFT_MAX_ANGLE                 = Degrees.of(160.0);  // degrees
         public static final boolean       TURRET_SENSOR_INVERTED                = true;
-        public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(90.0);   // Forward-facing when no target
-        public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0);   // degrees
+        public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(0.0); // Forward-facing when no target
+        public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0); // degrees
+        public static final Angle         TURRET_TRACK_TX_DEADBAND              = Degrees.of(0.75);
         public static final String        LIMELIGHT_NAME                        = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice
         public static final Distance      TURRET_CENTER_TAG_TO_HUB_CENTER       = Inches.of(23.5);
@@ -161,7 +175,8 @@ public final class Constants
         public static final List<Integer> RED_HUB_TAG_IDS                       = List.of(2, 4, 5, 10);
         public static final List<Integer> ALL_HUB_TAG_IDS                       = Stream.concat(BLUE_HUB_TAG_IDS.stream(), RED_HUB_TAG_IDS.stream()).toList();
         public static final Translation3d CENTER_TAG_TO_HUB_CENTER_OFFSET       = new Translation3d(Inches.of(-23.5), Inches.zero(), Inches.zero());
-        public static final Angle         TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD = Degrees.of(90); // Hub "zero" is 90 degrees left of robot forward
+        public static final Angle         TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD = Degrees.of(90); // Hub "zero" is 90 degrees
+                                                                                                  // left of robot forward
         public static final Translation2d BLUE_HUB                              = new Translation2d(Inches.of(182.1), Inches.of(158.85));
         public static final Translation2d RED_HUB                               = new Translation2d(Inches.of(469.1), Inches.of(158.85));
         public static final Translation2d TURRET_POSITION                       = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
@@ -174,11 +189,11 @@ public final class Constants
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
         (
-            Map.entry(52.0, 2840.0),
-            Map.entry(69.0, 3000.0),
-            Map.entry(94.0, 3450.0),
-            Map.entry(114.0, 4175.0),
-            Map.entry(156.0, 5290.0)
+            Map.entry(68.0, 3000.0),
+            Map.entry(77.0, 3050.0),
+            Map.entry(108.0, 3700.0),
+            Map.entry(113.0, 3850.0),
+            Map.entry(138.0, 4350.0)
         );
         // @formatter:on
 

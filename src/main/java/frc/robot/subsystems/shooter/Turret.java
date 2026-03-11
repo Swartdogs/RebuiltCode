@@ -68,6 +68,10 @@ public class Turret
     @Logged
     private Pose2d                           _targetPose;
     @Logged
+    private Distance                         _limelightDistance;
+    @Logged
+    private boolean                          _limelightHasTarget;
+    @Logged
     private boolean                          _disabled;
 
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
@@ -95,6 +99,8 @@ public class Turret
         _motorVoltage       = Volts.zero();
         _targetDistance     = Meters.zero();
         _targetPose         = new Pose2d();
+        _limelightDistance  = Meters.zero();
+        _limelightHasTarget = false;
         _disabled           = false;
 
         var currentConfig = new CurrentLimitsConfigs();
@@ -125,8 +131,10 @@ public class Turret
     {
         _currentSwerveState = _swerveStateSupplier.get();
 
-        _turretAngle  = Degrees.of(_turretSensor.get());
-        _motorVoltage = _turretMotor.getMotorVoltage().getValue();
+        _turretAngle        = Degrees.of(_turretSensor.get());
+        _motorVoltage       = _turretMotor.getMotorVoltage().getValue();
+        _limelightHasTarget = false;
+        _limelightDistance  = Meters.zero();
 
         var fiducials   = new AprilTagFiducial[0];
         var motorOutput = Volts.zero();
@@ -143,26 +151,19 @@ public class Turret
                     fiducials = results.get().targets_Fiducials;
                 }
 
-                if (fiducials.length <= 0)
-                {
-                    var hub                  = Utilities.getHubCoordinates();
-                    var robot                = _currentSwerveState.Pose.getTranslation();
-                    var robotToHub           = hub.minus(robot);
-                    var robotAngleCorrection = _currentSwerveState.Pose.getRotation().getMeasure().plus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                var localHubTranslation    = getHubTranslationInRobotFrame();
+                var turretToHubTranslation = localHubTranslation.minus(ShooterConstants.TURRET_POSITION);
 
-                    _targetDistance = Meters.of(robotToHub.getNorm());
-                    rawSetpoint     = robotToHub.getAngle().getMeasure().minus(robotAngleCorrection);
-                }
-                else
+                _targetDistance = Meters.of(turretToHubTranslation.getNorm());
+                rawSetpoint     = getTurretSetpointForRobotFrameTarget(turretToHubTranslation);
+
+                if (fiducials.length > 0)
                 {
                     double avgTx = 0.0;
                     double avgTy = 0.0;
 
                     for (AprilTagFiducial tag : fiducials)
                     {
-                        // subtract the values instead of adding them
-                        // our limelight is mounted upside down so we
-                        // need the inverse of these measurements
                         avgTx -= tag.tx;
                         avgTy -= tag.ty;
                     }
@@ -172,11 +173,16 @@ public class Turret
                     avgTx /= n;
                     avgTy /= n;
 
-                    // Tx and Ty are now the average pitch and yaw to the target.
-                    // Now calculate distance from pitch
-                    var tyMeasure = Degrees.of(avgTy);
-                    _targetDistance = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
-                    rawSetpoint     = _turretAngle.minus(Degrees.of(avgTx));
+                    var tyMeasure    = Degrees.of(avgTy);
+                    var txCorrection = Degrees.of(avgTx);
+
+                    _limelightDistance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
+                    _limelightHasTarget = true;
+
+                    if (!MathUtil.isNear(0.0, txCorrection.in(Degrees), ShooterConstants.TURRET_TRACK_TX_DEADBAND.in(Degrees)))
+                    {
+                        rawSetpoint = rawSetpoint.minus(txCorrection);
+                    }
                 }
                 break;
 
@@ -200,7 +206,7 @@ public class Turret
 
             case Idle:
             default:
-                _hasSetpoint = true;
+                _hasSetpoint = false;
                 rawSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 _targetDistance = Meters.zero();
                 break;
@@ -218,6 +224,7 @@ public class Turret
             motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
         }
 
+        motorOutput = applySoftLimit(motorOutput);
         _turretMotor.setVoltage(motorOutput.in(Volts));
     }
 
@@ -258,14 +265,40 @@ public class Turret
         }
     }
 
-    // Depending on the geometry of the field and where we need to shoot to,
-    // sometimes we might get an angle that's like -300 degrees. We can point
-    // to it (it's the same as 60 degrees), but MeasureUtil.clamp doesn't
-    // handle this rollover
     private Angle moduloAngle(Angle angle)
     {
         var degrees = angle.in(Degrees);
 
         return Degrees.of(MathUtil.inputModulus(degrees, -180, 180));
+    }
+
+    private Voltage applySoftLimit(Voltage requestedVoltage)
+    {
+        var requestedVolts = requestedVoltage.in(Volts);
+        var turretDegrees  = _turretAngle.in(Degrees);
+
+        if (turretDegrees <= ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Degrees) && requestedVolts < 0.0)
+        {
+            return Volts.zero();
+        }
+
+        if (turretDegrees >= ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Degrees) && requestedVolts > 0.0)
+        {
+            return Volts.zero();
+        }
+
+        return requestedVoltage;
+    }
+
+    private Translation2d getHubTranslationInRobotFrame()
+    {
+        var robotToHubField = Utilities.getHubCoordinates().minus(_currentSwerveState.Pose.getTranslation());
+
+        return robotToHubField.rotateBy(_currentSwerveState.Pose.getRotation().unaryMinus());
+    }
+
+    private Angle getTurretSetpointForRobotFrameTarget(Translation2d targetTranslation)
+    {
+        return targetTranslation.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
     }
 }
