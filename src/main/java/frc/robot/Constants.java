@@ -140,7 +140,7 @@ public final class Constants
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
         public static final AngularVelocity                           MANUAL_SHOOT_RPM       = RPM.of(3500.0);
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
-        private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(100.0);
+        private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(150.0);
 
         // Hood (VictorSPX with analog potentiometer)
         public static final double        HOOD_KP          = 3.0;
@@ -189,11 +189,11 @@ public final class Constants
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
         (
-            Map.entry(68.0, 3000.0),
-            Map.entry(77.0, 3050.0),
-            Map.entry(108.0, 3700.0),
-            Map.entry(113.0, 3850.0),
-            Map.entry(138.0, 4350.0)
+            Map.entry(68.0, 3100.0),
+            Map.entry(77.0, 3150.0),
+            Map.entry(108.0, 3800.0),
+            Map.entry(113.0, 3950.0),
+            Map.entry(138.0, 4450.0)
         );
         // @formatter:on
 
