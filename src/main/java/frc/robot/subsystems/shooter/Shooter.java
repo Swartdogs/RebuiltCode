@@ -1,11 +1,12 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -17,15 +18,12 @@ public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, Preparing, Ready, Firing, Manual
+        Idle, Preparing, Ready, Firing, Manual;
     }
 
-    /************
-     * COMMANDS *
-     ************/
     public Command startShooter()
     {
-        return runOnce(() -> startShoot(false));
+        return runOnce(() -> startPreparedShoot(false));
     }
 
     public Command fire()
@@ -35,7 +33,7 @@ public class Shooter extends SubsystemBase
 
     public Command shoot()
     {
-        return startEnd(() -> startShoot(true), () -> stopShooter());
+        return startEnd(this::startShoot, this::stopShooter);
     }
 
     public Command startPass()
@@ -45,42 +43,45 @@ public class Shooter extends SubsystemBase
 
     public Command pass()
     {
-        return startEnd(() -> startPass(true), () -> stopShooter());
+        return startEnd(() -> startPass(true), this::stopShooter);
     }
 
-    public Command stop()
-    {
-        return runOnce(this::stopShooter);
-    }
-
-    // Manual commands below
     public Command setManualMode(boolean manual)
     {
         return runOnce(() ->
         {
-            _state = manual ? ShooterState.Manual : ShooterState.Idle;
+            _state            = manual ? ShooterState.Manual : ShooterState.Idle;
+            _autoShootEnabled = false;
+            _feeder.set(false);
+            _turret.setTurretState(TurretState.Idle);
             _turret.setDisabled(manual);
+
+            if (manual)
+            {
+                _flywheel.stop();
+            }
         });
     }
 
-    public Command setFlywheelVelocity(AngularVelocity velocity)
+    public boolean inManualMode()
     {
-        return runOnce(() -> _flywheel.setVelocity(velocity)).onlyIf(this::inManualMode);
+        return _state == ShooterState.Manual;
     }
 
-    public Command modFlywheelVelocity(AngularVelocity mod)
+    public void setManualFlywheel(double rpm)
     {
-        return runOnce(() -> _flywheel.setVelocity(_flywheel.getTargetVelocity().plus(mod))).onlyIf(this::inManualMode);
+        if (inManualMode())
+        {
+            _flywheel.setVelocity(RPM.of(Math.max(0.0, rpm)));
+        }
     }
 
-    public Command stopFlywheel()
+    public void stopManualFlywheel()
     {
-        return runOnce(() -> _flywheel.stop()).onlyIf(this::inManualMode);
-    }
-
-    public Command runFeeder()
-    {
-        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
+        if (inManualMode())
+        {
+            _flywheel.stop();
+        }
     }
 
     public Command runRotor()
@@ -116,9 +117,11 @@ public class Shooter extends SubsystemBase
         // @formatter:on
     }
 
-    /*************
-     * SUBSYSTEM *
-     *************/
+    public Command stop()
+    {
+        return runOnce(this::stopShooter);
+    }
+
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
     public final Turret   _turret;
@@ -134,14 +137,14 @@ public class Shooter extends SubsystemBase
         _feeder           = new Feeder();
         _turret           = new Turret(swerveStateSupplier);
         _rotor            = new Rotor();
-        _state            = ShooterState.Manual;
+        _state            = ShooterState.Idle;
         _autoShootEnabled = false;
 
         _feeder.set(false);
         _rotor.set(false);
         _flywheel.stop();
         _turret.setTurretState(TurretState.Idle);
-        _turret.setDisabled(true);
+        _turret.setDisabled(false);
     }
 
     @Override
@@ -179,9 +182,6 @@ public class Shooter extends SubsystemBase
                 break;
 
             case Manual:
-                // Do nothing. The different parts of the
-                // shooter will be controlled directly through
-                // commands
                 break;
 
             case Idle:
@@ -192,6 +192,8 @@ public class Shooter extends SubsystemBase
                 _turret.setTurretState(TurretState.Idle);
                 break;
         }
+
+        _feeder.set(_state == ShooterState.Firing);
 
         _turret.periodic();
         _flywheel.periodic();
@@ -205,7 +207,7 @@ public class Shooter extends SubsystemBase
         _flywheel.simulationPeriodic();
     }
 
-    public void startShoot(boolean autoShoot)
+    public void startPreparedShoot(boolean autoShoot)
     {
         beginShootingSequence(TurretState.Track, autoShoot);
     }
@@ -217,8 +219,9 @@ public class Shooter extends SubsystemBase
 
     private void beginShootingSequence(TurretState turretState, boolean autoShoot)
     {
-        if (_state == ShooterState.Idle)
+        if (_state == ShooterState.Idle || _state == ShooterState.Manual)
         {
+            _turret.setDisabled(false);
             _turret.setTurretState(turretState);
             _autoShootEnabled = autoShoot;
             _state            = ShooterState.Preparing;
@@ -229,6 +232,7 @@ public class Shooter extends SubsystemBase
     {
         _state            = ShooterState.Idle;
         _autoShootEnabled = false;
+        _turret.setDisabled(false);
     }
 
     public void commenceFiring()
@@ -239,6 +243,17 @@ public class Shooter extends SubsystemBase
         }
     }
 
+    private void startShoot()
+    {
+        if (_state == ShooterState.Idle || _state == ShooterState.Manual)
+        {
+            _turret.setDisabled(false);
+            _turret.setTurretState(TurretState.Track);
+            _autoShootEnabled = false;
+            _state            = ShooterState.Firing;
+        }
+    }
+
     private void primeShot()
     {
         if (_state != ShooterState.Idle)
@@ -246,10 +261,5 @@ public class Shooter extends SubsystemBase
             var distance = _turret.getTargetDistance();
             _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
         }
-    }
-
-    public boolean inManualMode()
-    {
-        return _state == ShooterState.Manual;
     }
 }
