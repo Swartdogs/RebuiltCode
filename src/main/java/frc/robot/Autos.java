@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.generated.ChoreoVars;
-import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Utilities;
 

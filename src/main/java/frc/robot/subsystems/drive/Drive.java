@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -27,8 +27,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.Constants.VisionConstants;
-import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-
+import frc.robot.subsystems.drive.TunerConstants.TunerSwerveDrivetrain;
 import limelight.Limelight;
 import limelight.networktables.LimelightPoseEstimator;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;

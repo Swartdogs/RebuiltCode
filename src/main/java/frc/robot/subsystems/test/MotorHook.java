@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.subsystems.test;
 
 public class MotorHook extends TestHook
 {

@@ -17,10 +17,10 @@ import edu.wpi.first.epilogue.Logged;
 
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.DIOConstants;
-import frc.robot.MotorHook;
-import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.subsystems.test.MotorHook;
+import frc.robot.subsystems.test.TestHook;
 import frc.robot.util.MeasureUtil;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
