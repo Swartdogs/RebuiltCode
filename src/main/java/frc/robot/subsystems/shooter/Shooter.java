@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -115,6 +116,29 @@ public class Shooter extends SubsystemBase
         })
         .onlyIf(this::inManualMode);
         // @formatter:on
+    }
+
+    public Command setFlywheelVelocity(AngularVelocity velocity)
+    {
+        return runOnce(() ->
+        {
+            _state = ShooterState.Manual;
+            _flywheel.setVelocity(velocity);
+        });
+    }
+
+    public Command runFeeder()
+    {
+        return startEnd(() ->
+        {
+            _state = ShooterState.Manual;
+            _feeder.set(true);
+        }, () ->
+        {
+            _feeder.set(false);
+            _flywheel.stop();
+            _state = ShooterState.Idle;
+        });
     }
 
     public Command stop()

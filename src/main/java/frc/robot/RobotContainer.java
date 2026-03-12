@@ -54,13 +54,8 @@ public class RobotContainer
     private final Autos                      _autos             = new Autos(_drive, _shooter);
     @NotLogged
     private final ProfiledPIDController      _snakeController   = new ProfiledPIDController(
-            DriveConstants.SNAKE_HEADING_KP,
-            0.0,
-            DriveConstants.SNAKE_HEADING_KD,
-            new TrapezoidProfile.Constraints(
-                    DriveConstants.SNAKE_MAX_ANGULAR_RATE.in(RadiansPerSecond),
-                    DriveConstants.SNAKE_MAX_ANGULAR_ACCELERATION.in(RadiansPerSecondPerSecond)
-            )
+            DriveConstants.SNAKE_HEADING_KP, 0.0, DriveConstants.SNAKE_HEADING_KD,
+            new TrapezoidProfile.Constraints(DriveConstants.SNAKE_MAX_ANGULAR_RATE.in(RadiansPerSecond), DriveConstants.SNAKE_MAX_ANGULAR_ACCELERATION.in(RadiansPerSecondPerSecond))
     );
     private Dimensionless                    _driveMultiplier   = DriveConstants.FULL_SPEED_SCALE;
     private double                           _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
@@ -128,8 +123,7 @@ public class RobotContainer
 
         if (translationMagnitude > DriveConstants.SNAKE_MIN_TRANSLATE_FOR_HEADING.in(MetersPerSecond))
         {
-            var desiredHeadingRadians = Math.atan2(strafe.in(MetersPerSecond), drive.in(MetersPerSecond))
-                    + DriveConstants.SNAKE_INTAKE_HEADING_OFFSET.in(Radians);
+            var desiredHeadingRadians = Math.atan2(strafe.in(MetersPerSecond), drive.in(MetersPerSecond)) + DriveConstants.SNAKE_INTAKE_HEADING_OFFSET.in(Radians);
             _snakeHeading = Rotation2d.fromRadians(MathUtil.angleModulus(desiredHeadingRadians));
         }
 
