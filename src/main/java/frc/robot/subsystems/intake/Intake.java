@@ -22,11 +22,11 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.MotorHook;
-import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.subsystems.test.MotorHook;
+import frc.robot.subsystems.test.TestHook;
 
 @Logged
 public class Intake extends ExtensionMotor

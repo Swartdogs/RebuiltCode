@@ -31,8 +31,8 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.MotorHook;
-import frc.robot.TestHook;
+import frc.robot.subsystems.test.MotorHook;
+import frc.robot.subsystems.test.TestHook;
 
 @Logged
 public class Flywheel

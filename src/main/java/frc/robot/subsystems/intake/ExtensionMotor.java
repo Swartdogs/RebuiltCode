@@ -39,8 +39,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.SimulationConstants;
-import frc.robot.MotorHook;
-import frc.robot.TestHook;
+import frc.robot.subsystems.test.MotorHook;
+import frc.robot.subsystems.test.TestHook;
 
 @Logged
 public class ExtensionMotor extends SubsystemBase
