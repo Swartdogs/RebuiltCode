@@ -179,6 +179,7 @@ public class Turret
                     _limelightDistance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
                     _limelightHasTarget = true;
 
+                    // Ignore tiny Limelight yaw error so we don't keep hunting on vision noise.
                     if (!MathUtil.isNear(0.0, txCorrection.in(Degrees), ShooterConstants.TURRET_TRACK_TX_DEADBAND.in(Degrees)))
                     {
                         rawSetpoint = rawSetpoint.minus(txCorrection);
