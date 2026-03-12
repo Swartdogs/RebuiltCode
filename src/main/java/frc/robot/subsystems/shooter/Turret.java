@@ -151,11 +151,11 @@ public class Turret
                     fiducials = results.get().targets_Fiducials;
                 }
 
-                var localHubTranslation    = getHubTranslationInRobotFrame();
+                var localHubTranslation = getHubTranslationInRobotFrame();
                 var turretToHubTranslation = localHubTranslation.minus(ShooterConstants.TURRET_POSITION);
 
                 _targetDistance = Meters.of(turretToHubTranslation.getNorm());
-                rawSetpoint     = getTurretSetpointForRobotFrameTarget(turretToHubTranslation);
+                rawSetpoint = getTurretSetpointForRobotFrameTarget(turretToHubTranslation);
 
                 if (fiducials.length > 0)
                 {
