@@ -73,14 +73,14 @@ public class ExtensionMotor extends SubsystemBase
         _extendOutput   = extendOutput;
         _retractVolts   = retractVolts;
 
-        var config = new SparkFlexConfig();
+        SparkFlexConfig config = new SparkFlexConfig();
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.EXTENSION_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
-        var encoderConfig = new EncoderConfig();
+        EncoderConfig encoderConfig = new EncoderConfig();
         encoderConfig.positionConversionFactor(extensionConversionFactor.in(Inches.per(Rotation)));
 
         _extendMotor.setVoltage(Volts.zero());
-        var limitSwitchConfig = new LimitSwitchConfig();
+        LimitSwitchConfig limitSwitchConfig = new LimitSwitchConfig();
         limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION.in(Inches)).forwardLimitSwitchTriggerBehavior(Behavior.kStopMovingMotor)
                 .reverseLimitSwitchType(Type.kNormallyOpen).reverseLimitSwitchPosition(IntakeConstants.EXTENSION_MIN_POSITION.in(Inches)).reverseLimitSwitchTriggerBehavior(Behavior.kStopMovingMotorAndSetPosition);
 

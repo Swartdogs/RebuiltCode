@@ -3,8 +3,12 @@ package frc.robot.util;
 import static edu.wpi.first.units.Units.Value;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularVelocityUnit;
+import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Unit;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Dimensionless;
@@ -20,13 +24,13 @@ public final class MeasureUtil
 
     public static Angle clamp(Angle value, Angle min, Angle max)
     {
-        var unit = value.unit();
+        AngleUnit unit = value.unit();
         return unit.of(clamp(unit, value, min, max));
     }
 
     public static Voltage clamp(Voltage value, Voltage min, Voltage max)
     {
-        var unit = value.unit();
+        VoltageUnit unit = value.unit();
         return unit.of(clamp(unit, value, min, max));
     }
 
@@ -37,13 +41,13 @@ public final class MeasureUtil
 
     public static LinearVelocity applyDeadband(LinearVelocity input, Dimensionless deadband)
     {
-        var unit = input.unit();
+        LinearVelocityUnit unit = input.unit();
         return unit.of(MathUtil.applyDeadband(input.in(unit), deadband.in(Value)));
     }
 
     public static AngularVelocity applyDeadband(AngularVelocity input, Dimensionless deadband)
     {
-        var unit = input.unit();
+        AngularVelocityUnit unit = input.unit();
         return unit.of(MathUtil.applyDeadband(input.in(unit), deadband.in(Value)));
     }
 }

@@ -99,7 +99,7 @@ public class Autos extends SubsystemBase
     @Override
     public void periodic()
     {
-        var currentStart = _startChooser.getSelected();
+        StartPosition currentStart = _startChooser.getSelected();
 
         if (_startPosition != currentStart)
         {
@@ -139,7 +139,7 @@ public class Autos extends SubsystemBase
 
     public Command buildAuto()
     {
-        var start = _startChooser.getSelected();
+        StartPosition start = _startChooser.getSelected();
 
         // @formatter:off
         return Commands.sequence
@@ -168,7 +168,7 @@ public class Autos extends SubsystemBase
 
     private Pose2d flip(Pose2d bluePose)
     {
-        var pose = bluePose;
+        Pose2d pose = bluePose;
 
         if (Utilities.isRedAlliance())
         {
