@@ -83,6 +83,11 @@ public class Shooter extends SubsystemBase
         return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
     }
 
+    public Command runRotor()
+    {
+        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
+    }
+
     public Command manualShoot()
     {
         // @formatter:off
@@ -90,9 +95,23 @@ public class Shooter extends SubsystemBase
         (
             runOnce(() -> _flywheel.setVelocity(ShooterConstants.MANUAL_SHOOT_RPM)),
             Commands.waitUntil(_flywheel::atSpeed),
-            startEnd(() -> _feeder.set(true), () -> _feeder.set(false))
+            startEnd(
+                () ->
+                {
+                    _feeder.set(true);
+                    _rotor.set(true);
+                },
+                () ->
+                {
+                    _feeder.set(false);
+                    _rotor.set(false);
+                })
         )
-        .finallyDo(() -> _flywheel.stop())
+        .finallyDo(() -> {
+            _flywheel.stop();
+            _feeder.set(false);
+            _rotor.set(false);
+        })
         .onlyIf(this::inManualMode);
         // @formatter:on
     }
@@ -103,6 +122,7 @@ public class Shooter extends SubsystemBase
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
     public final Turret   _turret;
+    public final Rotor    _rotor;
     @Logged
     private ShooterState  _state;
     @Logged
@@ -113,10 +133,12 @@ public class Shooter extends SubsystemBase
         _flywheel         = new Flywheel();
         _feeder           = new Feeder();
         _turret           = new Turret(swerveStateSupplier);
+        _rotor            = new Rotor();
         _state            = ShooterState.Manual;
         _autoShootEnabled = false;
 
         _feeder.set(false);
+        _rotor.set(false);
         _flywheel.stop();
         _turret.setTurretState(TurretState.Idle);
         _turret.setDisabled(true);
@@ -130,6 +152,7 @@ public class Shooter extends SubsystemBase
             case Preparing:
             case Ready:
                 _feeder.set(false);
+                _rotor.set(false);
                 primeShot();
 
                 if (_flywheel.atSpeed() && _turret.isLinedUp())
@@ -151,6 +174,7 @@ public class Shooter extends SubsystemBase
 
             case Firing:
                 _feeder.set(true);
+                _rotor.set(true);
                 primeShot();
                 break;
 
@@ -164,6 +188,7 @@ public class Shooter extends SubsystemBase
             default:
                 _flywheel.stop();
                 _feeder.set(false);
+                _rotor.set(false);
                 _turret.setTurretState(TurretState.Idle);
                 break;
         }
@@ -171,6 +196,7 @@ public class Shooter extends SubsystemBase
         _turret.periodic();
         _flywheel.periodic();
         _feeder.periodic();
+        _rotor.periodic();
     }
 
     @Override
