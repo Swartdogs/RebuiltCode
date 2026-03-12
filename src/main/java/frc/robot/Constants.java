@@ -44,8 +44,8 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.subsystems.drive.TunerConstants;
 import edu.wpi.first.math.system.plant.DCMotor;
-import frc.robot.generated.TunerConstants;
 
 public final class Constants
 {

@@ -27,7 +27,6 @@ import frc.robot.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.subsystems.ExtensionMotor;
 
 @Logged
 public class Intake extends ExtensionMotor
