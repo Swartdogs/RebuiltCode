@@ -166,6 +166,7 @@ public class RobotContainer
         _operator.x().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM - MANUAL_FLYWHEEL_STEP_RPM)).onlyIf(_shooter::inManualMode));
         _operator.b().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM + MANUAL_FLYWHEEL_STEP_RPM)).onlyIf(_shooter::inManualMode));
         _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel).onlyIf(_shooter::inManualMode));
+        _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
     }
