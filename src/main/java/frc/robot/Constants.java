@@ -167,7 +167,7 @@ public final class Constants
         public static final boolean       TURRET_SENSOR_INVERTED                = true;
         public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(0.0); // Forward-facing when no target
         public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0); // degrees
-        public static final Angle         TURRET_TRACK_TX_DEADBAND              = Degrees.of(0.75);
+        public static final Angle         TURRET_TRACK_TX_DEADBAND              = Degrees.of(2);
         public static final String        LIMELIGHT_NAME                        = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice
         public static final Distance      TURRET_CENTER_TAG_TO_HUB_CENTER       = Inches.of(23.5);
@@ -189,11 +189,14 @@ public final class Constants
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
         (
-            Map.entry(68.0, 3100.0),
-            Map.entry(77.0, 3150.0),
-            Map.entry(108.0, 3800.0),
-            Map.entry(113.0, 3950.0),
-            Map.entry(138.0, 4450.0)
+            Map.entry(50.0, 2500.0),
+            Map.entry(75.5, 2950.0),
+            Map.entry(101.0, 3400.0),
+            Map.entry(113.0, 3850.0),
+            Map.entry(130.0, 4050.0),
+            Map.entry(151.0, 4600.0),
+            Map.entry(183.0, 5100.0),
+            Map.entry(204.0, 5850.0)
         );
         // @formatter:on
 

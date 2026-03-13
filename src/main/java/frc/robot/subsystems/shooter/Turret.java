@@ -3,7 +3,6 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
@@ -68,9 +67,9 @@ public class Turret
     @Logged
     private Pose2d                           _targetPose;
     @Logged
-    private Distance                         _limelightDistance;
-    @Logged
     private boolean                          _limelightHasTarget;
+    @Logged
+    private boolean                          _targetValid;
     @Logged
     private boolean                          _disabled;
 
@@ -99,8 +98,8 @@ public class Turret
         _motorVoltage       = Volts.zero();
         _targetDistance     = Meters.zero();
         _targetPose         = new Pose2d();
-        _limelightDistance  = Meters.zero();
         _limelightHasTarget = false;
+        _targetValid        = false;
         _disabled           = false;
 
         var currentConfig = new CurrentLimitsConfigs();
@@ -134,7 +133,7 @@ public class Turret
         _turretAngle        = Degrees.of(_turretSensor.get());
         _motorVoltage       = _turretMotor.getMotorVoltage().getValue();
         _limelightHasTarget = false;
-        _limelightDistance  = Meters.zero();
+        _targetValid        = false;
 
         var fiducials   = new AprilTagFiducial[0];
         var motorOutput = Volts.zero();
@@ -157,27 +156,25 @@ public class Turret
                 _targetDistance = Meters.of(turretToHubTranslation.getNorm());
                 rawSetpoint = getTurretSetpointForRobotFrameTarget(turretToHubTranslation);
 
-                if (fiducials.length > 0)
-                {
-                    double avgTx = 0.0;
-                    double avgTy = 0.0;
+                AprilTagFiducial bestTag = null;
 
-                    for (AprilTagFiducial tag : fiducials)
+                for (AprilTagFiducial tag : fiducials)
+                {
+                    if (!Utilities.getOurHubTagIds().contains(tag.fiducialID))
                     {
-                        avgTx -= tag.tx;
-                        avgTy -= tag.ty;
+                        continue;
                     }
 
-                    int n = fiducials.length;
+                    if (bestTag == null || tag.ta > bestTag.ta || tag.ta == bestTag.ta && Math.abs(tag.tx) < Math.abs(bestTag.tx))
+                    {
+                        bestTag = tag;
+                    }
+                }
 
-                    avgTx /= n;
-                    avgTy /= n;
-
-                    var tyMeasure    = Degrees.of(avgTy);
-                    var txCorrection = Degrees.of(avgTx);
-
-                    _limelightDistance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
+                if (bestTag != null)
+                {
                     _limelightHasTarget = true;
+                    var txCorrection = Degrees.of(-bestTag.tx);
 
                     // Ignore tiny Limelight yaw error so we don't keep hunting on vision noise.
                     if (!MathUtil.isNear(0.0, txCorrection.in(Degrees), ShooterConstants.TURRET_TRACK_TX_DEADBAND.in(Degrees)))
@@ -185,10 +182,13 @@ public class Turret
                         rawSetpoint = rawSetpoint.minus(txCorrection);
                     }
                 }
+
+                _targetValid = Utilities.isHubActive();
                 break;
 
             case Pass:
                 _hasSetpoint = true;
+                _targetValid = true;
                 Angle fieldTargetAngle;
 
                 if (Utilities.isBlueAlliance())
@@ -208,6 +208,7 @@ public class Turret
             case Idle:
             default:
                 _hasSetpoint = false;
+                _targetValid = false;
                 rawSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 _targetDistance = Meters.zero();
                 break;
@@ -251,6 +252,16 @@ public class Turret
     public boolean isLinedUp()
     {
         return _hasSetpoint && _pidController.atSetpoint();
+    }
+
+    public boolean hasValidTarget()
+    {
+        return _targetValid;
+    }
+
+    public boolean isReadyToShoot()
+    {
+        return hasValidTarget() && isLinedUp();
     }
 
     public void setDisabled(boolean disabled)

@@ -321,22 +321,27 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Logged
     public class DriveVision
     {
+        private static final Pose2d          kInvalidVisionPose   = new Pose2d(-1.0, -1.0, Rotation2d.kZero);
         private final Limelight              _limelightLeft;
         private final Limelight              _limelightRight;
         private final LimelightPoseEstimator _poseEstimatorLeft;
         private final LimelightPoseEstimator _poseEstimatorRight;
         @Logged
-        private double                       _lastTimestampLeft  = 0.0;
+        private double                       _lastTimestampLeft   = 0.0;
         @Logged
-        private double                       _lastTimestampRight = 0.0;
+        private double                       _lastTimestampRight  = 0.0;
         @Logged
-        private boolean                      _hasVisionLeft      = false;
+        private boolean                      _hasVisionLeft       = false;
         @Logged
-        private boolean                      _hasVisionRight     = false;
+        private boolean                      _hasVisionRight      = false;
         @Logged
-        private Pose2d                       _leftPose           = new Pose2d();
+        private boolean                      _acceptedVisionLeft  = false;
         @Logged
-        private Pose2d                       _rightPose          = new Pose2d();
+        private boolean                      _acceptedVisionRight = false;
+        @Logged
+        private Pose2d                       _leftPose            = kInvalidVisionPose;
+        @Logged
+        private Pose2d                       _rightPose           = kInvalidVisionPose;
 
         public DriveVision()
         {
@@ -365,16 +370,17 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             if (RobotBase.isSimulation()) return;
 
-            _hasVisionLeft  = processLimelight(_limelightLeft, _poseEstimatorLeft, _lastTimestampLeft);
-            _hasVisionRight = processLimelight(_limelightRight, _poseEstimatorRight, _lastTimestampRight);
+            _acceptedVisionLeft  = processLimelight(_limelightLeft, _poseEstimatorLeft, _lastTimestampLeft, true);
+            _acceptedVisionRight = processLimelight(_limelightRight, _poseEstimatorRight, _lastTimestampRight, false);
         }
 
-        private boolean processLimelight(Limelight limelight, LimelightPoseEstimator poseEstimator, double lastTimestamp)
+        private boolean processLimelight(Limelight limelight, LimelightPoseEstimator poseEstimator, double lastTimestamp, boolean isLeft)
         {
             var results = limelight.getLatestResults();
 
             if (results.isEmpty() || results.get().targets_Fiducials.length <= 0)
             {
+                setVisionState(isLeft, false, kInvalidVisionPose);
                 return false;
             }
 
@@ -382,16 +388,12 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
             if (estimate.isEmpty())
             {
+                setVisionState(isLeft, false, kInvalidVisionPose);
                 return false;
             }
 
             PoseEstimate poseEstimate = estimate.get();
-            if (poseEstimate.timestampSeconds <= lastTimestamp)
-            {
-                return false;
-            }
-
-            var pose = poseEstimate.pose.toPose2d();
+            var          pose         = poseEstimate.pose.toPose2d();
 
             // Somehow, bad data can still get through here
             // check for a zero pose and throw it out
@@ -399,23 +401,43 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
             if (Math.abs(pose.getX()) < 1e-6 && Math.abs(pose.getY()) < 1e-6)
             {
+                setVisionState(isLeft, false, kInvalidVisionPose);
+                return false;
+            }
+
+            setVisionState(isLeft, true, pose);
+
+            if (poseEstimate.timestampSeconds <= lastTimestamp)
+            {
                 return false;
             }
 
             addVisionMeasurement(pose, poseEstimate.timestampSeconds);
 
-            if (limelight == _limelightLeft)
+            if (isLeft)
             {
                 _lastTimestampLeft = poseEstimate.timestampSeconds;
-                _leftPose          = pose;
             }
             else
             {
                 _lastTimestampRight = poseEstimate.timestampSeconds;
-                _rightPose          = pose;
             }
 
             return true;
+        }
+
+        private void setVisionState(boolean isLeft, boolean hasVision, Pose2d pose)
+        {
+            if (isLeft)
+            {
+                _hasVisionLeft = hasVision;
+                _leftPose      = pose;
+            }
+            else
+            {
+                _hasVisionRight = hasVision;
+                _rightPose      = pose;
+            }
         }
     }
 }
