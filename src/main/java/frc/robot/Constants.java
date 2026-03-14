@@ -163,6 +163,7 @@ public final class Constants
         public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(0.0); // Forward-facing when no target
         public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0); // degrees
         public static final Angle         TURRET_TRACK_TX_DEADBAND              = Degrees.of(2);
+        public static final Distance      SHOOTER_LATERAL_OFFSET                = Inches.of(1.0); // Physical offset between turret rotation center and shooter exit point
         public static final String        LIMELIGHT_NAME                        = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice
         public static final Distance      TURRET_CENTER_TAG_TO_HUB_CENTER       = Inches.of(23.5);
