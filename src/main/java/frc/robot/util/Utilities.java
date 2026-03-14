@@ -123,4 +123,25 @@ public final class Utilities
     {
         return isBlueAlliance() ? ShooterConstants.BLUE_HUB : ShooterConstants.RED_HUB;
     }
+
+    /**
+     * Returns the number of seconds remaining until the next hub shift boundary.
+     * Works in practice mode (no FMS game data required) since shift timing is
+     * purely based on match time. Returns -1 when not in teleop.
+     */
+    public static double getTimeUntilNextShift()
+    {
+        double timeRemaining = DriverStation.getMatchTime();
+        if (timeRemaining < 0 || !DriverStation.isTeleop())
+        {
+            return -1;
+        }
+
+        if (timeRemaining > kTransitionShiftEndTimeSecs.in(Seconds)) return timeRemaining - kTransitionShiftEndTimeSecs.in(Seconds);
+        if (timeRemaining > kShift1EndTimeSecs.in(Seconds)) return timeRemaining - kShift1EndTimeSecs.in(Seconds);
+        if (timeRemaining > kShift2EndTimeSecs.in(Seconds)) return timeRemaining - kShift2EndTimeSecs.in(Seconds);
+        if (timeRemaining > kShift3EndTimeSecs.in(Seconds)) return timeRemaining - kShift3EndTimeSecs.in(Seconds);
+        if (timeRemaining > kShift4EndTimeSecs.in(Seconds)) return timeRemaining - kShift4EndTimeSecs.in(Seconds);
+        return timeRemaining; // endgame - time left in match
+    }
 }
