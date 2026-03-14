@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.intake.Intake;
@@ -41,6 +42,8 @@ public class RobotContainer
     private final Drive                      _drive             = TunerConstants.createDrivetrain();
     private final Intake                     _intake            = new Intake();
     private final Shooter                    _shooter           = new Shooter(_drive::getState);
+    @NotLogged
+    private final Dashboard                  _dashboard         = new Dashboard(_shooter);
     @NotLogged
     private final Autos                      _autos             = new Autos(_drive, _shooter);
     private Dimensionless                    _driveMultiplier   = DriveConstants.FULL_SPEED_SCALE;

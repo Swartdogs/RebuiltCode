@@ -262,6 +262,11 @@ public class Turret
         return _targetValid;
     }
 
+    public boolean hasLimelightTarget()
+    {
+        return _limelightHasTarget;
+    }
+
     public boolean isReadyToShoot()
     {
         return hasValidTarget() && isLinedUp();
