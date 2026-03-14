@@ -18,22 +18,22 @@
             },
             "children": [
               {
-                "title": "Auto Delay",
-                "x": 1984.0,
-                "y": 416.0,
+                "title": "Auto Mode",
+                "x": 0.0,
+                "y": 0.0,
                 "width": 288.0,
                 "height": 128.0,
                 "type": "ComboBox Chooser",
                 "properties": {
-                  "topic": "/SmartDashboard/Auto Delay",
+                  "topic": "/SmartDashboard/Auto Mode",
                   "period": 0.06,
                   "sort_options": false
                 }
               },
               {
                 "title": "Start Position",
-                "x": 1984.0,
-                "y": 480.0,
+                "x": 0.0,
+                "y": 0.0,
                 "width": 288.0,
                 "height": 128.0,
                 "type": "ComboBox Chooser",
@@ -44,16 +44,29 @@
                 }
               },
               {
-                "title": "Shoot",
-                "x": 1664.0,
-                "y": 320.0,
-                "width": 128.0,
+                "title": "Auto Trajectory",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 288.0,
                 "height": 128.0,
-                "type": "Toggle Switch",
+                "type": "ComboBox Chooser",
                 "properties": {
-                  "topic": "/SmartDashboard/Shoot",
+                  "topic": "/SmartDashboard/Auto Trajectory",
                   "period": 0.06,
-                  "data_type": "boolean"
+                  "sort_options": false
+                }
+              },
+              {
+                "title": "Auto Delay",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 288.0,
+                "height": 128.0,
+                "type": "ComboBox Chooser",
+                "properties": {
+                  "topic": "/SmartDashboard/Auto Delay",
+                  "period": 0.06,
+                  "sort_options": false
                 }
               }
             ]

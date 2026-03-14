@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.Supplier;
@@ -18,7 +19,7 @@ public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, Preparing, Ready, Firing, Manual;
+        Idle, Preparing, Ready, Firing, Manual, TrackingOnly;
     }
 
     public Command startShooter()
@@ -117,6 +118,30 @@ public class Shooter extends SubsystemBase
         return runOnce(this::stopShooter);
     }
 
+    public Command trackOnly()
+    {
+        return startEnd(() ->
+        {
+            _state = ShooterState.TrackingOnly;
+            _turret.setDisabled(false);
+        }, this::stopShooter);
+    }
+
+    public void bumpManualTurretAngle(double deltaDeg)
+    {
+        if (inManualMode())
+        {
+            _turret.setDisabled(false);
+            _turret.setTurretState(TurretState.ManualAngle);
+            _turret.bumpManualAngle(Degrees.of(deltaDeg));
+        }
+    }
+
+    public double getManualTurretAngleDeg()
+    {
+        return _turret.getManualAngle().in(Degrees);
+    }
+
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
     public final Turret   _turret;
@@ -180,6 +205,12 @@ public class Shooter extends SubsystemBase
                 break;
 
             case Manual:
+                break;
+
+            case TrackingOnly:
+                _feeder.set(false);
+                _flywheel.stop();
+                _turret.setTurretState(TurretState.Track);
                 break;
 
             case Idle:

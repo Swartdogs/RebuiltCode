@@ -44,7 +44,7 @@ public class Turret
 {
     public enum TurretState
     {
-        Idle, Track, Pass
+        Idle, Track, Pass, ManualAngle
     }
 
     private final TalonFX                    _turretMotor;
@@ -54,6 +54,7 @@ public class Turret
     private final PIDController              _pidController;
     private SwerveDriveState                 _currentSwerveState;
     private TurretState                      _turretState;
+    private Angle                            _manualAngleSetpoint;
     @Logged
     private Angle                            _turretAngle;
     @Logged
@@ -86,21 +87,22 @@ public class Turret
             sensorOffset = sensorOffset.unaryMinus();
         }
 
-        _turretMotor        = new TalonFX(CANConstants.TURRET_MOTOR);
-        _turretSensor       = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
-        _limelight          = new Limelight(ShooterConstants.LIMELIGHT_NAME);
-        _pidController      = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
-        _currentSwerveState = new SwerveDriveState();
-        _turretState        = TurretState.Idle;
-        _turretAngle        = Degrees.zero();
-        _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
-        _hasSetpoint        = false;
-        _motorVoltage       = Volts.zero();
-        _targetDistance     = Meters.zero();
-        _targetPose         = new Pose2d();
-        _limelightHasTarget = false;
-        _targetValid        = false;
-        _disabled           = false;
+        _turretMotor         = new TalonFX(CANConstants.TURRET_MOTOR);
+        _turretSensor        = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
+        _limelight           = new Limelight(ShooterConstants.LIMELIGHT_NAME);
+        _pidController       = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
+        _currentSwerveState  = new SwerveDriveState();
+        _turretState         = TurretState.Idle;
+        _manualAngleSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
+        _turretAngle         = Degrees.zero();
+        _turretSetpoint      = ShooterConstants.TURRET_HOME_ANGLE;
+        _hasSetpoint         = false;
+        _motorVoltage        = Volts.zero();
+        _targetDistance      = Meters.zero();
+        _targetPose          = new Pose2d();
+        _limelightHasTarget  = false;
+        _targetValid         = false;
+        _disabled            = false;
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -183,6 +185,13 @@ public class Turret
                     }
                 }
 
+                // The shooter exit point is forward of the turret rotation center. This creates
+                // a lateral miss that varies as sin(turretAngle): zero at 0°, max at ±90°.
+                // Guard distance from zero to avoid atan2 blowing up at startup.
+                var safeDistanceM = Math.max(_targetDistance.in(Meters), 0.5);
+                var lateralErrorM = ShooterConstants.SHOOTER_LATERAL_OFFSET.in(Meters) * Math.sin(Math.toRadians(rawSetpoint.in(Degrees)));
+                rawSetpoint = rawSetpoint.plus(Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM))));
+
                 _targetValid = Utilities.isHubActive();
                 break;
 
@@ -203,6 +212,12 @@ public class Turret
                 }
 
                 rawSetpoint = fieldTargetAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                break;
+
+            case ManualAngle:
+                _hasSetpoint = true;
+                _targetValid = false;
+                rawSetpoint = _manualAngleSetpoint;
                 break;
 
             case Idle:
@@ -242,6 +257,21 @@ public class Turret
     public void setTurretState(TurretState state)
     {
         _turretState = state;
+    }
+
+    public void setManualAngle(Angle angle)
+    {
+        _manualAngleSetpoint = angle;
+    }
+
+    public void bumpManualAngle(Angle delta)
+    {
+        _manualAngleSetpoint = _manualAngleSetpoint.plus(delta);
+    }
+
+    public Angle getManualAngle()
+    {
+        return _manualAngleSetpoint;
     }
 
     public TurretState getTurretState()

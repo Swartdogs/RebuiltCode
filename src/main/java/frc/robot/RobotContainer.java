@@ -40,6 +40,8 @@ public class RobotContainer
 {
     private static final double MANUAL_FLYWHEEL_START_RPM = 3500.0;
     private static final double MANUAL_FLYWHEEL_STEP_RPM  = 50.0;
+    private static final double MANUAL_TURRET_START_DEG   = 0.0;
+    private static final double MANUAL_TURRET_STEP_DEG    = 2.0;
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric _fieldCentric      = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
@@ -62,6 +64,7 @@ public class RobotContainer
     );
     private Dimensionless                    _driveMultiplier   = DriveConstants.FULL_SPEED_SCALE;
     private double                           _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
+    private double                           _manualTurretDeg   = MANUAL_TURRET_START_DEG;
     private Rotation2d                       _snakeHeading      = Rotation2d.kZero;
     private boolean                          _wasSnakeModeOn    = false;
 
@@ -145,6 +148,12 @@ public class RobotContainer
         _shooter.setManualFlywheel(_manualFlywheelRPM);
     }
 
+    private void bumpManualTurretAngle(double deltaDeg)
+    {
+        _manualTurretDeg += deltaDeg;
+        _shooter.bumpManualTurretAngle(deltaDeg);
+    }
+
     private void configureBindings()
     {
         _drive.setDefaultCommand(_drive.applyRequest(this::getFieldCentricRequest));
@@ -156,6 +165,7 @@ public class RobotContainer
         _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier = DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier = DriveConstants.FULL_SPEED_SCALE));
         _driver.button(3).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
         _driver.button(5).whileTrue(_shooter.pass());
+        _driver.button(6).whileTrue(_shooter.trackOnly());
         _driver.button(7).onTrue(_drive.runOnce(_drive::seedFieldCentric));
 
         _drive.registerTelemetry(_logger::telemeterize);
@@ -172,6 +182,8 @@ public class RobotContainer
         _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
+        _operator.povLeft().onTrue(Commands.runOnce(() -> bumpManualTurretAngle(-MANUAL_TURRET_STEP_DEG)).onlyIf(_shooter::inManualMode));
+        _operator.povRight().onTrue(Commands.runOnce(() -> bumpManualTurretAngle(MANUAL_TURRET_STEP_DEG)).onlyIf(_shooter::inManualMode));
     }
 
     public Command getAutonomousCommand()
