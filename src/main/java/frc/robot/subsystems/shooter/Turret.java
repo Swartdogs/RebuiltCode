@@ -70,6 +70,8 @@ public class Turret
     @Logged
     private boolean                          _limelightHasTarget;
     @Logged
+    private boolean                          _hubActive;
+    @Logged
     private boolean                          _targetValid;
     @Logged
     private boolean                          _disabled;
@@ -101,6 +103,7 @@ public class Turret
         _targetDistance      = Meters.zero();
         _targetPose          = new Pose2d();
         _limelightHasTarget  = false;
+        _hubActive           = false;
         _targetValid         = false;
         _disabled            = false;
 
@@ -135,6 +138,7 @@ public class Turret
         _turretAngle        = Degrees.of(_turretSensor.get());
         _motorVoltage       = _turretMotor.getMotorVoltage().getValue();
         _limelightHasTarget = false;
+        _hubActive          = Utilities.isHubActive();
         _targetValid        = false;
 
         var fiducials   = new AprilTagFiducial[0];
@@ -195,7 +199,7 @@ public class Turret
                 var lateralErrorM = ShooterConstants.SHOOTER_LATERAL_OFFSET.in(Meters) * Math.sin(Math.toRadians(rawSetpoint.in(Degrees)));
                 rawSetpoint = rawSetpoint.plus(Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM))));
 
-                _targetValid = Utilities.isHubActive();
+                _targetValid = _hubActive;
                 break;
 
             case Pass:

@@ -23,6 +23,8 @@ public class Feeder
     private final SparkFlex _feederMotor;
     @Logged
     private Voltage         _feederMotorVoltage = Volts.of(0.0);
+    @Logged
+    private boolean         _enabled            = false;
 
     public Feeder()
     {
@@ -41,6 +43,7 @@ public class Feeder
 
     public void set(boolean on)
     {
+        _enabled = on;
         Voltage targetVoltage = on ? ShooterConstants.FEEDER_VOLTAGE : Volts.zero();
         _feederMotor.setVoltage(targetVoltage.in(Volts));
     }
