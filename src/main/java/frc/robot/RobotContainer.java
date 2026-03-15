@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.intake.Intake;
@@ -32,20 +31,16 @@ public class RobotContainer
 {
     private static final double MANUAL_FLYWHEEL_START_RPM = 3500.0;
     private static final double MANUAL_FLYWHEEL_STEP_RPM  = 50.0;
-    private static final double MANUAL_TURRET_START_DEG   = 0.0;
     private static final double MANUAL_TURRET_STEP_DEG    = 2.0;
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric _fieldCentric      = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
     private final SwerveRequest.RobotCentric _robotCentric      = new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-    private final Telemetry                  _logger            = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
     private final CommandJoystick            _driver            = new CommandJoystick(0);
     private final CommandXboxController      _operator          = new CommandXboxController(1);
     private final Drive                      _drive             = TunerConstants.createDrivetrain();
     private final Intake                     _intake            = new Intake();
     private final Shooter                    _shooter           = new Shooter(_drive::getState);
-    @NotLogged
-    private final Dashboard                  _dashboard         = new Dashboard(_shooter);
     @NotLogged
     private final Autos                      _autos             = new Autos(_drive, _shooter);
     private Dimensionless                    _driveMultiplier   = DriveConstants.FULL_SPEED_SCALE;
@@ -84,7 +79,6 @@ public class RobotContainer
 
     private void bumpManualTurretAngle(double deltaDeg)
     {
-        _manualTurretDeg += deltaDeg;
         _shooter.bumpManualTurretAngle(deltaDeg);
     }
 
@@ -101,8 +95,6 @@ public class RobotContainer
         _driver.button(5).whileTrue(_shooter.pass());
         _driver.button(6).whileTrue(_shooter.trackOnly());
         _driver.button(7).onTrue(_drive.runOnce(_drive::seedFieldCentric));
-
-        _drive.registerTelemetry(_logger::telemeterize);
 
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
