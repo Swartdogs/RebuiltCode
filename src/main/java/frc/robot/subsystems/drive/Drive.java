@@ -15,6 +15,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -42,10 +43,20 @@ import limelight.networktables.PoseEstimate;
 @Logged
 public class Drive extends TunerSwerveDrivetrain implements Subsystem
 {
-    private static final double kSimLoopPeriod = 0.004; // 4 ms
+    private static final double kSimLoopPeriod                      = 0.004; // 4 ms
     private final DriveVision   _vision;
-    private Notifier            m_simNotifier  = null;
+    private Notifier            m_simNotifier                       = null;
     private double              m_lastSimTime;
+    @Logged
+    private Pose2d              _robotPoseNow                       = new Pose2d();
+    @Logged
+    private double              _robotSpeedVxMetersPerSecond        = 0.0;
+    @Logged
+    private double              _robotSpeedVyMetersPerSecond        = 0.0;
+    @Logged
+    private double              _robotSpeedOmegaRadiansPerSecond    = 0.0;
+    @Logged
+    private Translation2d       _fieldRelativeTranslationalVelocity = new Translation2d();
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -230,6 +241,16 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Override
     public void periodic()
     {
+        var driveState = getState();
+        var robotPose  = driveState.Pose;
+        var robotSpeed = driveState.Speeds;
+
+        _robotPoseNow                       = robotPose;
+        _robotSpeedVxMetersPerSecond        = robotSpeed.vxMetersPerSecond;
+        _robotSpeedVyMetersPerSecond        = robotSpeed.vyMetersPerSecond;
+        _robotSpeedOmegaRadiansPerSecond    = robotSpeed.omegaRadiansPerSecond;
+        _fieldRelativeTranslationalVelocity = new Translation2d(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond).rotateBy(robotPose.getRotation());
+
         /*
          * Periodically try to apply the operator perspective. If we haven't applied the
          * operator perspective before, then we should apply it regardless of DS state.
