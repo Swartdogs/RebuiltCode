@@ -1,10 +1,7 @@
 package frc.robot;
 
-import java.util.stream.IntStream;
-
 import choreo.auto.AutoFactory;
 import choreo.trajectory.SwerveSample;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -12,74 +9,53 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.GeneralConstants;
-import frc.robot.generated.ChoreoTraj;
 import frc.robot.generated.ChoreoVars;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Utilities;
 
-public class Autos extends SubsystemBase
+public class Autos
 {
     private enum AutoMode
     {
-        // @formatter:off
-        DoNothing            ("Do Nothing"),
-        ShootOnly            ("Shoot Only"),
-        ShootWithDelay       ("Shoot with Delay"),
-        ShootThenDrive       ("Shoot then Drive"),
-        ShootWithDelayThenDrive("Shoot with Delay then Drive");
-        // @formatter:on
-
-        public final String displayName;
-
-        private AutoMode(String name)
-        {
-            displayName = name;
-        }
+        DoNothing,
+        ShootOnly,
+        ShootWithDelay,
+        ShootThenDrive,
+        ShootWithDelayThenDrive
     }
 
     private enum StartPosition
     {
-        // @formatter:off
-        LeftTrench ("Left Trench",  ChoreoVars.Poses.LeftTrench),
-        LeftBump   ("Left Bump",    ChoreoVars.Poses.LeftBump),
-        HubStart   ("Hub",          ChoreoVars.Poses.HubStart),
-        RightBump  ("Right Bump",   ChoreoVars.Poses.RightBump),
-        RightTrench("Right Trench", ChoreoVars.Poses.RightTrench);
+        LeftTrench(ChoreoVars.Poses.LeftTrench),
+        LeftBump(ChoreoVars.Poses.LeftBump),
+        HubStart(ChoreoVars.Poses.HubStart),
+        RightBump(ChoreoVars.Poses.RightBump),
+        RightTrench(ChoreoVars.Poses.RightTrench);
 
-        // @formatter:on
+        public final Pose2d pose;
 
-        public String displayName;
-        public Pose2d pose;
-
-        private StartPosition(String name, Pose2d bluePose)
+        private StartPosition(Pose2d bluePose)
         {
-            displayName = name;
-            pose        = bluePose;
+            pose = bluePose;
         }
     }
 
-    private static final String                  NO_TRAJECTORY      = "None (Stay)";
-    private final AutoFactory                    _autoFactory;
-    private final Drive                          _driveSubsystem;
-    private final Shooter                        _shooterSubsystem;
-    private final SwerveRequest.FieldCentric     _autoRequest       = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-    private final PIDController                  _xController       = new PIDController(0.0, 0.0, 0.0);
-    private final PIDController                  _yController       = new PIDController(0.0, 0.0, 0.0);
-    private final PIDController                  _headingController = new PIDController(0.0, 0.0, 0.0);
-    private final SendableChooser<AutoMode>      _modeChooser       = new SendableChooser<AutoMode>();
-    private final SendableChooser<Integer>       _autoDelay         = new SendableChooser<Integer>();
-    private final SendableChooser<String>        _trajChooser       = new SendableChooser<String>();
-    private final SendableChooser<StartPosition> _startChooser      = new SendableChooser<StartPosition>();
-    private final Field2d                        _field;
-    private StartPosition                        _startPosition     = null;
+    private static final String              NO_TRAJECTORY           = "None (Stay)";
+    private static final AutoMode            DEFAULT_AUTO_MODE       = AutoMode.ShootOnly;
+    private static final int                 DEFAULT_AUTO_DELAY_SECS = 0;
+    private static final StartPosition       DEFAULT_START_POSITION  = StartPosition.LeftTrench;
+    private static final String              DEFAULT_AUTO_TRAJECTORY = NO_TRAJECTORY;
+    private final AutoFactory                _autoFactory;
+    private final Drive                      _driveSubsystem;
+    private final Shooter                    _shooterSubsystem;
+    private final SwerveRequest.FieldCentric _autoRequest            = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private final PIDController              _xController            = new PIDController(0.0, 0.0, 0.0);
+    private final PIDController              _yController            = new PIDController(0.0, 0.0, 0.0);
+    private final PIDController              _headingController      = new PIDController(0.0, 0.0, 0.0);
 
     public Autos(Drive driveSubsystem, Shooter shooterSubsystem)
     {
@@ -97,54 +73,16 @@ public class Autos extends SubsystemBase
             driveSubsystem
         );
         // @formatter:on
-
-        _modeChooser.setDefaultOption(AutoMode.ShootOnly.displayName, AutoMode.ShootOnly);
-        _modeChooser.addOption(AutoMode.ShootWithDelay.displayName, AutoMode.ShootWithDelay);
-        _modeChooser.addOption(AutoMode.ShootThenDrive.displayName, AutoMode.ShootThenDrive);
-        _modeChooser.addOption(AutoMode.ShootWithDelayThenDrive.displayName, AutoMode.ShootWithDelayThenDrive);
-        _modeChooser.addOption(AutoMode.DoNothing.displayName, AutoMode.DoNothing);
-
-        _autoDelay.setDefaultOption("0", 0);
-        IntStream.range(1, 6).forEach(n -> _autoDelay.addOption(String.valueOf(n), n));
-
-        _startChooser.setDefaultOption(StartPosition.LeftTrench.displayName, StartPosition.LeftTrench);
-        _startChooser.addOption(StartPosition.LeftBump.displayName, StartPosition.LeftBump);
-        _startChooser.addOption(StartPosition.HubStart.displayName, StartPosition.HubStart);
-        _startChooser.addOption(StartPosition.RightBump.displayName, StartPosition.RightBump);
-        _startChooser.addOption(StartPosition.RightTrench.displayName, StartPosition.RightTrench);
-
-        _trajChooser.setDefaultOption(NO_TRAJECTORY, NO_TRAJECTORY);
-        ChoreoTraj.ALL_TRAJECTORIES.keySet().stream().sorted().forEach(name -> _trajChooser.addOption(name, name));
-
-        _field = new Field2d();
-
-        SmartDashboard.putData("Auto Mode", _modeChooser);
-        SmartDashboard.putData("Auto Trajectory", _trajChooser);
-        SmartDashboard.putData("Auto Delay", _autoDelay);
-        SmartDashboard.putData("Start Position", _startChooser);
-        SmartDashboard.putData("Autonomous Mode", _field);
-    }
-
-    @Override
-    public void periodic()
-    {
-        var currentStart = _startChooser.getSelected();
-
-        if (_startPosition != currentStart)
-        {
-            _startPosition = currentStart;
-            _field.setRobotPose(flip(_startPosition.pose));
-        }
     }
 
     public Command buildAuto()
     {
-        var start    = _startChooser.getSelected();
-        var mode     = _modeChooser.getSelected();
-        var trajName = _trajChooser.getSelected();
+        var start    = DEFAULT_START_POSITION;
+        var mode     = DEFAULT_AUTO_MODE;
+        var trajName = DEFAULT_AUTO_TRAJECTORY;
         var reset    = Commands.runOnce(() -> _driveSubsystem.resetPose(flip(start.pose)));
-        var shoot    = _shooterSubsystem.shoot();
-        var delay    = Commands.waitSeconds(_autoDelay.getSelected());
+        var shoot    = _shooterSubsystem.shoot().withTimeout(4.0);
+        var delay    = Commands.waitSeconds(DEFAULT_AUTO_DELAY_SECS);
         var drive    = NO_TRAJECTORY.equals(trajName) ? Commands.none() : _autoFactory.trajectoryCmd(trajName);
 
         // @formatter:off
@@ -166,7 +104,7 @@ public class Autos extends SubsystemBase
         // @formatter:off
         _driveSubsystem.setControl(_autoRequest
             .withVelocityX(sample.vx + _xController.calculate(pose.getX(), sample.x))
-            .withVelocityY(sample.vy + _yController.calculate(pose.getY(), sample.y))   
+            .withVelocityY(sample.vy + _yController.calculate(pose.getY(), sample.y))
             .withRotationalRate(sample.omega + _headingController.calculate(pose.getRotation().getRadians(), sample.heading))
         );
         // @formatter:on
