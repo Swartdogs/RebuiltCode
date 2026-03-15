@@ -20,9 +20,6 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
@@ -32,7 +29,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
-import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.MeasureUtil;
 import frc.robot.util.Utilities;
@@ -50,6 +46,7 @@ public class Turret
     private final TalonFX                    _turretMotor;
     private final AnalogPotentiometer        _turretSensor;
     private final Supplier<SwerveDriveState> _swerveStateSupplier;
+    private final TurretDirector             _turretDirector;
     private final Limelight                  _limelight;
     private final PIDController              _pidController;
     private SwerveDriveState                 _currentSwerveState;
@@ -79,6 +76,7 @@ public class Turret
     public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
     {
         _swerveStateSupplier = swerveStateSupplier;
+        _turretDirector      = new TurretDirector();
 
         var sensorRange  = ShooterConstants.TURRET_HARD_MAX_ANGLE.minus(ShooterConstants.TURRET_HARD_MIN_ANGLE);
         var sensorOffset = ShooterConstants.TURRET_HARD_MIN_ANGLE;
@@ -143,105 +141,50 @@ public class Turret
 
         var fiducials   = new AprilTagFiducial[0];
         var motorOutput = Volts.zero();
-        var rawSetpoint = Degrees.zero();
 
         switch (_turretState)
         {
             case Track:
-                _hasSetpoint = true;
                 var results = _limelight.getLatestResults();
 
                 if (results.isPresent())
                 {
                     fiducials = results.get().targets_Fiducials;
                 }
-
-                var localHubTranslation = getHubTranslationInRobotFrame();
-                var turretToHubTranslation = localHubTranslation.minus(ShooterConstants.TURRET_POSITION);
-
-                _targetDistance = Meters.of(turretToHubTranslation.getNorm());
-                rawSetpoint = getTurretSetpointForRobotFrameTarget(turretToHubTranslation);
-
-                AprilTagFiducial bestTag = null;
-
-                for (AprilTagFiducial tag : fiducials)
-                {
-                    // Limelight reports the tag ID as a double, but our tag lists are ints.
-                    var tagId = (int)Math.round(tag.fiducialID);
-
-                    if (!Utilities.getOurHubTagIds().contains(tagId))
-                    {
-                        continue;
-                    }
-
-                    if (bestTag == null || tag.ta > bestTag.ta || tag.ta == bestTag.ta && Math.abs(tag.tx) < Math.abs(bestTag.tx))
-                    {
-                        bestTag = tag;
-                    }
-                }
-
-                if (bestTag != null)
-                {
-                    _limelightHasTarget = true;
-                    var txCorrection = Degrees.of(-bestTag.tx);
-
-                    // Ignore tiny Limelight yaw error so we don't keep hunting on vision noise.
-                    if (!MathUtil.isNear(0.0, txCorrection.in(Degrees), ShooterConstants.TURRET_TRACK_TX_DEADBAND.in(Degrees)))
-                    {
-                        rawSetpoint = rawSetpoint.minus(txCorrection);
-                    }
-                }
-
-                // The shooter exit point is forward of the turret rotation center. This creates
-                // a lateral miss that varies as sin(turretAngle): zero at 0°, max at ±90°.
-                // Guard distance from zero to avoid atan2 blowing up at startup.
-                var safeDistanceM = Math.max(_targetDistance.in(Meters), 0.5);
-                var lateralErrorM = ShooterConstants.SHOOTER_LATERAL_OFFSET.in(Meters) * Math.sin(Math.toRadians(rawSetpoint.in(Degrees)));
-                rawSetpoint = rawSetpoint.plus(Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM))));
-
-                _targetValid = _hubActive;
+                var trackSolution = _turretDirector.calculate(_turretState, _currentSwerveState, Utilities.getHubCoordinates(), Utilities.getOurHubTagIds(), Utilities.isBlueAlliance(), _hubActive, fiducials);
+                _hasSetpoint = true;
+                _limelightHasTarget = trackSolution.hasVisionTarget();
+                _targetValid = trackSolution.valid();
+                _targetDistance = trackSolution.distance();
+                _targetPose = trackSolution.targetPose();
+                _turretSetpoint = trackSolution.turretAngle();
                 break;
 
             case Pass:
+                var passSolution = _turretDirector.calculate(_turretState, _currentSwerveState, Utilities.getHubCoordinates(), Utilities.getOurHubTagIds(), Utilities.isBlueAlliance(), _hubActive);
                 _hasSetpoint = true;
-                _targetValid = true;
-                Angle fieldTargetAngle;
-
-                if (Utilities.isBlueAlliance())
-                {
-                    _targetDistance  = _currentSwerveState.Pose.getMeasureX();
-                    fieldTargetAngle = Degrees.of(180);
-                }
-                else
-                {
-                    _targetDistance  = GeneralConstants.FIELD_SIZE_X.minus(_currentSwerveState.Pose.getMeasureX());
-                    fieldTargetAngle = Degrees.zero();
-                }
-
-                rawSetpoint = fieldTargetAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                _limelightHasTarget = passSolution.hasVisionTarget();
+                _targetValid = passSolution.valid();
+                _targetDistance = passSolution.distance();
+                _targetPose = passSolution.targetPose();
+                _turretSetpoint = passSolution.turretAngle();
                 break;
 
             case ManualAngle:
                 _hasSetpoint = true;
                 _targetValid = false;
-                rawSetpoint = _manualAngleSetpoint;
+                _turretSetpoint = MeasureUtil.clamp(moduloAngle(_manualAngleSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
                 break;
 
             case Idle:
             default:
                 _hasSetpoint = false;
                 _targetValid = false;
-                rawSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 _targetDistance = Meters.zero();
+                _targetPose = _currentSwerveState.Pose;
+                _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 break;
         }
-
-        var forwardTranslation    = new Translation2d(_targetDistance, Meters.zero());
-        var rotatedByTurretOffset = forwardTranslation.rotateBy(new Rotation2d(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD));
-        var rotatedBySetpoint     = rotatedByTurretOffset.rotateBy(new Rotation2d(rawSetpoint));
-
-        _targetPose     = _currentSwerveState.Pose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
-        _turretSetpoint = MeasureUtil.clamp(moduloAngle(rawSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
 
         if (_hasSetpoint && !_disabled)
         {
@@ -339,17 +282,5 @@ public class Turret
         }
 
         return requestedVoltage;
-    }
-
-    private Translation2d getHubTranslationInRobotFrame()
-    {
-        var robotToHubField = Utilities.getHubCoordinates().minus(_currentSwerveState.Pose.getTranslation());
-
-        return robotToHubField.rotateBy(_currentSwerveState.Pose.getRotation().unaryMinus());
-    }
-
-    private Angle getTurretSetpointForRobotFrameTarget(Translation2d targetTranslation)
-    {
-        return targetTranslation.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
     }
 }
