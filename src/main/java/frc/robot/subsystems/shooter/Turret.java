@@ -160,7 +160,9 @@ public class Turret
 
                 for (AprilTagFiducial tag : fiducials)
                 {
-                    if (!Utilities.getOurHubTagIds().contains(tag.fiducialID))
+                    var tagId = (int)Math.round(tag.fiducialID);
+
+                    if (!Utilities.getOurHubTagIds().contains(tagId))
                     {
                         continue;
                     }
