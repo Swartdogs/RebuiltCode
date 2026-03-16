@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.Constants.LoggingConstants;
 
 public class Telemetry
 {
@@ -86,7 +87,7 @@ public class Telemetry
         driveTimestamp.set(state.Timestamp);
         driveOdometryFrequency.set(1.0 / state.OdometryPeriod);
 
-        if (LoggingConfig.ENABLE_CTRE_SIGNAL_LOG)
+        if (LoggingConstants.ENABLE_CTRE_SIGNAL_LOG)
         {
             SignalLogger.writeStruct("DriveState/Pose", Pose2d.struct, state.Pose);
             SignalLogger.writeStruct("DriveState/Speeds", ChassisSpeeds.struct, state.Speeds);

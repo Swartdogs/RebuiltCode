@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.GeneralConstants;
+import frc.robot.Constants.LoggingConstants;
 
 @Logged
 public class Robot extends TimedRobot
@@ -25,25 +26,19 @@ public class Robot extends TimedRobot
     private final RobotContainer m_robotContainer;
 
     /* log and replay timestamp and joystick data */
-    private final HootAutoReplay m_timeAndJoystickReplay = LoggingConfig.ENABLE_CTRE_HOOT_REPLAY ? new HootAutoReplay().withTimestampReplay().withJoystickReplay() : null;
+    private final HootAutoReplay m_timeAndJoystickReplay = LoggingConstants.ENABLE_CTRE_HOOT_REPLAY ? new HootAutoReplay().withTimestampReplay().withJoystickReplay() : null;
 
     public Robot()
     {
-        configureLogging();
-        m_robotContainer = new RobotContainer();
-        Epilogue.bind(this);
-    }
-
-    private void configureLogging()
-    {
-        if (LoggingConfig.ENABLE_WPILIB_DATA_LOG)
+        if (LoggingConstants.ENABLE_WPILIB_DATA_LOG)
         {
             DataLogManager.start();
             DriverStation.startDataLog(DataLogManager.getLog());
         }
 
-        SignalLogger.enableAutoLogging(LoggingConfig.ENABLE_CTRE_SIGNAL_LOG);
-        if (LoggingConfig.ENABLE_CTRE_SIGNAL_LOG)
+        SignalLogger.enableAutoLogging(LoggingConstants.ENABLE_CTRE_SIGNAL_LOG);
+
+        if (LoggingConstants.ENABLE_CTRE_SIGNAL_LOG)
         {
             SignalLogger.start();
         }
@@ -51,6 +46,9 @@ public class Robot extends TimedRobot
         {
             SignalLogger.stop();
         }
+
+        m_robotContainer = new RobotContainer();
+        Epilogue.bind(this);
     }
 
     @Override
@@ -60,6 +58,7 @@ public class Robot extends TimedRobot
         {
             m_timeAndJoystickReplay.update();
         }
+
         CommandScheduler.getInstance().run();
     }
 
