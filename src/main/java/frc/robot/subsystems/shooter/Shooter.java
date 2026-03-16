@@ -1,6 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.Supplier;
@@ -8,12 +9,14 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.subsystems.shooter.Turret.TurretState;
+import frc.robot.subsystems.shooter.TurretDirector.ShotMode;
+import frc.robot.subsystems.shooter.TurretDirector.ShotSolution;
 
 @Logged
 public class Shooter extends SubsystemBase
@@ -21,6 +24,38 @@ public class Shooter extends SubsystemBase
     public enum ShooterState
     {
         Idle, Preparing, Ready, Firing, Manual, TrackingOnly;
+    }
+
+    public final Flywheel       _flywheel;
+    public final Feeder         _feeder;
+    public final Turret         _turret;
+    public final Rotor          _rotor;
+    public final TurretDirector _turretDirector;
+    @Logged
+    private ShooterState        _state;
+    @Logged
+    private boolean             _autoShootEnabled;
+    @Logged
+    private ShotMode            _requestedShotMode;
+    private ShotSolution        _currentShotSolution;
+
+    public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
+    {
+        _flywheel            = new Flywheel();
+        _feeder              = new Feeder();
+        _turret              = new Turret();
+        _rotor               = new Rotor();
+        _turretDirector      = new TurretDirector(swerveStateSupplier);
+        _state               = ShooterState.Idle;
+        _autoShootEnabled    = false;
+        _requestedShotMode   = ShotMode.Idle;
+        _currentShotSolution = createIdleSolution();
+
+        _feeder.set(false);
+        _rotor.set(false);
+        _flywheel.stop();
+        _turret.clearTargetAngle();
+        _turret.setDisabled(false);
     }
 
     public Command startShooter()
@@ -52,10 +87,12 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _state            = manual ? ShooterState.Manual : ShooterState.Idle;
-            _autoShootEnabled = false;
+            _state               = manual ? ShooterState.Manual : ShooterState.Idle;
+            _autoShootEnabled    = false;
+            _requestedShotMode   = ShotMode.Idle;
+            _currentShotSolution = createIdleSolution();
             _feeder.set(false);
-            _turret.setTurretState(TurretState.Idle);
+            _turret.clearTargetAngle();
             _turret.setDisabled(manual);
 
             if (manual)
@@ -156,7 +193,8 @@ public class Shooter extends SubsystemBase
     {
         return startEnd(() ->
         {
-            _state = ShooterState.TrackingOnly;
+            _state             = ShooterState.TrackingOnly;
+            _requestedShotMode = ShotMode.Track;
             _turret.setDisabled(false);
         }, this::stopShooter);
     }
@@ -166,7 +204,6 @@ public class Shooter extends SubsystemBase
         if (inManualMode())
         {
             _turret.setDisabled(false);
-            _turret.setTurretState(TurretState.ManualAngle);
             _turret.bumpManualAngle(Degrees.of(deltaDeg));
         }
     }
@@ -174,31 +211,6 @@ public class Shooter extends SubsystemBase
     public double getManualTurretAngleDeg()
     {
         return _turret.getManualAngle().in(Degrees);
-    }
-
-    public final Flywheel _flywheel;
-    public final Feeder   _feeder;
-    public final Turret   _turret;
-    public final Rotor    _rotor;
-    @Logged
-    private ShooterState  _state;
-    @Logged
-    private boolean       _autoShootEnabled;
-
-    public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
-    {
-        _flywheel         = new Flywheel();
-        _feeder           = new Feeder();
-        _turret           = new Turret(swerveStateSupplier);
-        _rotor            = new Rotor();
-        _state            = ShooterState.Idle;
-        _autoShootEnabled = false;
-
-        _feeder.set(false);
-        _rotor.set(false);
-        _flywheel.stop();
-        _turret.setTurretState(TurretState.Idle);
-        _turret.setDisabled(false);
     }
 
     @Override
@@ -210,7 +222,7 @@ public class Shooter extends SubsystemBase
             case Ready:
                 _feeder.set(false);
                 _rotor.set(false);
-                primeShot();
+                runRequestedShot(true);
 
                 if (isReadyToFeed())
                 {
@@ -230,27 +242,32 @@ public class Shooter extends SubsystemBase
                 break;
 
             case Firing:
-                _feeder.set(true);
-                _rotor.set(true);
-                primeShot();
+                runRequestedShot(true);
                 if (isReadyToFeed())
                 {
                     _feeder.set(true);
+                    _rotor.set(true);
                 }
                 else
                 {
                     _feeder.set(false);
+                    _rotor.set(false);
                     _state = ShooterState.Preparing;
                 }
                 break;
 
             case Manual:
+                if (_requestedShotMode != ShotMode.Idle)
+                {
+                    runRequestedShot(false);
+                }
                 break;
 
             case TrackingOnly:
                 _feeder.set(false);
                 _flywheel.stop();
-                _turret.setTurretState(TurretState.Track);
+                _requestedShotMode = ShotMode.Track;
+                runRequestedShot(false);
                 break;
 
             case Idle:
@@ -258,7 +275,7 @@ public class Shooter extends SubsystemBase
                 _flywheel.stop();
                 _feeder.set(false);
                 _rotor.set(false);
-                _turret.setTurretState(TurretState.Idle);
+                clearShotRequest();
                 break;
         }
 
@@ -276,21 +293,21 @@ public class Shooter extends SubsystemBase
 
     public void startPreparedShoot(boolean autoShoot)
     {
-        beginShootingSequence(TurretState.Track, autoShoot);
+        beginShootingSequence(ShotMode.Track, autoShoot);
     }
 
     public void startPass(boolean autoShoot)
     {
-        beginShootingSequence(TurretState.Pass, autoShoot);
+        beginShootingSequence(ShotMode.Pass, autoShoot);
     }
 
-    private void beginShootingSequence(TurretState turretState, boolean autoShoot)
+    private void beginShootingSequence(ShotMode shotMode, boolean autoShoot)
     {
         _feeder.set(false);
         _turret.setDisabled(false);
-        _turret.setTurretState(turretState);
-        _autoShootEnabled = autoShoot;
-        _state            = ShooterState.Preparing;
+        _requestedShotMode = shotMode;
+        _autoShootEnabled  = autoShoot;
+        _state             = ShooterState.Preparing;
     }
 
     public void stopShooter()
@@ -298,6 +315,7 @@ public class Shooter extends SubsystemBase
         _state            = ShooterState.Idle;
         _autoShootEnabled = false;
         _turret.setDisabled(false);
+        clearShotRequest();
     }
 
     public void commenceFiring()
@@ -308,13 +326,34 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    private void primeShot()
+    private void runRequestedShot(boolean spinFlywheel)
     {
-        if (_state != ShooterState.Idle)
+        if (_requestedShotMode == ShotMode.Idle)
         {
-            var distance = _turret.getTargetDistance();
-            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(distance));
+            _turret.clearTargetAngle();
+            _currentShotSolution = createIdleSolution();
+            return;
         }
+
+        _currentShotSolution = _turretDirector.calculate(_requestedShotMode);
+        _turret.setTargetAngle(_currentShotSolution.turretAngle());
+
+        if (spinFlywheel)
+        {
+            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(_currentShotSolution.distance()));
+        }
+    }
+
+    private void clearShotRequest()
+    {
+        _requestedShotMode   = ShotMode.Idle;
+        _currentShotSolution = createIdleSolution();
+        _turret.clearTargetAngle();
+    }
+
+    private ShotSolution createIdleSolution()
+    {
+        return new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false);
     }
 
     private boolean isReadyToFeed()

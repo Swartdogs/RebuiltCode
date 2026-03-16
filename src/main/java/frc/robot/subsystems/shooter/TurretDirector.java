@@ -4,9 +4,11 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -14,28 +16,92 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.subsystems.shooter.Turret.TurretState;
 import frc.robot.util.MeasureUtil;
+import frc.robot.util.Utilities;
+import limelight.Limelight;
 import limelight.networktables.target.AprilTagFiducial;
 
+@Logged
 public class TurretDirector
 {
-    public ShotSolution calculate(TurretState turretState, SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean isBlueAlliance, boolean hubActive, AprilTagFiducial... fiducials)
+    public enum ShotMode
     {
-        switch (turretState)
+        Idle, Track, Pass
+    }
+
+    public record ShotSolution(boolean valid, Angle turretAngle, Distance distance, ShotMode mode, Pose2d targetPose, boolean hasVisionTarget)
+    {
+    }
+
+    private final Supplier<SwerveDriveState> _swerveStateSupplier;
+    private final Limelight                  _limelight;
+    private List<Integer>                    _targetTagFilter;
+    private ShotSolution                     _currentSolution;
+    @Logged
+    private Distance                         _targetDistance;
+    @Logged
+    private Pose2d                           _targetPose;
+    @Logged
+    private boolean                          _limelightHasTarget;
+    @Logged
+    private boolean                          _hubActive;
+    @Logged
+    private boolean                          _targetValid;
+
+    public TurretDirector(Supplier<SwerveDriveState> swerveStateSupplier)
+    {
+        _swerveStateSupplier = swerveStateSupplier;
+        _limelight           = new Limelight(ShooterConstants.LIMELIGHT_NAME);
+        _targetTagFilter     = List.of();
+        _currentSolution     = new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false);
+        _targetDistance      = Meters.zero();
+        _targetPose          = new Pose2d();
+        _limelightHasTarget  = false;
+        _hubActive           = false;
+        _targetValid         = false;
+
+        _limelight.getSettings().withAprilTagOffset(ShooterConstants.CENTER_TAG_TO_HUB_CENTER_OFFSET).save();
+        updateFilter(Utilities.getOurHubTagIds(), true);
+    }
+
+    public ShotSolution calculate(ShotMode shotMode)
+    {
+        var swerveState    = _swerveStateSupplier.get();
+        var targetTagIds   = Utilities.getOurHubTagIds();
+        var isBlueAlliance = Utilities.isBlueAlliance();
+
+        updateFilter(targetTagIds, false);
+
+        _hubActive = Utilities.isHubActive();
+
+        var fiducials = new AprilTagFiducial[0];
+        var results   = _limelight.getLatestResults();
+
+        if (results.isPresent())
         {
-            case Track:
-                return calculateTrack(swerveState, hubCoordinates, targetTagIds, hubActive, fiducials);
-
-            case Pass:
-                return calculatePass(swerveState, isBlueAlliance);
-
-            case Idle:
-            default:
-                return new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), turretState, swerveState.Pose, false);
+            fiducials = results.get().targets_Fiducials;
         }
+
+        var solution = calculate(shotMode, swerveState, Utilities.getHubCoordinates(), targetTagIds, isBlueAlliance, _hubActive, fiducials);
+        _currentSolution    = solution;
+        _targetDistance     = solution.distance();
+        _targetPose         = solution.targetPose();
+        _limelightHasTarget = solution.hasVisionTarget();
+        _targetValid        = solution.valid();
+        return solution;
+    }
+
+    ShotSolution calculate(ShotMode shotMode, SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean isBlueAlliance, boolean hubActive, AprilTagFiducial... fiducials)
+    {
+        return switch (shotMode)
+        {
+            case Track -> calculateTrack(swerveState, hubCoordinates, targetTagIds, hubActive, fiducials);
+            case Pass -> calculatePass(swerveState, isBlueAlliance);
+            case Idle -> new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, swerveState.Pose, false);
+        };
     }
 
     private ShotSolution calculateTrack(SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean hubActive, AprilTagFiducial... fiducials)
@@ -62,7 +128,7 @@ public class TurretDirector
         var lateralErrorM = ShooterConstants.SHOOTER_LATERAL_OFFSET.in(Meters) * Math.sin(Math.toRadians(rawSetpoint.in(Degrees)));
         rawSetpoint = rawSetpoint.plus(Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM))));
 
-        return new ShotSolution(hubActive, clampTurretAngle(rawSetpoint), distance, TurretState.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null);
+        return new ShotSolution(hubActive, clampTurretAngle(rawSetpoint), distance, ShotMode.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null);
     }
 
     private ShotSolution calculatePass(SwerveDriveState swerveState, boolean isBlueAlliance)
@@ -83,7 +149,7 @@ public class TurretDirector
 
         var rawSetpoint = fieldTargetAngle.minus(swerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
 
-        return new ShotSolution(true, clampTurretAngle(rawSetpoint), distance, TurretState.Pass, buildTargetPose(swerveState.Pose, distance, rawSetpoint), false);
+        return new ShotSolution(true, clampTurretAngle(rawSetpoint), distance, ShotMode.Pass, buildTargetPose(swerveState.Pose, distance, rawSetpoint), false);
     }
 
     private Pose2d buildTargetPose(Pose2d robotPose, Distance distance, Angle rawSetpoint)
@@ -133,5 +199,16 @@ public class TurretDirector
         }
 
         return bestTag;
+    }
+
+    private void updateFilter(List<Integer> filters, boolean force)
+    {
+        if (!force && (!DriverStation.isDisabled() || filters.equals(_targetTagFilter)))
+        {
+            return;
+        }
+
+        _limelight.getSettings().withAprilTagIdFilter(filters).save();
+        _targetTagFilter = List.copyOf(filters);
     }
 }
