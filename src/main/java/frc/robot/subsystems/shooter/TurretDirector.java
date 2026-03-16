@@ -105,14 +105,13 @@ public class TurretDirector
 
     private ShotSolution calculateTrack(SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean hubActive, AprilTagFiducial... fiducials)
     {
-        // Use explicit robot-frame geometry points here instead of the old
-        // lateral-offset
-        // trig fudge, in the same "named transforms first" spirit used by 6328.
+        // Keep the named geometry points here, but preserve the old static shot
+        // behavior for now: distance is still pivot-to-hub, and the release point
+        // only contributes its lateral component as the legacy angle trim.
         var hubTranslationInRobotFrame = getHubTranslationInRobotFrame(swerveState, hubCoordinates);
         var pivotToHubTranslation      = hubTranslationInRobotFrame.minus(ShooterConstants.ROBOT_TO_TURRET_PIVOT);
-        var releaseToHubTranslation    = hubTranslationInRobotFrame.minus(ShooterConstants.ROBOT_TO_TURRET_RELEASE);
         var distance                   = Meters.of(pivotToHubTranslation.getNorm());
-        var rawSetpoint                = getTurretSetpointForRobotFrameTarget(releaseToHubTranslation);
+        var rawSetpoint                = getTurretSetpointForRobotFrameTarget(pivotToHubTranslation);
         var bestTag                    = selectBestTag(targetTagIds, fiducials);
 
         if (bestTag != null)
@@ -124,6 +123,8 @@ public class TurretDirector
                 rawSetpoint = rawSetpoint.minus(txCorrection);
             }
         }
+
+        rawSetpoint = rawSetpoint.plus(getLegacyReleaseLateralCorrection(rawSetpoint, distance));
 
         return new ShotSolution(hubActive, rawSetpoint, distance, ShotMode.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null);
     }
@@ -168,6 +169,15 @@ public class TurretDirector
     private Angle getTurretSetpointForRobotFrameTarget(Translation2d targetTranslation)
     {
         return targetTranslation.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+    }
+
+    private Angle getLegacyReleaseLateralCorrection(Angle rawSetpoint, Distance distance)
+    {
+        var safeDistanceM        = Math.max(distance.in(Meters), 0.5);
+        var releaseLateralOffset = ShooterConstants.TURRET_PIVOT_TO_RELEASE.getY();
+        var lateralErrorM        = releaseLateralOffset * Math.sin(Math.toRadians(rawSetpoint.in(Degrees)));
+
+        return Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM)));
     }
 
     private AprilTagFiducial selectBestTag(List<Integer> targetTagIds, AprilTagFiducial... fiducials)
