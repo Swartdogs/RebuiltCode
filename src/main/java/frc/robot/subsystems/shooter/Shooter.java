@@ -38,6 +38,16 @@ public class Shooter extends SubsystemBase
     @Logged
     private ShotMode            _requestedShotMode;
     private ShotSolution        _currentShotSolution;
+    @Logged
+    private boolean             _solutionReady;
+    @Logged
+    private boolean             _turretReady;
+    @Logged
+    private boolean             _flywheelReady;
+    @Logged
+    private boolean             _targetReady;
+    @Logged
+    private boolean             _feedReady;
 
     public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
     {
@@ -50,6 +60,11 @@ public class Shooter extends SubsystemBase
         _autoShootEnabled    = false;
         _requestedShotMode   = ShotMode.Idle;
         _currentShotSolution = createIdleSolution();
+        _solutionReady       = false;
+        _turretReady         = false;
+        _flywheelReady       = false;
+        _targetReady         = false;
+        _feedReady           = false;
 
         _feeder.set(false);
         _rotor.set(false);
@@ -332,6 +347,7 @@ public class Shooter extends SubsystemBase
         {
             _turret.clearTargetAngle();
             _currentShotSolution = createIdleSolution();
+            clearReadinessGate();
             return;
         }
 
@@ -348,6 +364,7 @@ public class Shooter extends SubsystemBase
     {
         _requestedShotMode   = ShotMode.Idle;
         _currentShotSolution = createIdleSolution();
+        clearReadinessGate();
         _turret.clearTargetAngle();
     }
 
@@ -358,6 +375,30 @@ public class Shooter extends SubsystemBase
 
     private boolean isReadyToFeed()
     {
-        return _flywheel.atSpeed();
+        _solutionReady = _currentShotSolution.valid();
+        _turretReady   = _turret.isLinedUp();
+        _flywheelReady = _flywheel.atSpeed();
+        _targetReady   = hasValidTargetForCurrentShot();
+        _feedReady     = _solutionReady && _turretReady && _flywheelReady && _targetReady;
+        return _feedReady;
+    }
+
+    private boolean hasValidTargetForCurrentShot()
+    {
+        return switch (_currentShotSolution.mode())
+        {
+            case Track -> _currentShotSolution.valid();
+            case Pass -> true;
+            case Idle -> false;
+        };
+    }
+
+    private void clearReadinessGate()
+    {
+        _solutionReady = false;
+        _turretReady   = false;
+        _flywheelReady = false;
+        _targetReady   = false;
+        _feedReady     = false;
     }
 }
