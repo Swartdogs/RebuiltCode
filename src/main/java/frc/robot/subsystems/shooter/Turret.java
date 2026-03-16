@@ -20,11 +20,13 @@ import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.util.MeasureUtil;
 
 @Logged
 public class Turret
 {
+    private static final int    kCandidateWrapCount     = 2;
+    private static final double kComparisonToleranceDeg = 1e-9;
+
     enum ControlMode
     {
         Idle, TargetAngle, ManualAngle
@@ -95,12 +97,12 @@ public class Turret
         {
             case TargetAngle:
                 _hasSetpoint = true;
-                _turretSetpoint = clampToSoftLimits(_targetAngleSetpoint);
+                _turretSetpoint = selectLegalSetpoint(_targetAngleSetpoint);
                 break;
 
             case ManualAngle:
                 _hasSetpoint = true;
-                _turretSetpoint = clampToSoftLimits(_manualAngleSetpoint);
+                _turretSetpoint = selectLegalSetpoint(_manualAngleSetpoint);
                 break;
 
             case Idle:
@@ -161,14 +163,48 @@ public class Turret
         _disabled = disabled;
     }
 
-    private Angle moduloAngle(Angle angle)
+    private Angle selectLegalSetpoint(Angle requestedAngle)
     {
-        return Degrees.of(MathUtil.inputModulus(angle.in(Degrees), -180, 180));
+        return chooseNearestLegalAngle(_turretAngle, requestedAngle);
     }
 
-    private Angle clampToSoftLimits(Angle requestedAngle)
+    static Angle chooseNearestLegalAngle(Angle currentAngle, Angle requestedAngle)
     {
-        return MeasureUtil.clamp(moduloAngle(requestedAngle), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+        var currentDegrees   = currentAngle.in(Degrees);
+        var requestedDegrees = requestedAngle.in(Degrees);
+        var minDegrees       = ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Degrees);
+        var maxDegrees       = ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Degrees);
+        var wrapCenter       = (int)Math.round((currentDegrees - requestedDegrees) / 360.0);
+        var bestAngle        = MathUtil.clamp(requestedDegrees, minDegrees, maxDegrees);
+        var bestTravel       = Double.POSITIVE_INFINITY;
+        var bestClampAmount  = Double.POSITIVE_INFINITY;
+        var bestWrapDistance = Integer.MAX_VALUE;
+
+        for (int wrapOffset = -kCandidateWrapCount; wrapOffset <= kCandidateWrapCount; wrapOffset++)
+        {
+            var wrapIndex      = wrapCenter + wrapOffset;
+            var wrappedDegrees = requestedDegrees + 360.0 * wrapIndex;
+            var legalDegrees   = MathUtil.clamp(wrappedDegrees, minDegrees, maxDegrees);
+            var travelDegrees  = Math.abs(legalDegrees - currentDegrees);
+            var clampAmount    = Math.abs(legalDegrees - wrappedDegrees);
+            var wrapDistance   = Math.abs(wrapIndex);
+
+            // Inspired by Team 5000's TurretCalculator and 6328's unwrap-style helpers:
+            // choose a legal branch relative to the current azimuth instead of moduloing
+            // first, so requests near +/- soft limits stay on the local side.
+            var isBetterCandidate = travelDegrees < bestTravel || MathUtil.isNear(travelDegrees, bestTravel, kComparisonToleranceDeg)
+                    && (clampAmount < bestClampAmount || MathUtil.isNear(clampAmount, bestClampAmount, kComparisonToleranceDeg) && (wrapDistance < bestWrapDistance || wrapDistance == bestWrapDistance && legalDegrees > bestAngle));
+
+            if (isBetterCandidate)
+            {
+                bestAngle        = legalDegrees;
+                bestTravel       = travelDegrees;
+                bestClampAmount  = clampAmount;
+                bestWrapDistance = wrapDistance;
+            }
+        }
+
+        return Degrees.of(bestAngle);
     }
 
     private Voltage applySoftLimit(Voltage requestedVoltage)

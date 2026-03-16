@@ -19,7 +19,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.util.MeasureUtil;
 import frc.robot.util.Utilities;
 import limelight.Limelight;
 import limelight.networktables.target.AprilTagFiducial;
@@ -106,11 +105,15 @@ public class TurretDirector
 
     private ShotSolution calculateTrack(SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean hubActive, AprilTagFiducial... fiducials)
     {
-        var localHubTranslation    = getHubTranslationInRobotFrame(swerveState, hubCoordinates);
-        var turretToHubTranslation = localHubTranslation.minus(ShooterConstants.TURRET_POSITION);
-        var distance               = Meters.of(turretToHubTranslation.getNorm());
-        var rawSetpoint            = getTurretSetpointForRobotFrameTarget(turretToHubTranslation);
-        var bestTag                = selectBestTag(targetTagIds, fiducials);
+        // Use explicit robot-frame geometry points here instead of the old
+        // lateral-offset
+        // trig fudge, in the same "named transforms first" spirit used by 6328.
+        var hubTranslationInRobotFrame = getHubTranslationInRobotFrame(swerveState, hubCoordinates);
+        var pivotToHubTranslation      = hubTranslationInRobotFrame.minus(ShooterConstants.ROBOT_TO_TURRET_PIVOT);
+        var releaseToHubTranslation    = hubTranslationInRobotFrame.minus(ShooterConstants.ROBOT_TO_TURRET_RELEASE);
+        var distance                   = Meters.of(pivotToHubTranslation.getNorm());
+        var rawSetpoint                = getTurretSetpointForRobotFrameTarget(releaseToHubTranslation);
+        var bestTag                    = selectBestTag(targetTagIds, fiducials);
 
         if (bestTag != null)
         {
@@ -122,13 +125,7 @@ public class TurretDirector
             }
         }
 
-        // Preserve the current static shooter-offset correction so the calculator
-        // reproduces today's behavior before SWM math is introduced.
-        var safeDistanceM = Math.max(distance.in(Meters), 0.5);
-        var lateralErrorM = ShooterConstants.SHOOTER_LATERAL_OFFSET.in(Meters) * Math.sin(Math.toRadians(rawSetpoint.in(Degrees)));
-        rawSetpoint = rawSetpoint.plus(Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM))));
-
-        return new ShotSolution(hubActive, clampTurretAngle(rawSetpoint), distance, ShotMode.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null);
+        return new ShotSolution(hubActive, rawSetpoint, distance, ShotMode.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null);
     }
 
     private ShotSolution calculatePass(SwerveDriveState swerveState, boolean isBlueAlliance)
@@ -149,7 +146,7 @@ public class TurretDirector
 
         var rawSetpoint = fieldTargetAngle.minus(swerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
 
-        return new ShotSolution(true, clampTurretAngle(rawSetpoint), distance, ShotMode.Pass, buildTargetPose(swerveState.Pose, distance, rawSetpoint), false);
+        return new ShotSolution(true, rawSetpoint, distance, ShotMode.Pass, buildTargetPose(swerveState.Pose, distance, rawSetpoint), false);
     }
 
     private Pose2d buildTargetPose(Pose2d robotPose, Distance distance, Angle rawSetpoint)
@@ -171,12 +168,6 @@ public class TurretDirector
     private Angle getTurretSetpointForRobotFrameTarget(Translation2d targetTranslation)
     {
         return targetTranslation.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
-    }
-
-    private Angle clampTurretAngle(Angle rawSetpoint)
-    {
-        var wrappedDegrees = MathUtil.inputModulus(rawSetpoint.in(Degrees), -180, 180);
-        return MeasureUtil.clamp(Degrees.of(wrappedDegrees), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
     }
 
     private AprilTagFiducial selectBestTag(List<Integer> targetTagIds, AprilTagFiducial... fiducials)

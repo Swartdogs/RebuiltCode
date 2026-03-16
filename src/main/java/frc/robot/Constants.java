@@ -163,7 +163,6 @@ public final class Constants
         public static final Angle         TURRET_HOME_ANGLE                     = Degrees.of(0.0); // Forward-facing when no target
         public static final Angle         TURRET_TOLERANCE                      = Degrees.of(2.0); // degrees
         public static final Angle         TURRET_TRACK_TX_DEADBAND              = Degrees.of(2);
-        public static final Distance      SHOOTER_LATERAL_OFFSET                = Inches.of(1.0); // Physical offset between turret rotation center and shooter exit point
         public static final String        LIMELIGHT_NAME                        = "limelight-shooter";
         public static final Angle         TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice
         public static final Distance      TURRET_CENTER_TAG_TO_HUB_CENTER       = Inches.of(23.5);
@@ -175,12 +174,21 @@ public final class Constants
                                                                                                   // left of robot forward
         public static final Translation2d BLUE_HUB                              = new Translation2d(Inches.of(182.1), Inches.of(158.85));
         public static final Translation2d RED_HUB                               = new Translation2d(Inches.of(469.1), Inches.of(158.85));
-        public static final Translation2d TURRET_POSITION                       = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
-        public static final Translation2d TURRET_CAMERA_POSITION                = new Translation2d(Inches.zero(), Inches.of(8.0));
-        public static final Distance      TURRET_LIMELIGHT_HEIGHT               = Inches.of(24.625); // 24 5/8"
-        public static final Distance      HUB_TAG_HEIGHT                        = Inches.of(44.25);
-        public static final Distance      TURRET_TO_HUB_HEIGHT_DELTA            = HUB_TAG_HEIGHT.minus(TURRET_LIMELIGHT_HEIGHT);
-        public static final Angle         TURRET_LIMELIGHT_PITCH                = Degrees.zero();
+        public static final Translation2d ROBOT_TO_TURRET_PIVOT      = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
+        public static final Translation2d TURRET_PIVOT_TO_RELEASE    = new Translation2d(Inches.zero(), Inches.of(1.0)); // Placeholder delta used to preserve today's static shot geometry until the
+                                                                                                                         // measured release transform replaces it
+        public static final Translation2d ROBOT_TO_TURRET_RELEASE    = ROBOT_TO_TURRET_PIVOT.plus(TURRET_PIVOT_TO_RELEASE);
+        public static final Translation2d ROBOT_TO_TURRET_CAMERA     = new Translation2d(Inches.zero(), Inches.of(8.0));
+        @Deprecated
+        public static final Distance      SHOOTER_LATERAL_OFFSET     = Inches.of(1.0);
+        @Deprecated
+        public static final Translation2d TURRET_POSITION            = ROBOT_TO_TURRET_PIVOT;
+        @Deprecated
+        public static final Translation2d TURRET_CAMERA_POSITION     = ROBOT_TO_TURRET_CAMERA;
+        public static final Distance      TURRET_LIMELIGHT_HEIGHT    = Inches.of(24.625); // 24 5/8"
+        public static final Distance      HUB_TAG_HEIGHT             = Inches.of(44.25);
+        public static final Distance      TURRET_TO_HUB_HEIGHT_DELTA = HUB_TAG_HEIGHT.minus(TURRET_LIMELIGHT_HEIGHT);
+        public static final Angle         TURRET_LIMELIGHT_PITCH     = Degrees.zero();
 
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
