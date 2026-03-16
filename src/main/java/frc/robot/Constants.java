@@ -112,7 +112,7 @@ public final class Constants
         public static final Voltage                      INTAKE_VOLTS                = Volts.of(9.0);
         public static final Voltage                      REVERSE_VOLTS               = Volts.of(-9.0);
         public static final Current                      ROLLER_CURRENT_LIMIT        = Amps.of(80);
-        public static final Current                      EXTENSION_CURRENT_LIMIT     = Amps.of(40);
+        public static final Current                      EXTENSION_CURRENT_LIMIT     = Amps.of(60);
         public static final int                          CAMERA_DEVICE_INDEX         = 0;
         public static final String                       CAMERA_NAME                 = "IntakeCam";
         public static final int                          CAMERA_WIDTH                = 320;
@@ -148,11 +148,11 @@ public final class Constants
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
         public static final AngularVelocity                           MANUAL_SHOOT_RPM       = RPM.of(3500.0);
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
-        private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(150.0);
+        private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(-150.0);
 
         // Turret
         public static final Current         TURRET_CURRENT_LIMIT                  = Amps.of(40.0);
-        public static final double          TURRET_KP                             = 0.04; // TODO: Tune (onboard TalonFX PID)
+        public static final double          TURRET_KP                             = 0.12; // TODO: Tune (onboard TalonFX PID)
         public static final double          TURRET_KI                             = 0.0;
         public static final double          TURRET_KD                             = 0.0115;
         public static final Dimensionless   TURRET_GEAR_RATIO                     = Value.of(13.0 / 1.0); // 13 : 1
@@ -161,9 +161,12 @@ public final class Constants
         public static final Angle           TURRET_SOFT_MIN_ANGLE                 = Degrees.of(-160.0); // degrees (full 360 rotation)
         public static final Angle           TURRET_SOFT_MAX_ANGLE                 = Degrees.of(160.0);  // degrees
         public static final boolean         TURRET_SENSOR_INVERTED                = true;
+        public static final Angle           TURRET_SENSOR_ZERO_OFFSET             = Degrees.of(-4.67);
         public static final Angle           TURRET_HOME_ANGLE                     = Degrees.of(0.0); // Forward-facing when no target
-        public static final Angle           TURRET_TOLERANCE                      = Degrees.of(2.0); // degrees
-        public static final Angle           TURRET_TRACK_TX_DEADBAND              = Degrees.of(2);
+        public static final Angle           TURRET_TOLERANCE                      = Degrees.of(3.5); // degrees
+        public static final Angle           TURRET_LINED_UP_HOLD_TOLERANCE        = Degrees.of(5.0); // degrees
+        public static final Angle           TURRET_TARGET_SETPOINT_DEADBAND       = Degrees.of(1.0); // degrees
+        public static final Angle           TURRET_TRACK_TX_DEADBAND              = Degrees.of(3.5);
         public static final String          LIMELIGHT_NAME                        = "limelight-shooter";
         public static final Angle           TURRET_PASS_TARGET                    = Degrees.of(180.0); // TODO: Validate in driver practice
         public static final Distance        TURRET_CENTER_TAG_TO_HUB_CENTER       = Inches.of(23.5);
@@ -176,8 +179,8 @@ public final class Constants
         public static final Translation2d   BLUE_HUB                              = new Translation2d(Inches.of(182.1), Inches.of(158.85));
         public static final Translation2d   RED_HUB                               = new Translation2d(Inches.of(469.1), Inches.of(158.85));
         public static final Translation2d   ROBOT_TO_TURRET_PIVOT                 = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
-        public static final Translation2d   TURRET_PIVOT_TO_RELEASE               = new Translation2d(Inches.zero(), Inches.of(1.0)); // Placeholder delta used to preserve today's static shot geometry until the
-                                                                                                                                      // measured release transform replaces it
+        public static final Translation2d   TURRET_PIVOT_TO_RELEASE               = new Translation2d(Inches.of(1.0), Inches.zero()); // Measured release point is ~1 in forward of the pivot (turret -90), not
+                                                                                                                                      // lateral
         public static final Translation2d   ROBOT_TO_TURRET_RELEASE               = ROBOT_TO_TURRET_PIVOT.plus(TURRET_PIVOT_TO_RELEASE);
         public static final Translation2d   ROBOT_TO_TURRET_CAMERA                = new Translation2d(Inches.zero(), Inches.of(8.0));
         @Deprecated

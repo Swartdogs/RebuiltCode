@@ -36,10 +36,14 @@ public class Turret
     private final AnalogPotentiometer _turretSensor;
     private final PIDController       _pidController;
     private ControlMode               _controlMode;
+    @Logged
     private Angle                     _manualAngleSetpoint;
+    @Logged
     private Angle                     _targetAngleSetpoint;
     @Logged
     private Angle                     _turretAngle;
+    @Logged
+    private Angle                     _rawTurretAngle;
     @Logged
     private Angle                     _turretSetpoint;
     @Logged
@@ -48,6 +52,8 @@ public class Turret
     private Voltage                   _motorVoltage;
     @Logged
     private boolean                   _disabled;
+    @Logged
+    private boolean                   _linedUp;
 
     public Turret()
     {
@@ -71,6 +77,7 @@ public class Turret
         _hasSetpoint         = false;
         _motorVoltage        = Volts.zero();
         _disabled            = false;
+        _linedUp             = false;
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -88,8 +95,9 @@ public class Turret
 
     public void periodic()
     {
-        _turretAngle  = Degrees.of(_turretSensor.get());
-        _motorVoltage = _turretMotor.getMotorVoltage().getValue();
+        _rawTurretAngle = Degrees.of(_turretSensor.get());
+        _turretAngle    = _rawTurretAngle.plus(ShooterConstants.TURRET_SENSOR_ZERO_OFFSET);
+        _motorVoltage   = _turretMotor.getMotorVoltage().getValue();
 
         var motorOutput = Volts.zero();
 
@@ -112,9 +120,16 @@ public class Turret
                 break;
         }
 
+        updateLinedUpState();
+
         if (_hasSetpoint && !_disabled)
         {
             motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
+
+            if (_pidController.atSetpoint())
+            {
+                motorOutput = Volts.zero();
+            }
         }
 
         motorOutput = applySoftLimit(motorOutput);
@@ -127,8 +142,14 @@ public class Turret
 
     public void setTargetAngle(Angle angle)
     {
-        _targetAngleSetpoint = angle;
-        _controlMode         = ControlMode.TargetAngle;
+        var targetDeltaDegrees = Math.abs(MathUtil.inputModulus(angle.minus(_targetAngleSetpoint).in(Degrees), -180.0, 180.0));
+
+        if (_controlMode != ControlMode.TargetAngle || targetDeltaDegrees >= ShooterConstants.TURRET_TARGET_SETPOINT_DEADBAND.in(Degrees))
+        {
+            _targetAngleSetpoint = angle;
+        }
+
+        _controlMode = ControlMode.TargetAngle;
     }
 
     public void clearTargetAngle()
@@ -155,7 +176,7 @@ public class Turret
 
     public boolean isLinedUp()
     {
-        return _hasSetpoint && _pidController.atSetpoint();
+        return _linedUp;
     }
 
     public void setDisabled(boolean disabled)
@@ -220,5 +241,21 @@ public class Turret
         }
 
         return requestedVoltage;
+    }
+
+    private void updateLinedUpState()
+    {
+        if (!_hasSetpoint || _disabled)
+        {
+            _linedUp = false;
+            return;
+        }
+
+        var angleErrorDegrees   = Math.abs(_turretSetpoint.minus(_turretAngle).in(Degrees));
+        var acquireTolerance    = ShooterConstants.TURRET_TOLERANCE.in(Degrees);
+        var holdTolerance       = ShooterConstants.TURRET_LINED_UP_HOLD_TOLERANCE.in(Degrees);
+        var allowedErrorDegrees = _linedUp ? holdTolerance : acquireTolerance;
+
+        _linedUp = angleErrorDegrees <= allowedErrorDegrees;
     }
 }

@@ -99,17 +99,15 @@ public class RobotContainer
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
         _operator.rightTrigger().whileTrue(_intake.jiggle());
-        _operator.start().and(_operator.back()).onTrue(_shooter.setManualMode(true));
-        _operator.start().and(_operator.back().negate()).onTrue(_shooter.setManualMode(false));
-        _operator.y().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(MANUAL_FLYWHEEL_START_RPM)).onlyIf(_shooter::inManualMode));
-        _operator.x().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM - MANUAL_FLYWHEEL_STEP_RPM)).onlyIf(_shooter::inManualMode));
-        _operator.b().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM + MANUAL_FLYWHEEL_STEP_RPM)).onlyIf(_shooter::inManualMode));
-        _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel).onlyIf(_shooter::inManualMode));
+        _operator.y().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(MANUAL_FLYWHEEL_START_RPM)));
+        _operator.x().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM - MANUAL_FLYWHEEL_STEP_RPM)));
+        _operator.b().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM + MANUAL_FLYWHEEL_STEP_RPM)));
+        _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel));
         _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
-        _operator.povLeft().onTrue(Commands.runOnce(() -> bumpManualTurretAngle(-MANUAL_TURRET_STEP_DEG)).onlyIf(_shooter::inManualMode));
-        _operator.povRight().onTrue(Commands.runOnce(() -> bumpManualTurretAngle(MANUAL_TURRET_STEP_DEG)).onlyIf(_shooter::inManualMode));
+        _operator.povLeft().onTrue(Commands.runOnce(() -> bumpManualTurretAngle(-MANUAL_TURRET_STEP_DEG)));
+        _operator.povRight().onTrue(Commands.runOnce(() -> bumpManualTurretAngle(MANUAL_TURRET_STEP_DEG)));
     }
 
     public Command getAutonomousCommand()

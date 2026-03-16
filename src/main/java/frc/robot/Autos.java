@@ -21,20 +21,12 @@ public class Autos
 {
     private enum AutoMode
     {
-        DoNothing,
-        ShootOnly,
-        ShootWithDelay,
-        ShootThenDrive,
-        ShootWithDelayThenDrive
+        DoNothing, ShootOnly, ShootWithDelay, ShootThenDrive, ShootWithDelayThenDrive
     }
 
     private enum StartPosition
     {
-        LeftTrench(ChoreoVars.Poses.LeftTrench),
-        LeftBump(ChoreoVars.Poses.LeftBump),
-        HubStart(ChoreoVars.Poses.HubStart),
-        RightBump(ChoreoVars.Poses.RightBump),
-        RightTrench(ChoreoVars.Poses.RightTrench);
+        LeftTrench(ChoreoVars.Poses.LeftTrench), LeftBump(ChoreoVars.Poses.LeftBump), HubStart(ChoreoVars.Poses.HubStart), RightBump(ChoreoVars.Poses.RightBump), RightTrench(ChoreoVars.Poses.RightTrench);
 
         public final Pose2d pose;
 

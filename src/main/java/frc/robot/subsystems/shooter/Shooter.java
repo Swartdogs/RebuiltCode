@@ -93,7 +93,7 @@ public class Shooter extends SubsystemBase
         _feedReady                            = false;
 
         _feeder.set(false);
-        _rotor.set(false);
+        // _rotor.set(false);
         _flywheel.stop();
         _turret.clearTargetAngle();
         _turret.setDisabled(false);
@@ -124,44 +124,19 @@ public class Shooter extends SubsystemBase
         return startEnd(() -> startPass(true), this::stopShooter);
     }
 
-    public Command setManualMode(boolean manual)
-    {
-        return runOnce(() ->
-        {
-            _state               = manual ? ShooterState.Manual : ShooterState.Idle;
-            _autoShootEnabled    = false;
-            _requestedShotMode   = ShotMode.Idle;
-            _currentShotSolution = createIdleSolution();
-            _feeder.set(false);
-            _rotor.set(false);
-            _turret.clearTargetAngle();
-            _turret.setDisabled(manual);
-
-            if (manual)
-            {
-                _flywheel.stop();
-            }
-        });
-    }
-
-    public boolean inManualMode()
-    {
-        return _state == ShooterState.Manual;
-    }
-
     public void setManualFlywheel(double rpm)
     {
-        if (inManualMode())
-        {
-            _flywheel.setVelocity(RPM.of(Math.max(0.0, rpm)));
-        }
+        beginManualControl(false);
+        _flywheel.setVelocity(RPM.of(Math.max(0.0, rpm)));
     }
 
     public void stopManualFlywheel()
     {
-        if (inManualMode())
+        _flywheel.stop();
+
+        if (_state == ShooterState.Manual)
         {
-            _flywheel.stop();
+            _state = ShooterState.Idle;
         }
     }
 
@@ -202,7 +177,7 @@ public class Shooter extends SubsystemBase
     {
         return runOnce(() ->
         {
-            _state = ShooterState.Manual;
+            beginManualControl(false);
             _flywheel.setVelocity(velocity);
         });
     }
@@ -211,13 +186,14 @@ public class Shooter extends SubsystemBase
     {
         return startEnd(() ->
         {
+            beginManualControl(false);
             _feeder.set(true);
-            _rotor.set(true);
+            // _rotor.set(true);
         }, () ->
         {
             _feeder.set(false);
-            _rotor.set(false);
-        }).onlyIf(this::inManualMode);
+            // _rotor.set(false);
+        });
     }
 
     public Command runFeeder()
@@ -226,11 +202,11 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Manual;
             _feeder.set(true);
-            _rotor.set(true);
+            // _rotor.set(true);
         }, () ->
         {
             _feeder.set(false);
-            _rotor.set(false);
+            // _rotor.set(false);
             _flywheel.stop();
             _state = ShooterState.Idle;
         });
@@ -253,11 +229,9 @@ public class Shooter extends SubsystemBase
 
     public void bumpManualTurretAngle(double deltaDeg)
     {
-        if (inManualMode())
-        {
-            _turret.setDisabled(false);
-            _turret.bumpManualAngle(Degrees.of(deltaDeg));
-        }
+        beginManualControl(true);
+        _turret.setDisabled(false);
+        _turret.bumpManualAngle(Degrees.of(deltaDeg));
     }
 
     public double getManualTurretAngleDeg()
@@ -273,7 +247,7 @@ public class Shooter extends SubsystemBase
             case Preparing:
             case Ready:
                 _feeder.set(false);
-                _rotor.set(false);
+                // _rotor.set(false);
                 runRequestedShot(true);
 
                 if (isReadyToFeed())
@@ -298,12 +272,12 @@ public class Shooter extends SubsystemBase
                 if (isReadyToFeed())
                 {
                     _feeder.set(true);
-                    _rotor.set(true);
+                    // _rotor.set(true);
                 }
                 else
                 {
                     _feeder.set(false);
-                    _rotor.set(false);
+                    // _rotor.set(false);
                     _state = ShooterState.Preparing;
                 }
                 break;
@@ -317,7 +291,7 @@ public class Shooter extends SubsystemBase
 
             case TrackingOnly:
                 _feeder.set(false);
-                _rotor.set(false);
+                // _rotor.set(false);
                 _flywheel.stop();
                 _requestedShotMode = ShotMode.Track;
                 runRequestedShot(false);
@@ -327,7 +301,7 @@ public class Shooter extends SubsystemBase
             default:
                 _flywheel.stop();
                 _feeder.set(false);
-                _rotor.set(false);
+                // _rotor.set(false);
                 clearShotRequest();
                 break;
         }
@@ -361,6 +335,23 @@ public class Shooter extends SubsystemBase
         _requestedShotMode = shotMode;
         _autoShootEnabled  = autoShoot;
         _state             = ShooterState.Preparing;
+    }
+
+    private void beginManualControl(boolean clearTurretTarget)
+    {
+        _state               = ShooterState.Manual;
+        _autoShootEnabled    = false;
+        _requestedShotMode   = ShotMode.Idle;
+        _currentShotSolution = createIdleSolution();
+        clearReadinessGate();
+        _feeder.set(false);
+        // _rotor.set(false);
+        _turret.setDisabled(false);
+
+        if (clearTurretTarget)
+        {
+            _turret.clearTargetAngle();
+        }
     }
 
     public void stopShooter()
@@ -406,7 +397,7 @@ public class Shooter extends SubsystemBase
         _currentShotSolution = createIdleSolution();
         clearReadinessGate();
         _turret.clearTargetAngle();
-        _rotor.set(false);
+        // _rotor.set(false);
     }
 
     private ShotSolution createIdleSolution()
@@ -461,7 +452,7 @@ public class Shooter extends SubsystemBase
             return false;
         }
 
-        if (_state == ShooterState.TrackingOnly)
+        if (_state == ShooterState.TrackingOnly || _autoShootEnabled)
         {
             return true;
         }

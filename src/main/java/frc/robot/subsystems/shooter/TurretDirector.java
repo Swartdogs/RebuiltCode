@@ -58,6 +58,8 @@ public class TurretDirector
     @Logged
     private boolean                          _targetValid;
     @Logged
+    private Angle                            _desiredTurretAngle;
+    @Logged
     private Pose2d                           _predictedReleasePose;
     @Logged
     private Pose2d                           _lookaheadTurretOriginPose;
@@ -75,6 +77,7 @@ public class TurretDirector
         _limelightHasTarget        = false;
         _hubActive                 = false;
         _targetValid               = false;
+        _desiredTurretAngle        = ShooterConstants.TURRET_HOME_ANGLE;
         _predictedReleasePose      = new Pose2d();
         _lookaheadTurretOriginPose = new Pose2d();
         _shotTimeOfFlight          = Seconds.zero();
@@ -112,6 +115,7 @@ public class TurretDirector
         _targetPose         = solution.targetPose();
         _limelightHasTarget = solution.hasVisionTarget();
         _targetValid        = solution.valid();
+        _desiredTurretAngle = solution.turretAngle();
         return solution;
     }
 
@@ -227,9 +231,13 @@ public class TurretDirector
 
     private Angle getLegacyReleaseLateralCorrection(Angle rawSetpoint, Distance distance)
     {
-        var safeDistanceM        = Math.max(distance.in(Meters), 0.5);
-        var releaseLateralOffset = ShooterConstants.TURRET_PIVOT_TO_RELEASE.getY();
-        var lateralErrorM        = releaseLateralOffset * Math.sin(Math.toRadians(rawSetpoint.in(Degrees)));
+        var safeDistanceM    = Math.max(distance.in(Meters), 0.5);
+        var shotDirectionDeg = rawSetpoint.plus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD).in(Degrees);
+        var shotDirectionRad = Math.toRadians(shotDirectionDeg);
+        var releaseOffset    = ShooterConstants.TURRET_PIVOT_TO_RELEASE;
+        var perpendicularX   = -Math.sin(shotDirectionRad);
+        var perpendicularY   = Math.cos(shotDirectionRad);
+        var lateralErrorM    = releaseOffset.getX() * perpendicularX + releaseOffset.getY() * perpendicularY;
 
         return Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM)));
     }
