@@ -11,8 +11,8 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.MotorHook;
-import frc.robot.TestHook;
+import frc.robot.subsystems.test.MotorHook;
+import frc.robot.subsystems.test.TestHook;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -58,5 +58,10 @@ public class Rotor
         {
             _rotorMotor.setVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
         }
+    }
+
+    public TestHook getHook()
+    {
+        return new FeederHook();
     }
 }
