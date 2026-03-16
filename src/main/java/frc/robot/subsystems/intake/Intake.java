@@ -53,8 +53,6 @@ public class Intake extends SubsystemBase
     private final SparkLimitSwitch _outLimitSwitch;
     private final SparkLimitSwitch _inLimitSwitch;
     private final SparkFlexSim     _extensionMotorSim;
-    private final Voltage          _extendOutput;
-    private final Voltage          _retractVolts;
     private final DCMotor          _extensionMotorModel;
     @Logged
     private Distance               _currentExtension   = Inches.zero();
@@ -131,6 +129,17 @@ public class Intake extends SubsystemBase
         // @formatter:on
     }
 
+    @NotLogged
+    public Command getExtendCmd()
+    {
+        return setExtensionCmd(true);
+    }
+
+    private Command setExtensionCmd(boolean finalState)
+    {
+        return runOnce(() -> extend(finalState));
+    }
+
     /*************
      * SUBSYSTEM *
      *************/
@@ -147,8 +156,6 @@ public class Intake extends SubsystemBase
         _extendMotor    = new SparkFlex(CANConstants.INTAKE_EXTEND, MotorType.kBrushless);
         _outLimitSwitch = _extendMotor.getForwardLimitSwitch();
         _inLimitSwitch  = _extendMotor.getReverseLimitSwitch();
-        _extendOutput   = IntakeConstants.EXTEND_VOLTS;
-        _retractVolts   = IntakeConstants.RETRACT_VOLTS;
 
         var extensionConfig = new SparkFlexConfig();
         extensionConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.EXTENSION_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
@@ -225,7 +232,7 @@ public class Intake extends SubsystemBase
 
     public void extend(boolean finalState)
     {
-        _extendMotor.setVoltage(finalState ? _extendOutput : _retractVolts);
+        _extendMotor.setVoltage(finalState ? IntakeConstants.EXTEND_VOLTS : IntakeConstants.RETRACT_VOLTS);
     }
 
     public Voltage getMotorVoltage()
@@ -246,17 +253,6 @@ public class Intake extends SubsystemBase
     public boolean isRetracted()
     {
         return _inSwitchTriggered;
-    }
-
-    @NotLogged
-    public Command getExtendCmd()
-    {
-        return setExtensionCmd(true);
-    }
-
-    private Command setExtensionCmd(boolean finalState)
-    {
-        return runOnce(() -> extend(finalState));
     }
 
     public void setIntakeState(IntakeState state)
