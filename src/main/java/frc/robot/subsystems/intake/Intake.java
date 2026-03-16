@@ -49,21 +49,6 @@ public class Intake extends SubsystemBase
         Off, Forward, Reverse
     }
 
-    private final SparkFlex        _extendMotor;
-    private final SparkLimitSwitch _outLimitSwitch;
-    private final SparkLimitSwitch _inLimitSwitch;
-    private final SparkFlexSim     _extensionMotorSim;
-    private final DCMotor          _extensionMotorModel;
-    @Logged
-    private Distance               _currentExtension   = Inches.zero();
-    @Logged
-    private Voltage                _motorVoltage       = Volts.zero();
-    @Logged
-    private boolean                _outSwitchTriggered = false;
-    @Logged
-    private boolean                _inSwitchTriggered  = false;
-    private final Alert            _limitSwitchAlert;
-
     /************
      * COMMANDS *
      ************/
@@ -143,13 +128,27 @@ public class Intake extends SubsystemBase
     /*************
      * SUBSYSTEM *
      *************/
-    private final SparkFlex    _intakeMotor;
-    private final SparkFlexSim _intakeMotorSim;
-    private final DCMotor      _neoVortex;
+    private final SparkFlex        _intakeMotor;
+    private final SparkFlex        _extendMotor;
+    private final SparkLimitSwitch _outLimitSwitch;
+    private final SparkLimitSwitch _inLimitSwitch;
+    private final SparkFlexSim     _intakeMotorSim;
+    private final SparkFlexSim     _extensionMotorSim;
+    private final DCMotor          _neoVortex;
+    private final DCMotor          _extensionMotorModel;
+    private final Alert            _limitSwitchAlert;
     @Logged
-    private IntakeState        _intakeState        = IntakeState.Off;
+    private IntakeState            _intakeState        = IntakeState.Off;
     @Logged
-    private Voltage            _intakeMotorVoltage = Volts.of(0.0);
+    private Voltage                _intakeMotorVoltage = Volts.of(0.0);
+    @Logged
+    private Distance               _currentExtension   = Inches.zero();
+    @Logged
+    private Voltage                _motorVoltage       = Volts.zero();
+    @Logged
+    private boolean                _outSwitchTriggered = false;
+    @Logged
+    private boolean                _inSwitchTriggered  = false;
 
     public Intake()
     {
