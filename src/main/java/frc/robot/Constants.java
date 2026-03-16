@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -174,21 +175,25 @@ public final class Constants
                                                                                                   // left of robot forward
         public static final Translation2d BLUE_HUB                              = new Translation2d(Inches.of(182.1), Inches.of(158.85));
         public static final Translation2d RED_HUB                               = new Translation2d(Inches.of(469.1), Inches.of(158.85));
-        public static final Translation2d ROBOT_TO_TURRET_PIVOT      = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
-        public static final Translation2d TURRET_PIVOT_TO_RELEASE    = new Translation2d(Inches.zero(), Inches.of(1.0)); // Placeholder delta used to preserve today's static shot geometry until the
-                                                                                                                         // measured release transform replaces it
-        public static final Translation2d ROBOT_TO_TURRET_RELEASE    = ROBOT_TO_TURRET_PIVOT.plus(TURRET_PIVOT_TO_RELEASE);
-        public static final Translation2d ROBOT_TO_TURRET_CAMERA     = new Translation2d(Inches.zero(), Inches.of(8.0));
+        public static final Translation2d ROBOT_TO_TURRET_PIVOT                 = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
+        public static final Translation2d TURRET_PIVOT_TO_RELEASE               = new Translation2d(Inches.zero(), Inches.of(1.0)); // Placeholder delta used to preserve today's static shot geometry until the
+                                                                                                                                    // measured release transform replaces it
+        public static final Translation2d ROBOT_TO_TURRET_RELEASE               = ROBOT_TO_TURRET_PIVOT.plus(TURRET_PIVOT_TO_RELEASE);
+        public static final Translation2d ROBOT_TO_TURRET_CAMERA                = new Translation2d(Inches.zero(), Inches.of(8.0));
         @Deprecated
-        public static final Distance      SHOOTER_LATERAL_OFFSET     = Inches.of(1.0);
+        public static final Distance      SHOOTER_LATERAL_OFFSET                = Inches.of(1.0);
         @Deprecated
-        public static final Translation2d TURRET_POSITION            = ROBOT_TO_TURRET_PIVOT;
+        public static final Translation2d TURRET_POSITION                       = ROBOT_TO_TURRET_PIVOT;
         @Deprecated
-        public static final Translation2d TURRET_CAMERA_POSITION     = ROBOT_TO_TURRET_CAMERA;
-        public static final Distance      TURRET_LIMELIGHT_HEIGHT    = Inches.of(24.625); // 24 5/8"
-        public static final Distance      HUB_TAG_HEIGHT             = Inches.of(44.25);
-        public static final Distance      TURRET_TO_HUB_HEIGHT_DELTA = HUB_TAG_HEIGHT.minus(TURRET_LIMELIGHT_HEIGHT);
-        public static final Angle         TURRET_LIMELIGHT_PITCH     = Degrees.zero();
+        public static final Translation2d TURRET_CAMERA_POSITION                = ROBOT_TO_TURRET_CAMERA;
+        public static final Distance      TURRET_LIMELIGHT_HEIGHT               = Inches.of(24.625); // 24 5/8"
+        public static final Distance      HUB_TAG_HEIGHT                        = Inches.of(44.25);
+        public static final Distance      TURRET_TO_HUB_HEIGHT_DELTA            = HUB_TAG_HEIGHT.minus(TURRET_LIMELIGHT_HEIGHT);
+        public static final Angle         TURRET_LIMELIGHT_PITCH                = Degrees.zero();
+        public static final Time          SWM_RELEASE_PHASE_DELAY               = Seconds.of(0.03);
+        public static final int           SWM_LOOKAHEAD_ITERATIONS              = 8;
+        private static final double       SWM_MIN_TOF_DISTANCE_IN               = 64.0;
+        private static final double       SWM_MAX_TOF_DISTANCE_IN               = 159.0;
 
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
@@ -202,6 +207,17 @@ public final class Constants
             Map.entry(183.0, 5100.0),
             Map.entry(204.0, 5850.0)
         );
+
+        // Keep TOF as its own lookup so the moving-shot solve matches the empirical
+        // map-based pattern used by teams like 5000, 6328, and Eeshwar's writeup.
+        private static final InterpolatingDoubleTreeMap SHOT_TOF_TABLE = InterpolatingDoubleTreeMap.ofEntries
+        (
+            Map.entry(64.0, 0.542),
+            Map.entry(85.0, 1.06),
+            Map.entry(87.0, 1.02),
+            Map.entry(134.0, 1.22),
+            Map.entry(159.0, 1.74)
+        );
         // @formatter:on
 
         // Feeder
@@ -214,6 +230,17 @@ public final class Constants
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
         {
             return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Inches))).plus(SMART_SHOOT_RPM_BIAS);
+        }
+
+        public static Time getShotTimeOfFlight(Distance distance)
+        {
+            return Seconds.of(SHOT_TOF_TABLE.get(distance.in(Inches)));
+        }
+
+        public static boolean isMovingShotDistanceValid(Distance distance)
+        {
+            var distanceInches = distance.in(Inches);
+            return distanceInches >= SWM_MIN_TOF_DISTANCE_IN && distanceInches <= SWM_MAX_TOF_DISTANCE_IN;
         }
     }
 

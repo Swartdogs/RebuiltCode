@@ -351,7 +351,7 @@ public class Shooter extends SubsystemBase
             return;
         }
 
-        _currentShotSolution = _turretDirector.calculate(_requestedShotMode);
+        _currentShotSolution = _turretDirector.calculate(_requestedShotMode, _state == ShooterState.TrackingOnly);
         _turret.setTargetAngle(_currentShotSolution.turretAngle());
 
         if (spinFlywheel)
