@@ -2,13 +2,17 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,45 +30,67 @@ public class Shooter extends SubsystemBase
         Idle, Preparing, Ready, Firing, Manual, TrackingOnly;
     }
 
-    public final Flywheel       _flywheel;
-    public final Feeder         _feeder;
-    public final Turret         _turret;
-    public final Rotor          _rotor;
-    public final TurretDirector _turretDirector;
+    public final Flywheel                    _flywheel;
+    public final Feeder                      _feeder;
+    public final Rotor                       _rotor;
+    public final Turret                      _turret;
+    public final TurretDirector              _turretDirector;
+    private final Supplier<SwerveDriveState> _swerveStateSupplier;
+    private final Debouncer                  _movingFeedDebouncer;
     @Logged
-    private ShooterState        _state;
+    private ShooterState                     _state;
     @Logged
-    private boolean             _autoShootEnabled;
+    private boolean                          _autoShootEnabled;
     @Logged
-    private ShotMode            _requestedShotMode;
-    private ShotSolution        _currentShotSolution;
+    private ShotMode                         _requestedShotMode;
+    private ShotSolution                     _currentShotSolution;
     @Logged
-    private boolean             _solutionReady;
+    private boolean                          _solutionReady;
     @Logged
-    private boolean             _turretReady;
+    private boolean                          _turretReady;
     @Logged
-    private boolean             _flywheelReady;
+    private boolean                          _flywheelReady;
     @Logged
-    private boolean             _targetReady;
+    private boolean                          _hubReady;
     @Logged
-    private boolean             _feedReady;
+    private boolean                          _inRangeReady;
+    @Logged
+    private boolean                          _rolloutReady;
+    @Logged
+    private boolean                          _stabilityReady;
+    @Logged
+    private boolean                          _usingMovingShotMath;
+    @Logged
+    private double                           _robotTranslationSpeedMetersPerSecond;
+    @Logged
+    private double                           _robotAngularSpeedRadiansPerSecond;
+    @Logged
+    private boolean                          _feedReady;
 
     public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
     {
-        _flywheel            = new Flywheel();
-        _feeder              = new Feeder();
-        _turret              = new Turret();
-        _rotor               = new Rotor();
-        _turretDirector      = new TurretDirector(swerveStateSupplier);
-        _state               = ShooterState.Idle;
-        _autoShootEnabled    = false;
-        _requestedShotMode   = ShotMode.Idle;
-        _currentShotSolution = createIdleSolution();
-        _solutionReady       = false;
-        _turretReady         = false;
-        _flywheelReady       = false;
-        _targetReady         = false;
-        _feedReady           = false;
+        _swerveStateSupplier                  = swerveStateSupplier;
+        _flywheel                             = new Flywheel();
+        _feeder                               = new Feeder();
+        _rotor                                = new Rotor();
+        _turret                               = new Turret();
+        _turretDirector                       = new TurretDirector(swerveStateSupplier);
+        _movingFeedDebouncer                  = new Debouncer(ShooterConstants.SWM_FEED_STABILITY_WINDOW.in(Seconds));
+        _state                                = ShooterState.Idle;
+        _autoShootEnabled                     = false;
+        _requestedShotMode                    = ShotMode.Idle;
+        _currentShotSolution                  = createIdleSolution();
+        _solutionReady                        = false;
+        _turretReady                          = false;
+        _flywheelReady                        = false;
+        _hubReady                             = false;
+        _inRangeReady                         = false;
+        _rolloutReady                         = false;
+        _stabilityReady                       = false;
+        _usingMovingShotMath                  = false;
+        _robotTranslationSpeedMetersPerSecond = 0.0;
+        _robotAngularSpeedRadiansPerSecond    = 0.0;
+        _feedReady                            = false;
 
         _feeder.set(false);
         _rotor.set(false);
@@ -107,6 +133,7 @@ public class Shooter extends SubsystemBase
             _requestedShotMode   = ShotMode.Idle;
             _currentShotSolution = createIdleSolution();
             _feeder.set(false);
+            _rotor.set(false);
             _turret.clearTargetAngle();
             _turret.setDisabled(manual);
 
@@ -182,7 +209,15 @@ public class Shooter extends SubsystemBase
 
     public Command runManualFeeder()
     {
-        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
+        return startEnd(() ->
+        {
+            _feeder.set(true);
+            _rotor.set(true);
+        }, () ->
+        {
+            _feeder.set(false);
+            _rotor.set(false);
+        }).onlyIf(this::inManualMode);
     }
 
     public Command runFeeder()
@@ -191,9 +226,11 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Manual;
             _feeder.set(true);
+            _rotor.set(true);
         }, () ->
         {
             _feeder.set(false);
+            _rotor.set(false);
             _flywheel.stop();
             _state = ShooterState.Idle;
         });
@@ -280,6 +317,7 @@ public class Shooter extends SubsystemBase
 
             case TrackingOnly:
                 _feeder.set(false);
+                _rotor.set(false);
                 _flywheel.stop();
                 _requestedShotMode = ShotMode.Track;
                 runRequestedShot(false);
@@ -351,7 +389,9 @@ public class Shooter extends SubsystemBase
             return;
         }
 
-        _currentShotSolution = _turretDirector.calculate(_requestedShotMode, _state == ShooterState.TrackingOnly);
+        updateRobotMotionState();
+        _usingMovingShotMath = shouldUseMovingShotMath();
+        _currentShotSolution = _turretDirector.calculate(_requestedShotMode, _usingMovingShotMath);
         _turret.setTargetAngle(_currentShotSolution.turretAngle());
 
         if (spinFlywheel)
@@ -366,11 +406,12 @@ public class Shooter extends SubsystemBase
         _currentShotSolution = createIdleSolution();
         clearReadinessGate();
         _turret.clearTargetAngle();
+        _rotor.set(false);
     }
 
     private ShotSolution createIdleSolution()
     {
-        return new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false);
+        return new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false, false, false);
     }
 
     private boolean isReadyToFeed()
@@ -378,27 +419,88 @@ public class Shooter extends SubsystemBase
         _solutionReady = _currentShotSolution.valid();
         _turretReady   = _turret.isLinedUp();
         _flywheelReady = _flywheel.atSpeed();
-        _targetReady   = hasValidTargetForCurrentShot();
-        _feedReady     = _solutionReady && _turretReady && _flywheelReady && _targetReady;
+        _hubReady      = hasActiveHubForCurrentShot();
+        _inRangeReady  = hasValidDistanceForCurrentShot();
+        _rolloutReady  = isWithinMovingFeedRolloutEnvelope();
+
+        // Temporary rollout override: keep logging hub-active state, but do not block
+        // feed on it while we validate the rest of the moving-shot gate.
+        var rawFeedReady = _solutionReady && _turretReady && _flywheelReady && _inRangeReady && _rolloutReady;
+
+        // Keep moving feed behind an explicit gate and short stability window so we
+        // can roll it out conservatively and see which bit is blocking launch.
+        _stabilityReady = !_usingMovingShotMath || _movingFeedDebouncer.calculate(rawFeedReady);
+        _feedReady      = rawFeedReady && _stabilityReady;
         return _feedReady;
     }
 
-    private boolean hasValidTargetForCurrentShot()
+    private boolean hasActiveHubForCurrentShot()
     {
         return switch (_currentShotSolution.mode())
         {
-            case Track -> _currentShotSolution.valid();
+            case Track -> _currentShotSolution.hubActive();
             case Pass -> true;
             case Idle -> false;
         };
     }
 
+    private boolean hasValidDistanceForCurrentShot()
+    {
+        return switch (_currentShotSolution.mode())
+        {
+            case Track -> !_usingMovingShotMath || _currentShotSolution.inRange();
+            case Pass -> true;
+            case Idle -> false;
+        };
+    }
+
+    private boolean shouldUseMovingShotMath()
+    {
+        if (_requestedShotMode != ShotMode.Track)
+        {
+            return false;
+        }
+
+        if (_state == ShooterState.TrackingOnly)
+        {
+            return true;
+        }
+
+        return _robotTranslationSpeedMetersPerSecond >= ShooterConstants.SWM_ENABLE_TRANSLATIONAL_SPEED.in(MetersPerSecond) || Math.abs(_robotAngularSpeedRadiansPerSecond) >= ShooterConstants.SWM_ENABLE_ANGULAR_SPEED.in(RadiansPerSecond);
+    }
+
+    private boolean isWithinMovingFeedRolloutEnvelope()
+    {
+        if (!_usingMovingShotMath || _currentShotSolution.mode() != ShotMode.Track)
+        {
+            return true;
+        }
+
+        return _robotTranslationSpeedMetersPerSecond <= ShooterConstants.SWM_FEED_MAX_TRANSLATIONAL_SPEED.in(MetersPerSecond)
+                && Math.abs(_robotAngularSpeedRadiansPerSecond) <= ShooterConstants.SWM_FEED_MAX_ANGULAR_SPEED.in(RadiansPerSecond);
+    }
+
+    private void updateRobotMotionState()
+    {
+        var speeds = _swerveStateSupplier.get().Speeds;
+
+        _robotTranslationSpeedMetersPerSecond = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+        _robotAngularSpeedRadiansPerSecond    = speeds.omegaRadiansPerSecond;
+    }
+
     private void clearReadinessGate()
     {
-        _solutionReady = false;
-        _turretReady   = false;
-        _flywheelReady = false;
-        _targetReady   = false;
-        _feedReady     = false;
+        _solutionReady                        = false;
+        _turretReady                          = false;
+        _flywheelReady                        = false;
+        _hubReady                             = false;
+        _inRangeReady                         = false;
+        _rolloutReady                         = false;
+        _stabilityReady                       = false;
+        _usingMovingShotMath                  = false;
+        _robotTranslationSpeedMetersPerSecond = 0.0;
+        _robotAngularSpeedRadiansPerSecond    = 0.0;
+        _movingFeedDebouncer.calculate(false);
+        _feedReady = false;
     }
 }

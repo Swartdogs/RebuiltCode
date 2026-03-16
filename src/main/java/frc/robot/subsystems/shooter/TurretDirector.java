@@ -35,7 +35,7 @@ public class TurretDirector
         Idle, Track, Pass
     }
 
-    public record ShotSolution(boolean valid, Angle turretAngle, Distance distance, ShotMode mode, Pose2d targetPose, boolean hasVisionTarget)
+    public record ShotSolution(boolean valid, Angle turretAngle, Distance distance, ShotMode mode, Pose2d targetPose, boolean hasVisionTarget, boolean inRange, boolean hubActive)
     {
     }
 
@@ -69,7 +69,7 @@ public class TurretDirector
         _swerveStateSupplier       = swerveStateSupplier;
         _limelight                 = new Limelight(ShooterConstants.LIMELIGHT_NAME);
         _targetTagFilter           = List.of();
-        _currentSolution           = new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false);
+        _currentSolution           = new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false, false, false);
         _targetDistance            = Meters.zero();
         _targetPose                = new Pose2d();
         _limelightHasTarget        = false;
@@ -155,7 +155,7 @@ public class TurretDirector
 
         logShotKinematics(swerveState.Pose, getPointInField(swerveState.Pose, ShooterConstants.ROBOT_TO_TURRET_PIVOT), distance, ShooterConstants.getShotTimeOfFlight(distance));
 
-        return new ShotSolution(hubActive, rawSetpoint, distance, ShotMode.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null);
+        return new ShotSolution(true, rawSetpoint, distance, ShotMode.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null, true, hubActive);
     }
 
     private ShotSolution calculatePass(SwerveDriveState swerveState, boolean isBlueAlliance)
@@ -178,7 +178,7 @@ public class TurretDirector
 
         logShotKinematics(swerveState.Pose, getPointInField(swerveState.Pose, ShooterConstants.ROBOT_TO_TURRET_PIVOT), distance, ShooterConstants.getShotTimeOfFlight(distance));
 
-        return new ShotSolution(true, rawSetpoint, distance, ShotMode.Pass, buildTargetPose(swerveState.Pose, distance, rawSetpoint), false);
+        return new ShotSolution(true, rawSetpoint, distance, ShotMode.Pass, buildTargetPose(swerveState.Pose, distance, rawSetpoint), false, true, true);
     }
 
     private ShotSolution calculateMovingTrack(SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean hubActive, AprilTagFiducial... fiducials)
@@ -192,9 +192,10 @@ public class TurretDirector
 
         logShotKinematics(movingTrackState.releasePose(), movingTrackState.lookaheadTurretOrigin(), movingTrackState.lookaheadDistance(), movingTrackState.timeOfFlight());
 
+        var inRange = ShooterConstants.isMovingShotDistanceValid(movingTrackState.lookaheadDistance());
+
         return new ShotSolution(
-                hubActive && ShooterConstants.isMovingShotDistanceValid(movingTrackState.lookaheadDistance()), rawSetpoint, movingTrackState.lookaheadDistance(), ShotMode.Track,
-                buildTargetPose(movingTrackState.releasePose(), movingTrackState.lookaheadDistance(), rawSetpoint), bestTag != null
+                inRange, rawSetpoint, movingTrackState.lookaheadDistance(), ShotMode.Track, buildTargetPose(movingTrackState.releasePose(), movingTrackState.lookaheadDistance(), rawSetpoint), bestTag != null, inRange, hubActive
         );
     }
 
@@ -279,7 +280,7 @@ public class TurretDirector
     private ShotSolution createIdleSolution(Pose2d robotPose)
     {
         logShotKinematics(robotPose, getPointInField(robotPose, ShooterConstants.ROBOT_TO_TURRET_PIVOT), Meters.zero(), Seconds.zero());
-        return new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, robotPose, false);
+        return new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, robotPose, false, false, false);
     }
 
     private void logShotKinematics(Pose2d releasePose, Translation2d lookaheadTurretOrigin, Distance distance, Time timeOfFlight)
