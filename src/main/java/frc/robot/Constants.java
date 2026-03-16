@@ -64,6 +64,7 @@ public final class Constants
         public static final int HOOD_MOTOR      = 20;  // Victor
         public static final int CLIMBER_EXTEND  = 21;
         public static final int CLIMBER_ROTATE  = 22;
+        public static final int ROTOR_MOTOR     = 23;
     }
 
     public static class AIOConstants
@@ -185,6 +186,8 @@ public final class Constants
         // Feeder
         public static final Current FEEDER_CURRENT_LIMIT = Amps.of(60);
         public static final Voltage FEEDER_VOLTAGE       = Volts.of(6);
+        public static final Current ROTOR_CURRENT_LIMIT  = Amps.of(60);
+        public static final Voltage ROTOR_VOLTAGE        = Volts.of(6);
 
         // TODO: Tune these values with testing!
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)

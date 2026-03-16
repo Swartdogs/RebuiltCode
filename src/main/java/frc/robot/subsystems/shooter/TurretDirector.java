@@ -62,7 +62,7 @@ public class TurretDirector
                     var tyMeasure = Degrees.of(avgTy);
                     var distance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
 
-                    // We have a distance and an angle. We can now describe the camera → target
+                    // We have a distance and an angle. We can now describe the camera to target
                     // translation as a forward vector with magnitude "distance" rotated by angle
                     // "avgTx"
 
