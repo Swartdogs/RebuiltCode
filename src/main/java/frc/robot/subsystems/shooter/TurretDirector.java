@@ -11,12 +11,14 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
@@ -45,6 +47,7 @@ public class TurretDirector
 
     private final Supplier<SwerveDriveState> _swerveStateSupplier;
     private final Limelight                  _limelight;
+    private final LinearFilter               _visionTxFilter;
     private List<Integer>                    _targetTagFilter;
     private ShotSolution                     _currentSolution;
     @Logged
@@ -65,22 +68,54 @@ public class TurretDirector
     private Pose2d                           _lookaheadTurretOriginPose;
     @Logged
     private Time                             _shotTimeOfFlight;
+    @Logged
+    private Angle                            _visionTxRaw;
+    @Logged
+    private Angle                            _visionTxFiltered;
+    @Logged
+    private Angle                            _visionTxApplied;
+    @Logged
+    private int                              _selectedVisionTagId;
+    @Logged
+    private Angle                            _poseOnlyTrackAngle;
+    @Logged
+    private Angle                            _poseVisionTrackDelta;
+    @Logged
+    private Angle                            _empiricalDriftCorrection;
+    @Logged
+    private double                           _empiricalDriftLateralErrorInches;
+    @Logged
+    private double                           _empiricalDriftSign;
+    @Logged
+    private Angle                            _trackCommandDelta;
 
     public TurretDirector(Supplier<SwerveDriveState> swerveStateSupplier)
     {
-        _swerveStateSupplier       = swerveStateSupplier;
-        _limelight                 = new Limelight(ShooterConstants.LIMELIGHT_NAME);
-        _targetTagFilter           = List.of();
-        _currentSolution           = new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false, false, false);
-        _targetDistance            = Meters.zero();
-        _targetPose                = new Pose2d();
-        _limelightHasTarget        = false;
-        _hubActive                 = false;
-        _targetValid               = false;
-        _desiredTurretAngle        = ShooterConstants.TURRET_HOME_ANGLE;
-        _predictedReleasePose      = new Pose2d();
-        _lookaheadTurretOriginPose = new Pose2d();
-        _shotTimeOfFlight          = Seconds.zero();
+        var txFilterWindowSamples = Math.max(1, (int)Math.round(ShooterConstants.TURRET_VISION_TX_FILTER_WINDOW.in(Seconds) / GeneralConstants.LOOP_PERIOD.in(Seconds)));
+        _swerveStateSupplier              = swerveStateSupplier;
+        _limelight                        = new Limelight(ShooterConstants.LIMELIGHT_NAME);
+        _visionTxFilter                   = LinearFilter.movingAverage(txFilterWindowSamples);
+        _targetTagFilter                  = List.of();
+        _currentSolution                  = new ShotSolution(false, ShooterConstants.TURRET_HOME_ANGLE, Meters.zero(), ShotMode.Idle, new Pose2d(), false, false, false);
+        _targetDistance                   = Meters.zero();
+        _targetPose                       = new Pose2d();
+        _limelightHasTarget               = false;
+        _hubActive                        = false;
+        _targetValid                      = false;
+        _desiredTurretAngle               = ShooterConstants.TURRET_HOME_ANGLE;
+        _predictedReleasePose             = new Pose2d();
+        _lookaheadTurretOriginPose        = new Pose2d();
+        _shotTimeOfFlight                 = Seconds.zero();
+        _visionTxRaw                      = Degrees.zero();
+        _visionTxFiltered                 = Degrees.zero();
+        _visionTxApplied                  = Degrees.zero();
+        _selectedVisionTagId              = -1;
+        _poseOnlyTrackAngle               = ShooterConstants.TURRET_HOME_ANGLE;
+        _poseVisionTrackDelta             = Degrees.zero();
+        _empiricalDriftCorrection         = Degrees.zero();
+        _empiricalDriftLateralErrorInches = 0.0;
+        _empiricalDriftSign               = ShooterConstants.TURRET_LINEAR_DRIFT_CORRECTION_SIGN;
+        _trackCommandDelta                = Degrees.zero();
 
         _limelight.getSettings().withAprilTagOffset(ShooterConstants.CENTER_TAG_TO_HUB_CENTER_OFFSET).save();
         updateFilter(Utilities.getOurHubTagIds(), true);
@@ -110,6 +145,7 @@ public class TurretDirector
         }
 
         var solution = calculate(shotMode, useMovingShotMath, swerveState, Utilities.getHubCoordinates(), targetTagIds, isBlueAlliance, _hubActive, fiducials);
+        solution            = stabilizeTrackCommand(solution);
         _currentSolution    = solution;
         _targetDistance     = solution.distance();
         _targetPose         = solution.targetPose();
@@ -134,32 +170,111 @@ public class TurretDirector
         };
     }
 
-    private ShotSolution calculateTrack(SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean hubActive, AprilTagFiducial... fiducials)
+    private ShotSolution stabilizeTrackCommand(ShotSolution solution)
     {
-        // Keep the named geometry points here, but preserve the old static shot
-        // behavior for now: distance is still pivot-to-hub, and the release point
-        // only contributes its lateral component as the legacy angle trim.
-        var hubTranslationInRobotFrame = getHubTranslationInRobotFrame(swerveState, hubCoordinates);
-        var pivotToHubTranslation      = hubTranslationInRobotFrame.minus(ShooterConstants.ROBOT_TO_TURRET_PIVOT);
-        var distance                   = Meters.of(pivotToHubTranslation.getNorm());
-        var rawSetpoint                = getTurretSetpointForRobotFrameTarget(pivotToHubTranslation);
-        var bestTag                    = selectBestTag(targetTagIds, fiducials);
-
-        if (bestTag != null)
+        if (solution.mode() != ShotMode.Track || _currentSolution.mode() != ShotMode.Track || !_currentSolution.valid())
         {
-            var txCorrection = Degrees.of(-bestTag.tx);
-
-            if (!MathUtil.isNear(0.0, txCorrection.in(Degrees), ShooterConstants.TURRET_TRACK_TX_DEADBAND.in(Degrees)))
-            {
-                rawSetpoint = rawSetpoint.minus(txCorrection);
-            }
+            _trackCommandDelta = Degrees.zero();
+            return solution;
         }
 
-        rawSetpoint = rawSetpoint.plus(getLegacyReleaseLateralCorrection(rawSetpoint, distance));
+        var requestedDeg = solution.turretAngle().in(Degrees);
+        var previousDeg  = _currentSolution.turretAngle().in(Degrees);
+        var deltaDeg     = MathUtil.inputModulus(requestedDeg - previousDeg, -180.0, 180.0);
+        _trackCommandDelta = Degrees.of(deltaDeg);
 
-        logShotKinematics(swerveState.Pose, getPointInField(swerveState.Pose, ShooterConstants.ROBOT_TO_TURRET_PIVOT), distance, ShooterConstants.getShotTimeOfFlight(distance));
+        var deadbandDeg = ShooterConstants.TURRET_TRACK_COMMAND_DEADBAND.in(Degrees);
+
+        if (Math.abs(deltaDeg) <= deadbandDeg)
+        {
+            return new ShotSolution(solution.valid(), _currentSolution.turretAngle(), solution.distance(), solution.mode(), solution.targetPose(), solution.hasVisionTarget(), solution.inRange(), solution.hubActive());
+        }
+
+        var maxStepDeg = ShooterConstants.TURRET_TRACK_COMMAND_MAX_STEP_PER_LOOP.in(Degrees);
+        var stepDeg    = MathUtil.clamp(deltaDeg, -maxStepDeg, maxStepDeg);
+        var stableDeg  = previousDeg + stepDeg;
+
+        return new ShotSolution(solution.valid(), Degrees.of(stableDeg), solution.distance(), solution.mode(), solution.targetPose(), solution.hasVisionTarget(), solution.inRange(), solution.hubActive());
+    }
+
+    private ShotSolution calculateTrack(SwerveDriveState swerveState, Translation2d hubCoordinates, List<Integer> targetTagIds, boolean hubActive, AprilTagFiducial... fiducials)
+    {
+        var turretReleaseField = getPointInField(swerveState.Pose, ShooterConstants.ROBOT_TO_TURRET_RELEASE);
+        var releaseToHubField  = hubCoordinates.minus(turretReleaseField);
+        var distance           = Meters.of(releaseToHubField.getNorm());
+        var rawSetpoint        = getTurretSetpointForFieldTarget(swerveState.Pose, releaseToHubField.getAngle().getMeasure());
+        _poseOnlyTrackAngle = rawSetpoint;
+        var bestTag = selectBestTag(targetTagIds, fiducials);
+        rawSetpoint           = applyVisionTrim(rawSetpoint, bestTag);
+        rawSetpoint           = rawSetpoint.plus(ShooterConstants.TURRET_TRACK_BIAS);
+        rawSetpoint           = rawSetpoint.plus(getEmpiricalLinearDriftCorrection(rawSetpoint, distance));
+        _poseVisionTrackDelta = rawSetpoint.minus(_poseOnlyTrackAngle);
+
+        logShotKinematics(swerveState.Pose, turretReleaseField, distance, ShooterConstants.getShotTimeOfFlight(distance));
 
         return new ShotSolution(true, rawSetpoint, distance, ShotMode.Track, buildTargetPose(swerveState.Pose, distance, rawSetpoint), bestTag != null, true, hubActive);
+    }
+
+    private Angle applyVisionTrim(Angle rawSetpoint, AprilTagFiducial bestTag)
+    {
+        if (bestTag == null)
+        {
+            _visionTxRaw      = Degrees.zero();
+            _visionTxFiltered = Degrees.zero();
+            _visionTxApplied  = Degrees.zero();
+            _visionTxFilter.reset();
+            return rawSetpoint;
+        }
+
+        var rawTxDegrees = bestTag.tx;
+        _visionTxRaw      = Degrees.of(rawTxDegrees);
+        _visionTxFiltered = Degrees.of(_visionTxFilter.calculate(rawTxDegrees));
+
+        if (!ShooterConstants.TURRET_USE_VISION_TX_TRIM)
+        {
+            _visionTxApplied = Degrees.zero();
+            return rawSetpoint;
+        }
+
+        var desiredTxDegrees = _visionTxFiltered.in(Degrees);
+
+        if (MathUtil.isNear(0.0, desiredTxDegrees, ShooterConstants.TURRET_TRACK_TX_DEADBAND.in(Degrees)))
+        {
+            desiredTxDegrees = 0.0;
+        }
+
+        var previousTxDegrees = _visionTxApplied.in(Degrees);
+        var deltaTxDegrees    = desiredTxDegrees - previousTxDegrees;
+        var maxStepDegrees    = ShooterConstants.TURRET_VISION_TX_MAX_STEP_PER_LOOP.in(Degrees);
+        var stepTxDegrees     = MathUtil.clamp(deltaTxDegrees, -maxStepDegrees, maxStepDegrees);
+        _visionTxApplied = Degrees.of(previousTxDegrees + stepTxDegrees);
+
+        return rawSetpoint.plus(_visionTxApplied);
+    }
+
+    private Angle getEmpiricalLinearDriftCorrection(Angle commandedAngle, Distance distance)
+    {
+        if (!ShooterConstants.TURRET_USE_LINEAR_DRIFT_COMPENSATION)
+        {
+            _empiricalDriftCorrection         = Degrees.zero();
+            _empiricalDriftLateralErrorInches = 0.0;
+            return Degrees.zero();
+        }
+
+        _empiricalDriftSign = ShooterConstants.TURRET_LINEAR_DRIFT_CORRECTION_SIGN;
+
+        var commandedDegrees          = commandedAngle.in(Degrees);
+        var rawLateralOffsetInches    = ShooterConstants.TURRET_DRIFT_LATERAL_BIAS.in(edu.wpi.first.units.Units.Inches)
+                + ShooterConstants.TURRET_DRIFT_LATERAL_SINE_AMPLITUDE.in(edu.wpi.first.units.Units.Inches) * Math.sin(Math.toRadians(commandedDegrees + ShooterConstants.TURRET_DRIFT_LATERAL_PHASE_OFFSET.in(Degrees)));
+        var signedLateralOffsetInches = _empiricalDriftSign * rawLateralOffsetInches;
+        var distanceMeters            = Math.max(distance.in(Meters), 0.25);
+        var signedCorrectionDegrees   = Math.toDegrees(Math.atan2(Units.inchesToMeters(signedLateralOffsetInches), distanceMeters));
+        var maxCorrectionDeg          = ShooterConstants.TURRET_LINEAR_DRIFT_MAX_CORRECTION.in(Degrees);
+        signedCorrectionDegrees = MathUtil.clamp(signedCorrectionDegrees, -maxCorrectionDeg, maxCorrectionDeg);
+
+        _empiricalDriftLateralErrorInches = signedLateralOffsetInches;
+        _empiricalDriftCorrection         = Degrees.of(signedCorrectionDegrees);
+        return _empiricalDriftCorrection;
     }
 
     private ShotSolution calculatePass(SwerveDriveState swerveState, boolean isBlueAlliance)
@@ -191,8 +306,10 @@ public class TurretDirector
         var lookaheadToHub   = hubCoordinates.minus(movingTrackState.lookaheadTurretOrigin());
         var rawSetpoint      = getTurretSetpointForFieldTarget(movingTrackState.releasePose(), lookaheadToHub.getAngle().getMeasure());
         var bestTag          = selectBestTag(targetTagIds, fiducials);
-
-        rawSetpoint = rawSetpoint.plus(getLegacyReleaseLateralCorrection(rawSetpoint, movingTrackState.lookaheadDistance()));
+        rawSetpoint                       = rawSetpoint.plus(ShooterConstants.TURRET_TRACK_BIAS);
+        _poseVisionTrackDelta             = Degrees.zero();
+        _empiricalDriftCorrection         = Degrees.zero();
+        _empiricalDriftLateralErrorInches = 0.0;
 
         logShotKinematics(movingTrackState.releasePose(), movingTrackState.lookaheadTurretOrigin(), movingTrackState.lookaheadDistance(), movingTrackState.timeOfFlight());
 
@@ -212,44 +329,16 @@ public class TurretDirector
         return robotPose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
     }
 
-    private Translation2d getHubTranslationInRobotFrame(SwerveDriveState swerveState, Translation2d hubCoordinates)
-    {
-        var robotToHubField = hubCoordinates.minus(swerveState.Pose.getTranslation());
-
-        return robotToHubField.rotateBy(swerveState.Pose.getRotation().unaryMinus());
-    }
-
-    private Angle getTurretSetpointForRobotFrameTarget(Translation2d targetTranslation)
-    {
-        return targetTranslation.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
-    }
-
     private Angle getTurretSetpointForFieldTarget(Pose2d robotPose, Angle fieldTargetAngle)
     {
         return fieldTargetAngle.minus(robotPose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
     }
 
-    private Angle getLegacyReleaseLateralCorrection(Angle rawSetpoint, Distance distance)
-    {
-        var safeDistanceM    = Math.max(distance.in(Meters), 0.5);
-        var shotDirectionDeg = rawSetpoint.plus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD).in(Degrees);
-        var shotDirectionRad = Math.toRadians(shotDirectionDeg);
-        var releaseOffset    = ShooterConstants.TURRET_PIVOT_TO_RELEASE;
-        var perpendicularX   = -Math.sin(shotDirectionRad);
-        var perpendicularY   = Math.cos(shotDirectionRad);
-        var lateralErrorM    = releaseOffset.getX() * perpendicularX + releaseOffset.getY() * perpendicularY;
-
-        return Degrees.of(Math.toDegrees(Math.atan2(lateralErrorM, safeDistanceM)));
-    }
-
     private MovingTrackState calculateMovingTrackState(SwerveDriveState swerveState, Translation2d hubCoordinates)
     {
-        // This follows the turret-origin solve pattern described publicly by 5000
-        // and 6328: predict the release pose, compute turret-point velocity as
-        // v + omega x r, then iterate TOF lookahead from the turret pivot.
         var releasePose         = predictReleasePose(swerveState.Pose, swerveState.Speeds);
-        var turretOriginField   = getPointInField(releasePose, ShooterConstants.ROBOT_TO_TURRET_PIVOT);
-        var turretPointVelocity = getTurretPointVelocityField(releasePose, swerveState.Speeds, ShooterConstants.ROBOT_TO_TURRET_PIVOT);
+        var turretOriginField   = getPointInField(releasePose, ShooterConstants.ROBOT_TO_TURRET_RELEASE);
+        var turretPointVelocity = getTurretPointVelocityField(releasePose, swerveState.Speeds, ShooterConstants.ROBOT_TO_TURRET_RELEASE);
         var lookaheadOrigin     = turretOriginField;
         var lookaheadDistance   = Meters.of(hubCoordinates.getDistance(lookaheadOrigin));
         var timeOfFlight        = ShooterConstants.getShotTimeOfFlight(lookaheadDistance);
@@ -301,7 +390,8 @@ public class TurretDirector
 
     private AprilTagFiducial selectBestTag(List<Integer> targetTagIds, AprilTagFiducial... fiducials)
     {
-        AprilTagFiducial bestTag = null;
+        AprilTagFiducial bestTag   = null;
+        AprilTagFiducial lockedTag = null;
 
         for (AprilTagFiducial tag : fiducials)
         {
@@ -312,13 +402,27 @@ public class TurretDirector
                 continue;
             }
 
+            if (tagId == _selectedVisionTagId)
+            {
+                lockedTag = tag;
+            }
+
             if (bestTag == null || tag.ta > bestTag.ta || tag.ta == bestTag.ta && Math.abs(tag.tx) < Math.abs(bestTag.tx))
             {
                 bestTag = tag;
             }
         }
 
-        return bestTag;
+        var selectedTag = lockedTag != null ? lockedTag : bestTag;
+
+        if (selectedTag == null)
+        {
+            _selectedVisionTagId = -1;
+            return null;
+        }
+
+        _selectedVisionTagId = (int)Math.round(selectedTag.fiducialID);
+        return selectedTag;
     }
 
     private void updateFilter(List<Integer> filters, boolean force)

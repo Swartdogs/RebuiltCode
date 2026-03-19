@@ -47,9 +47,14 @@ public class Turret
     @Logged
     private Angle                     _turretSetpoint;
     @Logged
+    private Angle                     _commandedTargetAngle;
+    @Logged
+    private Angle                     _targetAngleError;
+    @Logged
     private boolean                   _hasSetpoint;
     @Logged
     private Voltage                   _motorVoltage;
+    private Voltage                   _lastCommandedMotorVoltage;
     @Logged
     private boolean                   _disabled;
     @Logged
@@ -66,18 +71,21 @@ public class Turret
             sensorOffset = sensorOffset.unaryMinus();
         }
 
-        _turretMotor         = new TalonFX(CANConstants.TURRET_MOTOR);
-        _turretSensor        = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
-        _pidController       = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
-        _controlMode         = ControlMode.Idle;
-        _manualAngleSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
-        _targetAngleSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
-        _turretAngle         = Degrees.zero();
-        _turretSetpoint      = ShooterConstants.TURRET_HOME_ANGLE;
-        _hasSetpoint         = false;
-        _motorVoltage        = Volts.zero();
-        _disabled            = false;
-        _linedUp             = false;
+        _turretMotor               = new TalonFX(CANConstants.TURRET_MOTOR);
+        _turretSensor              = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
+        _pidController             = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
+        _controlMode               = ControlMode.Idle;
+        _manualAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
+        _turretAngle               = Degrees.zero();
+        _turretSetpoint            = ShooterConstants.TURRET_HOME_ANGLE;
+        _commandedTargetAngle      = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleError          = Degrees.zero();
+        _hasSetpoint               = false;
+        _motorVoltage              = Volts.zero();
+        _lastCommandedMotorVoltage = Volts.zero();
+        _disabled                  = false;
+        _linedUp                   = false;
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -90,7 +98,6 @@ public class Turret
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig));
 
         _pidController.setTolerance(ShooterConstants.TURRET_TOLERANCE.in(Degrees));
-        _pidController.setSetpoint(ShooterConstants.TURRET_HOME_ANGLE.in(Degrees));
     }
 
     public void periodic()
@@ -120,20 +127,34 @@ public class Turret
                 break;
         }
 
+        if (_hasSetpoint)
+        {
+            _turretSetpoint = limitSetpointStep(_commandedTargetAngle, _turretSetpoint);
+        }
+
         updateLinedUpState();
+
+        _commandedTargetAngle = _turretSetpoint;
+        _targetAngleError     = _commandedTargetAngle.minus(_turretAngle);
 
         if (_hasSetpoint && !_disabled)
         {
-            motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
+            var errorDegrees  = _turretSetpoint.minus(_turretAngle).in(Degrees);
+            var outputVolts   = _pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees));
+            var staticFFVolts = ShooterConstants.TURRET_STATIC_FF.in(Volts);
 
-            if (_pidController.atSetpoint())
+            if (!MathUtil.isNear(0.0, errorDegrees, ShooterConstants.TURRET_STATIC_FF_ERROR_DEADBAND.in(Degrees)))
             {
-                motorOutput = Volts.zero();
+                outputVolts += Math.copySign(staticFFVolts, errorDegrees);
             }
+
+            motorOutput = Volts.of(outputVolts);
         }
 
+        motorOutput = Volts.of(limitOutputStep(motorOutput.in(Volts)));
         motorOutput = applySoftLimit(motorOutput);
         _turretMotor.setVoltage(motorOutput.in(Volts));
+        _lastCommandedMotorVoltage = motorOutput;
     }
 
     public void simulationPeriodic()
@@ -179,6 +200,11 @@ public class Turret
         return _linedUp;
     }
 
+    public Angle getTargetAngleError()
+    {
+        return _targetAngleError;
+    }
+
     public void setDisabled(boolean disabled)
     {
         _disabled = disabled;
@@ -191,41 +217,62 @@ public class Turret
 
     static Angle chooseNearestLegalAngle(Angle currentAngle, Angle requestedAngle)
     {
-        var currentDegrees   = currentAngle.in(Degrees);
-        var requestedDegrees = requestedAngle.in(Degrees);
-        var minDegrees       = ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Degrees);
-        var maxDegrees       = ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Degrees);
-        var wrapCenter       = (int)Math.round((currentDegrees - requestedDegrees) / 360.0);
-        var bestAngle        = MathUtil.clamp(requestedDegrees, minDegrees, maxDegrees);
-        var bestTravel       = Double.POSITIVE_INFINITY;
-        var bestClampAmount  = Double.POSITIVE_INFINITY;
-        var bestWrapDistance = Integer.MAX_VALUE;
+        var    currentDegrees   = currentAngle.in(Degrees);
+        var    requestedDegrees = requestedAngle.in(Degrees);
+        var    minDegrees       = ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Degrees);
+        var    maxDegrees       = ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Degrees);
+        var    wrapCenter       = (int)Math.round((currentDegrees - requestedDegrees) / 360.0);
+        var    bestTravel       = Double.POSITIVE_INFINITY;
+        var    bestWrapDistance = Integer.MAX_VALUE;
+        Double bestLegalAngle   = null;
 
         for (int wrapOffset = -kCandidateWrapCount; wrapOffset <= kCandidateWrapCount; wrapOffset++)
         {
             var wrapIndex      = wrapCenter + wrapOffset;
             var wrappedDegrees = requestedDegrees + 360.0 * wrapIndex;
-            var legalDegrees   = MathUtil.clamp(wrappedDegrees, minDegrees, maxDegrees);
-            var travelDegrees  = Math.abs(legalDegrees - currentDegrees);
-            var clampAmount    = Math.abs(legalDegrees - wrappedDegrees);
-            var wrapDistance   = Math.abs(wrapIndex);
+            if (wrappedDegrees < minDegrees || wrappedDegrees > maxDegrees)
+            {
+                continue;
+            }
 
-            // Inspired by Team 5000's TurretCalculator and 6328's unwrap-style helpers:
-            // choose a legal branch relative to the current azimuth instead of moduloing
-            // first, so requests near +/- soft limits stay on the local side.
-            var isBetterCandidate = travelDegrees < bestTravel || MathUtil.isNear(travelDegrees, bestTravel, kComparisonToleranceDeg)
-                    && (clampAmount < bestClampAmount || MathUtil.isNear(clampAmount, bestClampAmount, kComparisonToleranceDeg) && (wrapDistance < bestWrapDistance || wrapDistance == bestWrapDistance && legalDegrees > bestAngle));
+            var travelDegrees = Math.abs(wrappedDegrees - currentDegrees);
+            var wrapDistance  = Math.abs(wrapIndex);
+
+            var isBetterCandidate = travelDegrees < bestTravel
+                    || MathUtil.isNear(travelDegrees, bestTravel, kComparisonToleranceDeg) && (wrapDistance < bestWrapDistance || wrapDistance == bestWrapDistance && (bestLegalAngle == null || wrappedDegrees > bestLegalAngle));
 
             if (isBetterCandidate)
             {
-                bestAngle        = legalDegrees;
+                bestLegalAngle   = wrappedDegrees;
                 bestTravel       = travelDegrees;
-                bestClampAmount  = clampAmount;
                 bestWrapDistance = wrapDistance;
             }
         }
 
-        return Degrees.of(bestAngle);
+        if (bestLegalAngle != null)
+        {
+            return Degrees.of(bestLegalAngle);
+        }
+
+        return Degrees.of(MathUtil.clamp(requestedDegrees, minDegrees, maxDegrees));
+    }
+
+    private Angle limitSetpointStep(Angle previousSetpoint, Angle requestedSetpoint)
+    {
+        var maxStepDeg      = ShooterConstants.TURRET_MAX_SETPOINT_STEP_PER_LOOP.in(Degrees);
+        var deltaDeg        = requestedSetpoint.minus(previousSetpoint).in(Degrees);
+        var limitedDeltaDeg = MathUtil.clamp(deltaDeg, -maxStepDeg, maxStepDeg);
+        var limitedSetpoint = previousSetpoint.plus(Degrees.of(limitedDeltaDeg));
+        return selectLegalSetpoint(limitedSetpoint);
+    }
+
+    private double limitOutputStep(double requestedVolts)
+    {
+        var previousVolts     = _lastCommandedMotorVoltage.in(Volts);
+        var maxStepVolts      = ShooterConstants.TURRET_MAX_OUTPUT_STEP_PER_LOOP.in(Volts);
+        var deltaVolts        = requestedVolts - previousVolts;
+        var limitedDeltaVolts = MathUtil.clamp(deltaVolts, -maxStepVolts, maxStepVolts);
+        return previousVolts + limitedDeltaVolts;
     }
 
     private Voltage applySoftLimit(Voltage requestedVoltage)

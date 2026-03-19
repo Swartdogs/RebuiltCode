@@ -14,6 +14,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -93,7 +94,7 @@ public class Shooter extends SubsystemBase
         _feedReady                            = false;
 
         _feeder.set(false);
-        // _rotor.set(false);
+        _rotor.set(false);
         _flywheel.stop();
         _turret.clearTargetAngle();
         _turret.setDisabled(false);
@@ -188,11 +189,11 @@ public class Shooter extends SubsystemBase
         {
             beginManualControl(false);
             _feeder.set(true);
-            // _rotor.set(true);
+            _rotor.set(true);
         }, () ->
         {
             _feeder.set(false);
-            // _rotor.set(false);
+            _rotor.set(false);
         });
     }
 
@@ -202,11 +203,11 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Manual;
             _feeder.set(true);
-            // _rotor.set(true);
+            _rotor.set(true);
         }, () ->
         {
             _feeder.set(false);
-            // _rotor.set(false);
+            _rotor.set(false);
             _flywheel.stop();
             _state = ShooterState.Idle;
         });
@@ -215,6 +216,11 @@ public class Shooter extends SubsystemBase
     public Command stop()
     {
         return runOnce(this::stopShooter);
+    }
+
+    public Command homeTurret()
+    {
+        return runOnce(() -> setManualTurretAngle(ShooterConstants.TURRET_HOME_ANGLE));
     }
 
     public Command trackOnly()
@@ -229,14 +235,7 @@ public class Shooter extends SubsystemBase
 
     public void bumpManualTurretAngle(double deltaDeg)
     {
-        beginManualControl(true);
-        _turret.setDisabled(false);
-        _turret.bumpManualAngle(Degrees.of(deltaDeg));
-    }
-
-    public double getManualTurretAngleDeg()
-    {
-        return _turret.getManualAngle().in(Degrees);
+        setManualTurretAngle(_turret.getManualAngle().plus(Degrees.of(deltaDeg)));
     }
 
     @Override
@@ -247,7 +246,7 @@ public class Shooter extends SubsystemBase
             case Preparing:
             case Ready:
                 _feeder.set(false);
-                // _rotor.set(false);
+                _rotor.set(false);
                 runRequestedShot(true);
 
                 if (isReadyToFeed())
@@ -272,12 +271,12 @@ public class Shooter extends SubsystemBase
                 if (isReadyToFeed())
                 {
                     _feeder.set(true);
-                    // _rotor.set(true);
+                    _rotor.set(true);
                 }
                 else
                 {
                     _feeder.set(false);
-                    // _rotor.set(false);
+                    _rotor.set(false);
                     _state = ShooterState.Preparing;
                 }
                 break;
@@ -291,7 +290,7 @@ public class Shooter extends SubsystemBase
 
             case TrackingOnly:
                 _feeder.set(false);
-                // _rotor.set(false);
+                _rotor.set(false);
                 _flywheel.stop();
                 _requestedShotMode = ShotMode.Track;
                 runRequestedShot(false);
@@ -301,7 +300,7 @@ public class Shooter extends SubsystemBase
             default:
                 _flywheel.stop();
                 _feeder.set(false);
-                // _rotor.set(false);
+                _rotor.set(false);
                 clearShotRequest();
                 break;
         }
@@ -345,13 +344,20 @@ public class Shooter extends SubsystemBase
         _currentShotSolution = createIdleSolution();
         clearReadinessGate();
         _feeder.set(false);
-        // _rotor.set(false);
+        _rotor.set(false);
         _turret.setDisabled(false);
 
         if (clearTurretTarget)
         {
             _turret.clearTargetAngle();
         }
+    }
+
+    private void setManualTurretAngle(Angle angle)
+    {
+        beginManualControl(true);
+        _turret.setDisabled(false);
+        _turret.setManualAngle(angle);
     }
 
     public void stopShooter()
@@ -396,8 +402,7 @@ public class Shooter extends SubsystemBase
         _requestedShotMode   = ShotMode.Idle;
         _currentShotSolution = createIdleSolution();
         clearReadinessGate();
-        _turret.clearTargetAngle();
-        // _rotor.set(false);
+        _rotor.set(false);
     }
 
     private ShotSolution createIdleSolution()
@@ -408,7 +413,7 @@ public class Shooter extends SubsystemBase
     private boolean isReadyToFeed()
     {
         _solutionReady = _currentShotSolution.valid();
-        _turretReady   = _turret.isLinedUp();
+        _turretReady   = isTurretReadyForFeed();
         _flywheelReady = _flywheel.atSpeed();
         _hubReady      = hasActiveHubForCurrentShot();
         _inRangeReady  = hasValidDistanceForCurrentShot();
@@ -423,6 +428,18 @@ public class Shooter extends SubsystemBase
         _stabilityReady = !_usingMovingShotMath || _movingFeedDebouncer.calculate(rawFeedReady);
         _feedReady      = rawFeedReady && _stabilityReady;
         return _feedReady;
+    }
+
+    private boolean isTurretReadyForFeed()
+    {
+        if (!_usingMovingShotMath || _currentShotSolution.mode() != ShotMode.Track)
+        {
+            return _turret.isLinedUp();
+        }
+
+        var movingToleranceDeg = ShooterConstants.SWM_FEED_TURRET_TOLERANCE.in(Degrees);
+        var turretErrorDeg     = Math.abs(_turret.getTargetAngleError().in(Degrees));
+        return turretErrorDeg <= movingToleranceDeg;
     }
 
     private boolean hasActiveHubForCurrentShot()
@@ -447,17 +464,9 @@ public class Shooter extends SubsystemBase
 
     private boolean shouldUseMovingShotMath()
     {
-        if (_requestedShotMode != ShotMode.Track)
-        {
-            return false;
-        }
-
-        if (_state == ShooterState.TrackingOnly || _autoShootEnabled)
-        {
-            return true;
-        }
-
-        return _robotTranslationSpeedMetersPerSecond >= ShooterConstants.SWM_ENABLE_TRANSLATIONAL_SPEED.in(MetersPerSecond) || Math.abs(_robotAngularSpeedRadiansPerSecond) >= ShooterConstants.SWM_ENABLE_ANGULAR_SPEED.in(RadiansPerSecond);
+        // Keep track-mode behavior consistent between `trackOnly` and `shoot`:
+        // both should run the moving-shot calculator path.
+        return _requestedShotMode == ShotMode.Track;
     }
 
     private boolean isWithinMovingFeedRolloutEnvelope()
