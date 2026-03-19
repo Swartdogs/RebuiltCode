@@ -40,33 +40,31 @@ public class TurretDirector
                 }
                 else
                 {
-                    double avgTx = 0.0;
-                    double avgTy = 0.0;
+                    double invertedYawSumDegrees   = 0.0;
+                    double invertedPitchSumDegrees = 0.0;
 
                     for (AprilTagFiducial tag : fiducials)
                     {
-                        // subtract the values instead of adding them
-                        // our limelight is mounted upside down so we
-                        // need the inverse of these measurements
-                        avgTx -= tag.tx;
-                        avgTy -= tag.ty;
+                        // Limelight is mounted upside down, so invert tx/ty before averaging.
+                        invertedYawSumDegrees   -= tag.tx;
+                        invertedPitchSumDegrees -= tag.ty;
                     }
 
-                    int n = fiducials.length;
+                    int sampleCount = fiducials.length;
 
-                    avgTx /= n;
-                    avgTy /= n;
+                    double averageInvertedYawDegrees   = invertedYawSumDegrees / sampleCount;
+                    double averageInvertedPitchDegrees = invertedPitchSumDegrees / sampleCount;
 
                     // Tx and Ty are now the average pitch and yaw to the target.
                     // Now calculate distance from pitch
-                    var tyMeasure = Degrees.of(avgTy);
+                    var tyMeasure = Degrees.of(averageInvertedPitchDegrees);
                     var distance  = ShooterConstants.TURRET_TO_HUB_HEIGHT_DELTA.div(Math.tan(tyMeasure.plus(ShooterConstants.TURRET_LIMELIGHT_PITCH).in(Radians)));
 
                     // We have a distance and an angle. We can now describe the camera to target
                     // translation as a forward vector with magnitude "distance" rotated by angle
-                    // "avgTx"
+                    // "averageInvertedYawDegrees"
 
-                    var localCameraToTarget = new Translation2d(distance, Inches.zero()).rotateBy(Rotation2d.fromDegrees(-avgTx));
+                    var localCameraToTarget = new Translation2d(distance, Inches.zero()).rotateBy(Rotation2d.fromDegrees(-averageInvertedYawDegrees));
 
                     // now, calculate ret and account for the turret being offset and at an angle
                     // get translation from the center of the robot to the camera

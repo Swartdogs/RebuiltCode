@@ -14,7 +14,9 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -31,6 +33,9 @@ import frc.robot.subsystems.drive.TunerConstants.TunerSwerveDrivetrain;
 import limelight.Limelight;
 import limelight.networktables.LimelightPoseEstimator;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
+import limelight.networktables.LimelightSettings;
+import limelight.networktables.LimelightSettings.ImuMode;
+import limelight.networktables.Orientation3d;
 import limelight.networktables.PoseEstimate;
 
 /**
@@ -321,42 +326,53 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Logged
     public class DriveVision
     {
-        private final Limelight              _limelightLeft;
-        private final Limelight              _limelightRight;
-        private final LimelightPoseEstimator _poseEstimatorLeft;
-        private final LimelightPoseEstimator _poseEstimatorRight;
         @Logged
-        private double                       _lastTimestampLeft  = 0.0;
+        private final VisionState   _leftVision;
         @Logged
-        private double                       _lastTimestampRight = 0.0;
-        @Logged
-        private boolean                      _hasVisionLeft      = false;
-        @Logged
-        private boolean                      _hasVisionRight     = false;
-        @Logged
-        private Pose2d                       _leftPose           = new Pose2d();
-        @Logged
-        private Pose2d                       _rightPose          = new Pose2d();
+        private final VisionState   _rightVision;
+        private static final Pose2d kInvalidVisionPose = new Pose2d(-1.0, -1.0, Rotation2d.kZero);
+
+        public static final class VisionState
+        {
+            @Logged
+            private double                       _lastTimestamp  = 0.0;
+            @Logged
+            private boolean                      _hasVision      = false;
+            @Logged
+            private boolean                      _acceptedVision = false;
+            @Logged
+            private Pose2d                       _pose           = kInvalidVisionPose;
+            private final Limelight              _limelight;
+            private final LimelightSettings      _settings;
+            private final LimelightPoseEstimator _poseEstimator;
+
+            private VisionState(Limelight limelight, Pose3d cameraOffset)
+            {
+                _limelight = limelight;
+                if (_limelight == null)
+                {
+                    _settings      = null;
+                    _poseEstimator = null;
+                    return;
+                }
+
+                _settings = _limelight.getSettings();
+                _settings.withCameraOffset(cameraOffset).save();
+                _poseEstimator = _limelight.createPoseEstimator(EstimationMode.MEGATAG2);
+            }
+        }
 
         public DriveVision()
         {
             if (RobotBase.isReal())
             {
-                _limelightLeft  = new Limelight(VisionConstants.LEFT_CAMERA_NAME);
-                _limelightRight = new Limelight(VisionConstants.RIGHT_CAMERA_NAME);
-
-                _poseEstimatorLeft  = _limelightLeft.createPoseEstimator(EstimationMode.MEGATAG1);
-                _poseEstimatorRight = _limelightRight.createPoseEstimator(EstimationMode.MEGATAG1);
-
-                _limelightLeft.getSettings().withCameraOffset(VisionConstants.LEFT_CAMERA_OFFSET).save();
-                _limelightRight.getSettings().withCameraOffset(VisionConstants.RIGHT_CAMERA_OFFSET).save();
+                _leftVision  = new VisionState(new Limelight(VisionConstants.LEFT_CAMERA_NAME), VisionConstants.LEFT_CAMERA_OFFSET);
+                _rightVision = new VisionState(new Limelight(VisionConstants.RIGHT_CAMERA_NAME), VisionConstants.RIGHT_CAMERA_OFFSET);
             }
             else
             {
-                _limelightLeft      = null;
-                _limelightRight     = null;
-                _poseEstimatorLeft  = null;
-                _poseEstimatorRight = null;
+                _leftVision  = new VisionState(null, null);
+                _rightVision = new VisionState(null, null);
             }
             setVisionMeasurementStdDevs(VisionConstants.STD_DEVS);
         }
@@ -365,33 +381,49 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         {
             if (RobotBase.isSimulation()) return;
 
-            _hasVisionLeft  = processLimelight(_limelightLeft, _poseEstimatorLeft, _lastTimestampLeft);
-            _hasVisionRight = processLimelight(_limelightRight, _poseEstimatorRight, _lastTimestampRight);
+            var robotHeading                 = getState().Pose.getRotation();
+            var robotYawRateDegreesPerSecond = Math.toDegrees(getState().Speeds.omegaRadiansPerSecond);
+            var imuMode                      = DriverStation.isDisabled() ? ImuMode.SyncInternalImu : ImuMode.InternalImuExternalAssist;
+            setRobotOrientation(_leftVision, robotHeading, robotYawRateDegreesPerSecond, imuMode);
+            setRobotOrientation(_rightVision, robotHeading, robotYawRateDegreesPerSecond, imuMode);
+
+            _leftVision._acceptedVision  = processLimelight(_leftVision);
+            _rightVision._acceptedVision = processLimelight(_rightVision);
         }
 
-        private boolean processLimelight(Limelight limelight, LimelightPoseEstimator poseEstimator, double lastTimestamp)
+        private void setRobotOrientation(VisionState state, Rotation2d robotHeading, double robotYawRateDegreesPerSecond, ImuMode imuMode)
         {
-            var results = limelight.getLatestResults();
+            state._settings.withImuMode(imuMode)
+                    .withRobotOrientation(new Orientation3d(new Rotation3d(Degrees.zero(), Degrees.zero(), robotHeading.getMeasure()), DegreesPerSecond.zero(), DegreesPerSecond.zero(), DegreesPerSecond.of(robotYawRateDegreesPerSecond)))
+                    .save();
+        }
 
-            if (results.isEmpty() || results.get().targets_Fiducials.length <= 0)
+        private boolean processLimelight(VisionState state)
+        {
+            if (Math.abs(Math.toDegrees(getState().Speeds.omegaRadiansPerSecond)) > VisionConstants.MAX_ANGULAR_RATE_FOR_VISION.in(DegreesPerSecond))
             {
+                setVisionState(state, false, kInvalidVisionPose);
                 return false;
             }
 
-            Optional<PoseEstimate> estimate = poseEstimator.getPoseEstimate();
+            var results = state._limelight.getLatestResults();
+
+            if (results.isEmpty() || results.get().targets_Fiducials.length <= 0)
+            {
+                setVisionState(state, false, kInvalidVisionPose);
+                return false;
+            }
+
+            Optional<PoseEstimate> estimate = state._poseEstimator.getPoseEstimate();
 
             if (estimate.isEmpty())
             {
+                setVisionState(state, false, kInvalidVisionPose);
                 return false;
             }
 
             PoseEstimate poseEstimate = estimate.get();
-            if (poseEstimate.timestampSeconds <= lastTimestamp)
-            {
-                return false;
-            }
-
-            var pose = poseEstimate.pose.toPose2d();
+            var          pose         = poseEstimate.pose.toPose2d();
 
             // Somehow, bad data can still get through here
             // check for a zero pose and throw it out
@@ -399,23 +431,29 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
             if (Math.abs(pose.getX()) < 1e-6 && Math.abs(pose.getY()) < 1e-6)
             {
+                setVisionState(state, false, kInvalidVisionPose);
+                return false;
+            }
+
+            // Keep hasVision/pose telemetry current even if this frame is stale and not
+            // fused.
+            setVisionState(state, true, pose);
+
+            if (poseEstimate.timestampSeconds <= state._lastTimestamp)
+            {
                 return false;
             }
 
             addVisionMeasurement(pose, poseEstimate.timestampSeconds);
-
-            if (limelight == _limelightLeft)
-            {
-                _lastTimestampLeft = poseEstimate.timestampSeconds;
-                _leftPose          = pose;
-            }
-            else
-            {
-                _lastTimestampRight = poseEstimate.timestampSeconds;
-                _rightPose          = pose;
-            }
+            state._lastTimestamp = poseEstimate.timestampSeconds;
 
             return true;
+        }
+
+        private void setVisionState(VisionState state, boolean hasVision, Pose2d pose)
+        {
+            state._hasVision = hasVision;
+            state._pose      = pose;
         }
     }
 }

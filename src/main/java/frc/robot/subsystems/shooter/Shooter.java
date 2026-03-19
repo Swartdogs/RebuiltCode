@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -17,15 +19,12 @@ public class Shooter extends SubsystemBase
 {
     public enum ShooterState
     {
-        Idle, Preparing, Ready, Firing, Manual
+        Idle, Preparing, Ready, Firing, Manual;
     }
 
-    /************
-     * COMMANDS *
-     ************/
     public Command startShooter()
     {
-        return runOnce(() -> startShoot(false));
+        return runOnce(() -> startPreparedShoot(false));
     }
 
     public Command fire()
@@ -35,7 +34,7 @@ public class Shooter extends SubsystemBase
 
     public Command shoot()
     {
-        return startEnd(() -> startShoot(true), () -> stopShooter());
+        return startEnd(() -> startPreparedShoot(true), this::stopShooter);
     }
 
     public Command startPass()
@@ -45,42 +44,45 @@ public class Shooter extends SubsystemBase
 
     public Command pass()
     {
-        return startEnd(() -> startPass(true), () -> stopShooter());
+        return startEnd(() -> startPass(true), this::stopShooter);
     }
 
-    public Command stop()
-    {
-        return runOnce(this::stopShooter);
-    }
-
-    // Manual commands below
     public Command setManualMode(boolean manual)
     {
         return runOnce(() ->
         {
-            _state = manual ? ShooterState.Manual : ShooterState.Idle;
+            _state            = manual ? ShooterState.Manual : ShooterState.Idle;
+            _autoShootEnabled = false;
+            _feeder.set(false);
+            _turret.setTurretState(TurretState.Idle);
             _turret.setDisabled(manual);
+
+            if (manual)
+            {
+                _flywheel.stop();
+            }
         });
     }
 
-    public Command setFlywheelVelocity(AngularVelocity velocity)
+    public boolean inManualMode()
     {
-        return runOnce(() -> _flywheel.setVelocity(velocity)).onlyIf(this::inManualMode);
+        return _state == ShooterState.Manual;
     }
 
-    public Command modFlywheelVelocity(AngularVelocity mod)
+    public void setManualFlywheel(double rpm)
     {
-        return runOnce(() -> _flywheel.setVelocity(_flywheel.getTargetVelocity().plus(mod))).onlyIf(this::inManualMode);
+        if (inManualMode())
+        {
+            _flywheel.setVelocity(RPM.of(Math.max(0.0, rpm)));
+        }
     }
 
-    public Command stopFlywheel()
+    public void stopManualFlywheel()
     {
-        return runOnce(() -> _flywheel.stop()).onlyIf(this::inManualMode);
-    }
-
-    public Command runFeeder()
-    {
-        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
+        if (inManualMode())
+        {
+            _flywheel.stop();
+        }
     }
 
     public Command runRotor()
@@ -116,9 +118,39 @@ public class Shooter extends SubsystemBase
         // @formatter:on
     }
 
-    /*************
-     * SUBSYSTEM *
-     *************/
+    public Command setFlywheelVelocity(AngularVelocity velocity)
+    {
+        return runOnce(() ->
+        {
+            _state = ShooterState.Manual;
+            _flywheel.setVelocity(velocity);
+        });
+    }
+
+    public Command runManualFeeder()
+    {
+        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
+    }
+
+    public Command runFeeder()
+    {
+        return startEnd(() ->
+        {
+            _state = ShooterState.Manual;
+            _feeder.set(true);
+        }, () ->
+        {
+            _feeder.set(false);
+            _flywheel.stop();
+            _state = ShooterState.Idle;
+        });
+    }
+
+    public Command stop()
+    {
+        return runOnce(this::stopShooter);
+    }
+
     public final Flywheel _flywheel;
     public final Feeder   _feeder;
     public final Turret   _turret;
@@ -134,14 +166,14 @@ public class Shooter extends SubsystemBase
         _feeder           = new Feeder();
         _turret           = new Turret(swerveStateSupplier);
         _rotor            = new Rotor();
-        _state            = ShooterState.Manual;
+        _state            = ShooterState.Idle;
         _autoShootEnabled = false;
 
         _feeder.set(false);
         _rotor.set(false);
         _flywheel.stop();
         _turret.setTurretState(TurretState.Idle);
-        _turret.setDisabled(true);
+        _turret.setDisabled(false);
     }
 
     @Override
@@ -155,7 +187,7 @@ public class Shooter extends SubsystemBase
                 _rotor.set(false);
                 primeShot();
 
-                if (_flywheel.atSpeed() && _turret.isLinedUp())
+                if (isReadyToFeed())
                 {
                     if (_autoShootEnabled)
                     {
@@ -176,12 +208,18 @@ public class Shooter extends SubsystemBase
                 _feeder.set(true);
                 _rotor.set(true);
                 primeShot();
+                if (isReadyToFeed())
+                {
+                    _feeder.set(true);
+                }
+                else
+                {
+                    _feeder.set(false);
+                    _state = ShooterState.Preparing;
+                }
                 break;
 
             case Manual:
-                // Do nothing. The different parts of the
-                // shooter will be controlled directly through
-                // commands
                 break;
 
             case Idle:
@@ -205,7 +243,7 @@ public class Shooter extends SubsystemBase
         _flywheel.simulationPeriodic();
     }
 
-    public void startShoot(boolean autoShoot)
+    public void startPreparedShoot(boolean autoShoot)
     {
         beginShootingSequence(TurretState.Track, autoShoot);
     }
@@ -217,18 +255,18 @@ public class Shooter extends SubsystemBase
 
     private void beginShootingSequence(TurretState turretState, boolean autoShoot)
     {
-        if (_state == ShooterState.Idle)
-        {
-            _turret.setTurretState(turretState);
-            _autoShootEnabled = autoShoot;
-            _state            = ShooterState.Preparing;
-        }
+        _feeder.set(false);
+        _turret.setDisabled(false);
+        _turret.setTurretState(turretState);
+        _autoShootEnabled = autoShoot;
+        _state            = ShooterState.Preparing;
     }
 
     public void stopShooter()
     {
         _state            = ShooterState.Idle;
         _autoShootEnabled = false;
+        _turret.setDisabled(false);
     }
 
     public void commenceFiring()
@@ -248,8 +286,8 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    public boolean inManualMode()
+    private boolean isReadyToFeed()
     {
-        return _state == ShooterState.Manual;
+        return _flywheel.atSpeed();
     }
 }
