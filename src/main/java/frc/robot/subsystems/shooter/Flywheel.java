@@ -49,10 +49,6 @@ public class Flywheel
     private AngularVelocity                 _targetVelocity  = RPM.zero();
     @Logged
     private Voltage                         _flywheelVoltage = Volts.zero();
-    @Logged
-    private double                          _actualRpm       = 0.0;
-    @Logged
-    private double                          _targetRpm       = 0.0;
 
     public Flywheel()
     {
@@ -96,8 +92,6 @@ public class Flywheel
     {
         _velocity        = RPM.of(_flywheelEncoder.getVelocity());
         _flywheelVoltage = Volts.of(_leadMotor.getAppliedOutput() * _leadMotor.getBusVoltage());
-        _actualRpm       = _velocity.in(RPM);
-        _targetRpm       = _targetVelocity.in(RPM);
     }
 
     public void simulationPeriodic()

@@ -97,21 +97,13 @@ public final class Constants
     {
         public static final LinearVelocity MAX_SPEED = TunerConstants.kSpeedAt12Volts.times(0.5); // kSpeedAt12Volts
         // desired top speed
-        public static final AngularVelocity     MAX_ANGULAR_RATE                      = RotationsPerSecond.of(0.75); // 3/4 of a rotation per
-                                                                                                                     // second max angular
-                                                                                                                     // velocity
-        public static final Dimensionless       TRANSLATE_DEADBAND                    = Percent.of(8);
-        public static final Dimensionless       ROTATE_DEADBAND                       = Percent.of(8);
-        public static final Dimensionless       SLOW_MODE_SCALE                       = Percent.of(35);
-        public static final Dimensionless       FULL_SPEED_SCALE                      = Percent.of(100);
-        public static final double              SNAKE_HEADING_KP                      = 4.5;
-        public static final double              SNAKE_HEADING_KD                      = 0.2;
-        public static final LinearVelocity      SNAKE_MIN_TRANSLATE_FOR_HEADING       = MetersPerSecond.of(0.2);
-        public static final double              SNAKE_ROTATION_OVERRIDE_AXIS_DEADBAND = 0.12;
-        public static final AngularVelocity     SNAKE_MAX_ANGULAR_RATE                = MAX_ANGULAR_RATE;
-        public static final AngularAcceleration SNAKE_MAX_ANGULAR_ACCELERATION        = RotationsPerSecondPerSecond.of(1.5);
-        public static final Angle               SNAKE_INTAKE_HEADING_OFFSET           = Degrees.of(180.0); // Intake faces the rear
-        public static final Angle               SNAKE_HEADING_TOLERANCE               = Degrees.of(2.0);
+        public static final AngularVelocity MAX_ANGULAR_RATE   = RotationsPerSecond.of(0.75); // 3/4 of a rotation per
+                                                                                              // second max angular
+                                                                                              // velocity
+        public static final Dimensionless   TRANSLATE_DEADBAND = Percent.of(8);
+        public static final Dimensionless   ROTATE_DEADBAND    = Percent.of(8);
+        public static final Dimensionless   SLOW_MODE_SCALE    = Percent.of(35);
+        public static final Dimensionless   FULL_SPEED_SCALE   = Percent.of(100);
     }
 
     public static class IntakeConstants
@@ -178,7 +170,7 @@ public final class Constants
         public static final List<Integer> RED_HUB_TAG_IDS                       = List.of(2, 4, 5, 10);
         public static final List<Integer> ALL_HUB_TAG_IDS                       = Stream.concat(BLUE_HUB_TAG_IDS.stream(), RED_HUB_TAG_IDS.stream()).toList();
         public static final Translation3d CENTER_TAG_TO_HUB_CENTER_OFFSET       = new Translation3d(Inches.of(-23.5), Inches.zero(), Inches.zero());
-        public static final Angle         TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD = Degrees.of(90); // Hub "zero" is 90 degrees
+        public static final Angle         TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD = Degrees.of(90); // Turret "zero" is 90 degrees
                                                                                                   // left of robot forward
         public static final Translation2d BLUE_HUB                              = new Translation2d(Inches.of(182.1), Inches.of(158.85));
         public static final Translation2d RED_HUB                               = new Translation2d(Inches.of(469.1), Inches.of(158.85));

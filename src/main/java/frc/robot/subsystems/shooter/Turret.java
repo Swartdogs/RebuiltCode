@@ -160,6 +160,7 @@ public class Turret
 
                 for (AprilTagFiducial tag : fiducials)
                 {
+                    // Limelight reports the tag ID as a double, but our tag lists are ints.
                     var tagId = (int)Math.round(tag.fiducialID);
 
                     if (!Utilities.getOurHubTagIds().contains(tagId))
@@ -288,15 +289,12 @@ public class Turret
 
     private Voltage applySoftLimit(Voltage requestedVoltage)
     {
-        var requestedVolts = requestedVoltage.in(Volts);
-        var turretDegrees  = _turretAngle.in(Degrees);
-
-        if (turretDegrees <= ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Degrees) && requestedVolts < 0.0)
+        if (_turretAngle.lte(ShooterConstants.TURRET_SOFT_MIN_ANGLE) && requestedVoltage.lt(Volts.zero()))
         {
             return Volts.zero();
         }
 
-        if (turretDegrees >= ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Degrees) && requestedVolts > 0.0)
+        if (_turretAngle.gte(ShooterConstants.TURRET_SOFT_MAX_ANGLE) && requestedVoltage.gt(Volts.zero()))
         {
             return Volts.zero();
         }
