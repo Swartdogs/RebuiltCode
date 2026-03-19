@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
 
@@ -37,6 +38,7 @@ public class Shooter extends SubsystemBase
     public final Turret                      _turret;
     public final TurretDirector              _turretDirector;
     private final Supplier<SwerveDriveState> _swerveStateSupplier;
+    private final Supplier<Boolean>          _intakeExtendedSupplier;
     private final Debouncer                  _movingFeedDebouncer;
     @Logged
     private ShooterState                     _state;
@@ -68,9 +70,10 @@ public class Shooter extends SubsystemBase
     @Logged
     private boolean                          _feedReady;
 
-    public Shooter(Supplier<SwerveDriveState> swerveStateSupplier)
+    public Shooter(Supplier<SwerveDriveState> swerveStateSupplier, Supplier<Boolean> intakeExtendedSupplier)
     {
         _swerveStateSupplier                  = swerveStateSupplier;
+        _intakeExtendedSupplier               = intakeExtendedSupplier;
         _flywheel                             = new Flywheel();
         _feeder                               = new Feeder();
         _rotor                                = new Rotor();
@@ -94,7 +97,7 @@ public class Shooter extends SubsystemBase
         _feedReady                            = false;
 
         _feeder.set(false);
-        _rotor.set(false);
+        _rotor.stop();
         _flywheel.stop();
         _turret.clearTargetAngle();
         _turret.setDisabled(false);
@@ -189,11 +192,11 @@ public class Shooter extends SubsystemBase
         {
             beginManualControl(false);
             _feeder.set(true);
-            _rotor.set(true);
+            setRotorEnabled(true);
         }, () ->
         {
             _feeder.set(false);
-            _rotor.set(false);
+            setRotorEnabled(false);
         });
     }
 
@@ -203,11 +206,11 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Manual;
             _feeder.set(true);
-            _rotor.set(true);
+            setRotorEnabled(true);
         }, () ->
         {
             _feeder.set(false);
-            _rotor.set(false);
+            setRotorEnabled(false);
             _flywheel.stop();
             _state = ShooterState.Idle;
         });
@@ -246,7 +249,7 @@ public class Shooter extends SubsystemBase
             case Preparing:
             case Ready:
                 _feeder.set(false);
-                _rotor.set(false);
+                setRotorEnabled(false);
                 runRequestedShot(true);
 
                 if (isReadyToFeed())
@@ -271,12 +274,12 @@ public class Shooter extends SubsystemBase
                 if (isReadyToFeed())
                 {
                     _feeder.set(true);
-                    _rotor.set(true);
+                    setRotorEnabled(true);
                 }
                 else
                 {
                     _feeder.set(false);
-                    _rotor.set(false);
+                    setRotorEnabled(false);
                     _state = ShooterState.Preparing;
                 }
                 break;
@@ -290,7 +293,7 @@ public class Shooter extends SubsystemBase
 
             case TrackingOnly:
                 _feeder.set(false);
-                _rotor.set(false);
+                setRotorEnabled(false);
                 _flywheel.stop();
                 _requestedShotMode = ShotMode.Track;
                 runRequestedShot(false);
@@ -300,7 +303,7 @@ public class Shooter extends SubsystemBase
             default:
                 _flywheel.stop();
                 _feeder.set(false);
-                _rotor.set(false);
+                setRotorEnabled(false);
                 clearShotRequest();
                 break;
         }
@@ -344,7 +347,7 @@ public class Shooter extends SubsystemBase
         _currentShotSolution = createIdleSolution();
         clearReadinessGate();
         _feeder.set(false);
-        _rotor.set(false);
+        setRotorEnabled(false);
         _turret.setDisabled(false);
 
         if (clearTurretTarget)
@@ -402,7 +405,7 @@ public class Shooter extends SubsystemBase
         _requestedShotMode   = ShotMode.Idle;
         _currentShotSolution = createIdleSolution();
         clearReadinessGate();
-        _rotor.set(false);
+        setRotorEnabled(false);
     }
 
     private ShotSolution createIdleSolution()
@@ -502,5 +505,17 @@ public class Shooter extends SubsystemBase
         _robotAngularSpeedRadiansPerSecond    = 0.0;
         _movingFeedDebouncer.calculate(false);
         _feedReady = false;
+    }
+
+    private void setRotorEnabled(boolean enabled)
+    {
+        if (!enabled)
+        {
+            _rotor.stop();
+            return;
+        }
+
+        var rotorVoltage = _intakeExtendedSupplier.get() ? ShooterConstants.ROTOR_FAST_VOLTAGE : ShooterConstants.ROTOR_SLOW_VOLTAGE;
+        _rotor.setVoltage(rotorVoltage);
     }
 }

@@ -148,7 +148,6 @@ public final class Constants
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(60);
         public static final AngularVelocity                           MANUAL_SHOOT_RPM       = RPM.of(3500.0);
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
-        private static final AngularVelocity                          SMART_SHOOT_RPM_BIAS   = RPM.of(0.0);
 
         // Turret
         public static final Current         TURRET_CURRENT_LIMIT                   = Amps.of(60.0);
@@ -242,12 +241,13 @@ public final class Constants
         public static final Current FEEDER_CURRENT_LIMIT = Amps.of(60);
         public static final Voltage FEEDER_VOLTAGE       = Volts.of(6);
         public static final Current ROTOR_CURRENT_LIMIT  = Amps.of(60);
-        public static final Voltage ROTOR_VOLTAGE        = Volts.of(3);
+        public static final Voltage ROTOR_FAST_VOLTAGE   = Volts.of(3.0);
+        public static final Voltage ROTOR_SLOW_VOLTAGE   = Volts.of(1.5);
 
         // TODO: Tune these values with testing!
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
         {
-            return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Inches))).plus(SMART_SHOOT_RPM_BIAS);
+            return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Inches)));
         }
 
         public static Time getShotTimeOfFlight(Distance distance)

@@ -23,8 +23,6 @@ public class Rotor
     private final TalonFX _rotorMotor;
     @Logged
     private Voltage       _rotorMotorVoltage = Volts.zero();
-    @Logged
-    private boolean       _enabled           = false;
 
     public Rotor()
     {
@@ -47,13 +45,16 @@ public class Rotor
 
     public void set(boolean on)
     {
-        _enabled = on;
-        var targetVoltage = on ? ShooterConstants.ROTOR_VOLTAGE : Volts.zero();
-        _rotorMotor.setVoltage(targetVoltage.in(Volts));
+        setVoltage(on ? ShooterConstants.ROTOR_FAST_VOLTAGE : Volts.zero());
+    }
+
+    public void setVoltage(Voltage voltage)
+    {
+        _rotorMotor.setVoltage(voltage.in(Volts));
     }
 
     public void stop()
     {
-        set(false);
+        setVoltage(Volts.zero());
     }
 }

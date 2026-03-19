@@ -37,7 +37,7 @@ public class RobotContainer
     private final CommandXboxController      _operator                 = new CommandXboxController(1);
     private final Drive                      _drive                    = TunerConstants.createDrivetrain();
     private final Intake                     _intake                   = new Intake();
-    private final Shooter                    _shooter                  = new Shooter(_drive::getState);
+    private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended);
     @NotLogged
     private final Autos                      _autos                    = new Autos(_drive, _shooter);
     private Dimensionless                    _driveMultiplier          = DriveConstants.FULL_SPEED_SCALE;
