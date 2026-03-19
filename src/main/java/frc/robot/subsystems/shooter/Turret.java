@@ -2,18 +2,26 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
@@ -32,33 +40,34 @@ public class Turret
         Idle, TargetAngle, ManualAngle
     }
 
-    private final TalonFX             _turretMotor;
-    private final AnalogPotentiometer _turretSensor;
-    private final PIDController       _pidController;
-    private ControlMode               _controlMode;
+    private final TalonFX                _turretMotor;
+    private final AnalogPotentiometer    _turretPotentiometer;
+    private final MotionMagicExpoVoltage _motionMagicRequest;
+    private final NeutralOut             _neutralRequest;
+    private ControlMode                  _controlMode;
+    private boolean                      _encoderSeeded;
     @Logged
-    private Angle                     _manualAngleSetpoint;
+    private Angle                        _manualAngleSetpoint;
     @Logged
-    private Angle                     _targetAngleSetpoint;
+    private Angle                        _targetAngleSetpoint;
     @Logged
-    private Angle                     _turretAngle;
+    private Angle                        _turretAngle;
     @Logged
-    private Angle                     _rawTurretAngle;
+    private Angle                        _turretSetpoint;
     @Logged
-    private Angle                     _turretSetpoint;
+    private Angle                        _commandedTargetAngle;
     @Logged
-    private Angle                     _commandedTargetAngle;
+    private Angle                        _targetAngleError;
     @Logged
-    private Angle                     _targetAngleError;
+    private boolean                      _hasSetpoint;
     @Logged
-    private boolean                   _hasSetpoint;
+    private Voltage                      _motorVoltage;
     @Logged
-    private Voltage                   _motorVoltage;
-    private Voltage                   _lastCommandedMotorVoltage;
+    private boolean                      _disabled;
     @Logged
-    private boolean                   _disabled;
+    private boolean                      _linedUp;
     @Logged
-    private boolean                   _linedUp;
+    private double                       _motorPositionRotations;
 
     public Turret()
     {
@@ -71,42 +80,77 @@ public class Turret
             sensorOffset = sensorOffset.unaryMinus();
         }
 
-        _turretMotor               = new TalonFX(CANConstants.TURRET_MOTOR);
-        _turretSensor              = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
-        _pidController             = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
-        _controlMode               = ControlMode.Idle;
-        _manualAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
-        _targetAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
-        _turretAngle               = Degrees.zero();
-        _turretSetpoint            = ShooterConstants.TURRET_HOME_ANGLE;
-        _commandedTargetAngle      = ShooterConstants.TURRET_HOME_ANGLE;
-        _targetAngleError          = Degrees.zero();
-        _hasSetpoint               = false;
-        _motorVoltage              = Volts.zero();
-        _lastCommandedMotorVoltage = Volts.zero();
-        _disabled                  = false;
-        _linedUp                   = false;
+        _turretMotor            = new TalonFX(CANConstants.TURRET_MOTOR);
+        _turretPotentiometer    = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
+        _motionMagicRequest     = new MotionMagicExpoVoltage(0);
+        _neutralRequest         = new NeutralOut();
+        _controlMode            = ControlMode.Idle;
+        _encoderSeeded          = false;
+        _manualAngleSetpoint    = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleSetpoint    = ShooterConstants.TURRET_HOME_ANGLE;
+        _turretAngle            = Degrees.zero();
+        _turretSetpoint         = ShooterConstants.TURRET_HOME_ANGLE;
+        _commandedTargetAngle   = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleError       = Degrees.zero();
+        _hasSetpoint            = false;
+        _motorVoltage           = Volts.zero();
+        _disabled               = false;
+        _linedUp                = false;
+        _motorPositionRotations = 0.0;
 
+        var talonConfig = new TalonFXConfiguration();
+
+        // Current limits
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
         currentConfig.StatorCurrentLimitEnable = true;
 
+        // Motor output
         var outputConfig = new MotorOutputConfigs();
         outputConfig.NeutralMode = NeutralModeValue.Brake;
         outputConfig.Inverted    = InvertedValue.Clockwise_Positive;
 
-        _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig));
+        // Feedback (gear ratio: motor rotations to mechanism rotations)
+        var feedbackConfig = new FeedbackConfigs();
+        feedbackConfig.SensorToMechanismRatio = ShooterConstants.TURRET_GEAR_RATIO.magnitude();
 
-        _pidController.setTolerance(ShooterConstants.TURRET_TOLERANCE.in(Degrees));
+        // PID Slot 0 gains
+        var slot0Config = new Slot0Configs();
+        slot0Config.kP = ShooterConstants.TURRET_KP;
+        slot0Config.kS = ShooterConstants.TURRET_KS;
+
+        // Motion Magic Expo settings
+        var motionMagicConfig = new MotionMagicConfigs();
+        motionMagicConfig.MotionMagicCruiseVelocity = ShooterConstants.TURRET_MM_CRUISE_VELOCITY.in(RotationsPerSecond);
+        motionMagicConfig.MotionMagicAcceleration   = ShooterConstants.TURRET_MM_ACCELERATION.in(RotationsPerSecondPerSecond);
+        motionMagicConfig.MotionMagicExpo_kV        = ShooterConstants.TURRET_MM_EXPO_KV;
+        motionMagicConfig.MotionMagicExpo_kA        = ShooterConstants.TURRET_MM_EXPO_KA;
+
+        // Software limits (in mechanism rotations, i.e. turret rotations)
+        var softLimitConfig = new SoftwareLimitSwitchConfigs();
+        softLimitConfig.ForwardSoftLimitEnable    = true;
+        softLimitConfig.ForwardSoftLimitThreshold = ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Rotations);
+        softLimitConfig.ReverseSoftLimitEnable    = true;
+        softLimitConfig.ReverseSoftLimitThreshold = ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Rotations);
+
+        talonConfig.withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withFeedback(feedbackConfig).withSlot0(slot0Config).withMotionMagic(motionMagicConfig).withSoftwareLimitSwitch(softLimitConfig);
+
+        _turretMotor.getConfigurator().apply(talonConfig);
     }
 
     public void periodic()
     {
-        _rawTurretAngle = Degrees.of(_turretSensor.get());
-        _turretAngle    = _rawTurretAngle.plus(ShooterConstants.TURRET_SENSOR_ZERO_OFFSET);
-        _motorVoltage   = _turretMotor.getMotorVoltage().getValue();
+        // Seed motor encoder from potentiometer on first run
+        if (!_encoderSeeded)
+        {
+            var potAngle = Degrees.of(_turretPotentiometer.get());
+            _turretMotor.setPosition(potAngle.in(Rotations));
+            _encoderSeeded = true;
+        }
 
-        var motorOutput = Volts.zero();
+        _motorPositionRotations = _turretMotor.getPosition().getValue().in(Rotations);
+        _turretAngle            = Degrees.of(_motorPositionRotations * 360.0);
+        _motorVoltage           = _turretMotor.getMotorVoltage().getValue();
 
         switch (_controlMode)
         {
@@ -127,11 +171,6 @@ public class Turret
                 break;
         }
 
-        if (_hasSetpoint)
-        {
-            _turretSetpoint = limitSetpointStep(_commandedTargetAngle, _turretSetpoint);
-        }
-
         updateLinedUpState();
 
         _commandedTargetAngle = _turretSetpoint;
@@ -139,22 +178,13 @@ public class Turret
 
         if (_hasSetpoint && !_disabled)
         {
-            var errorDegrees  = _turretSetpoint.minus(_turretAngle).in(Degrees);
-            var outputVolts   = _pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees));
-            var staticFFVolts = ShooterConstants.TURRET_STATIC_FF.in(Volts);
-
-            if (!MathUtil.isNear(0.0, errorDegrees, ShooterConstants.TURRET_STATIC_FF_ERROR_DEADBAND.in(Degrees)))
-            {
-                outputVolts += Math.copySign(staticFFVolts, errorDegrees);
-            }
-
-            motorOutput = Volts.of(outputVolts);
+            var setpointRotations = _turretSetpoint.in(Degrees) / 360.0;
+            _turretMotor.setControl(_motionMagicRequest.withPosition(setpointRotations));
         }
-
-        motorOutput = Volts.of(limitOutputStep(motorOutput.in(Volts)));
-        motorOutput = applySoftLimit(motorOutput);
-        _turretMotor.setVoltage(motorOutput.in(Volts));
-        _lastCommandedMotorVoltage = motorOutput;
+        else
+        {
+            _turretMotor.setControl(_neutralRequest);
+        }
     }
 
     public void simulationPeriodic()
@@ -255,39 +285,6 @@ public class Turret
         }
 
         return Degrees.of(MathUtil.clamp(requestedDegrees, minDegrees, maxDegrees));
-    }
-
-    private Angle limitSetpointStep(Angle previousSetpoint, Angle requestedSetpoint)
-    {
-        var maxStepDeg      = ShooterConstants.TURRET_MAX_SETPOINT_STEP_PER_LOOP.in(Degrees);
-        var deltaDeg        = requestedSetpoint.minus(previousSetpoint).in(Degrees);
-        var limitedDeltaDeg = MathUtil.clamp(deltaDeg, -maxStepDeg, maxStepDeg);
-        var limitedSetpoint = previousSetpoint.plus(Degrees.of(limitedDeltaDeg));
-        return selectLegalSetpoint(limitedSetpoint);
-    }
-
-    private double limitOutputStep(double requestedVolts)
-    {
-        var previousVolts     = _lastCommandedMotorVoltage.in(Volts);
-        var maxStepVolts      = ShooterConstants.TURRET_MAX_OUTPUT_STEP_PER_LOOP.in(Volts);
-        var deltaVolts        = requestedVolts - previousVolts;
-        var limitedDeltaVolts = MathUtil.clamp(deltaVolts, -maxStepVolts, maxStepVolts);
-        return previousVolts + limitedDeltaVolts;
-    }
-
-    private Voltage applySoftLimit(Voltage requestedVoltage)
-    {
-        if (_turretAngle.lte(ShooterConstants.TURRET_SOFT_MIN_ANGLE) && requestedVoltage.lt(Volts.zero()))
-        {
-            return Volts.zero();
-        }
-
-        if (_turretAngle.gte(ShooterConstants.TURRET_SOFT_MAX_ANGLE) && requestedVoltage.gt(Volts.zero()))
-        {
-            return Volts.zero();
-        }
-
-        return requestedVoltage;
     }
 
     private void updateLinedUpState()
