@@ -14,7 +14,6 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Voltage;
 
 import frc.robot.Constants.CANConstants;
-import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
 
 @Logged

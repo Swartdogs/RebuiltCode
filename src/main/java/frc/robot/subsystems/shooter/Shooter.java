@@ -6,7 +6,6 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
 
@@ -18,7 +17,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.TurretDirector.ShotMode;
@@ -142,39 +140,6 @@ public class Shooter extends SubsystemBase
         {
             _state = ShooterState.Idle;
         }
-    }
-
-    public Command runRotor()
-    {
-        return startEnd(() -> _feeder.set(true), () -> _feeder.set(false)).onlyIf(this::inManualMode);
-    }
-
-    public Command manualShoot()
-    {
-        // @formatter:off
-        return Commands.sequence
-        (
-            runOnce(() -> _flywheel.setVelocity(ShooterConstants.MANUAL_SHOOT_RPM)),
-            Commands.waitUntil(_flywheel::atSpeed),
-            startEnd(
-                () ->
-                {
-                    _feeder.set(true);
-                    _rotor.set(true);
-                },
-                () ->
-                {
-                    _feeder.set(false);
-                    _rotor.set(false);
-                })
-        )
-        .finallyDo(() -> {
-            _flywheel.stop();
-            _feeder.set(false);
-            _rotor.set(false);
-        })
-        .onlyIf(this::inManualMode);
-        // @formatter:on
     }
 
     public Command setFlywheelVelocity(AngularVelocity velocity)
