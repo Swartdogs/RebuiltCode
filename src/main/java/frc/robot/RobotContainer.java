@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -36,7 +37,7 @@ public class RobotContainer
     private final CommandXboxController      _operator                 = new CommandXboxController(1);
     private final Drive                      _drive                    = TunerConstants.createDrivetrain();
     private final Intake                     _intake                   = new Intake();
-    private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended);
+    private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
     @NotLogged
     private final Autos                      _autos                    = new Autos(_drive, _shooter);
     private Dimensionless                    _driveMultiplier          = DriveConstants.FULL_SPEED_SCALE;
@@ -87,6 +88,10 @@ public class RobotContainer
         _driver.button(6).whileTrue(_shooter.trackOnly());
         _driver.button(7).onTrue(_drive.runOnce(_drive::seedFieldCentric));
         _driver.button(8).onTrue(_shooter.homeTurret());
+        _driver.button(9).onTrue(_shooter.setManualTurretAngle(Degrees.of(45.0)));
+        _driver.button(10).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45.0)));
+        _driver.button(11).onTrue(_shooter.setManualTurretAngle(Degrees.of(90.0)));
+        _driver.button(12).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90.0)));
 
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());

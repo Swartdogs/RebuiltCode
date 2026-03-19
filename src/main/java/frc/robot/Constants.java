@@ -109,20 +109,28 @@ public final class Constants
 
     public static class IntakeConstants
     {
-        public static final Voltage                      INTAKE_VOLTS                = Volts.of(9.0);
-        public static final Voltage                      REVERSE_VOLTS               = Volts.of(-9.0);
-        public static final Current                      ROLLER_CURRENT_LIMIT        = Amps.of(80);
-        public static final Current                      EXTENSION_CURRENT_LIMIT     = Amps.of(60);
-        public static final int                          CAMERA_DEVICE_INDEX         = 0;
-        public static final String                       CAMERA_NAME                 = "IntakeCam";
-        public static final int                          CAMERA_WIDTH                = 320;
-        public static final int                          CAMERA_HEIGHT               = 240;
-        public static final int                          CAMERA_FPS                  = 15;
-        public static final Per<DistanceUnit, AngleUnit> EXTENSION_CONVERSION_FACTOR = Inches.of(12).div(Rotations.of(6));
-        public static final Distance                     EXTENSION_MAX_POSITION      = Inches.of(12.0);
-        public static final Distance                     EXTENSION_MIN_POSITION      = Inches.of(0);
-        public static final Voltage                      EXTEND_VOLTS                = Volts.of(1.5);
-        public static final Voltage                      RETRACT_VOLTS               = Volts.of(-2.5);
+        public static final Voltage                      INTAKE_VOLTS                  = Volts.of(9.0);
+        public static final Voltage                      REVERSE_VOLTS                 = Volts.of(-9.0);
+        public static final Current                      ROLLER_CURRENT_LIMIT_EXTENDED = Amps.of(80);
+        public static final Current                      ROLLER_CURRENT_LIMIT_ACTIVE   = Amps.of(40);
+        public static final Current                      EXTENSION_CURRENT_LIMIT       = Amps.of(60);
+        public static final int                          CAMERA_DEVICE_INDEX           = 0;
+        public static final String                       CAMERA_NAME                   = "IntakeCam";
+        public static final int                          CAMERA_WIDTH                  = 320;
+        public static final int                          CAMERA_HEIGHT                 = 240;
+        public static final int                          CAMERA_FPS                    = 15;
+        public static final Per<DistanceUnit, AngleUnit> EXTENSION_CONVERSION_FACTOR   = Inches.of(12).div(Rotations.of(6));
+        public static final Distance                     EXTENSION_MAX_POSITION        = Inches.of(12.0);
+        public static final Distance                     EXTENSION_MIN_POSITION        = Inches.of(0);
+        public static final Voltage                      EXTEND_VOLTS                  = Volts.of(1.5);
+        public static final Voltage                      RETRACT_VOLTS                 = Volts.of(-2.5);
+        public static final Voltage                      JIGGLE_RETRACT_VOLTS          = Volts.of(-6.0);
+        public static final Voltage                      JIGGLE_EXTEND_VOLTS           = Volts.of(2.5);
+        public static final double                       JIGGLE_RETRACT_FRACTION       = 0.2;
+        public static final double                       JIGGLE_RETRACT_STEP_FRACTION  = 0.3;
+        public static final Distance                     JIGGLE_LIMIT_MARGIN           = Inches.of(0.0);
+        public static final Time                         JIGGLE_MOVE_TIMEOUT           = Seconds.of(0.60);
+        public static final Time                         JIGGLE_PAUSE_TIME             = Seconds.of(0.02);
     }
 
     public static class GeneralConstants
@@ -150,66 +158,67 @@ public final class Constants
         public static final AngularVelocity                           PASS_FLYWHEEL_VELOCITY = RPM.of(3000.0); // TODO: Tune
 
         // Turret
-        public static final Current             TURRET_CURRENT_LIMIT                   = Amps.of(60.0);
-        public static final Dimensionless       TURRET_GEAR_RATIO                      = Value.of(13.0); // 13:1 motor rotations per turret rotation
-        public static final double              TURRET_KP                              = 2.0;
-        public static final double              TURRET_KS                              = 0.498;
-        public static final AngularVelocity     TURRET_MM_CRUISE_VELOCITY              = RotationsPerSecond.of(54.0);
-        public static final AngularAcceleration TURRET_MM_ACCELERATION                 = RotationsPerSecondPerSecond.of(108.0);
-        public static final double              TURRET_MM_EXPO_KV                      = 0.12; // V/rps
-        public static final double              TURRET_MM_EXPO_KA                      = 0.1;  // V/(rps/s)
-        public static final Angle               TURRET_HARD_MIN_ANGLE                  = Degrees.of(-180.0);
-        public static final Angle               TURRET_HARD_MAX_ANGLE                  = Degrees.of(180.0);
-        public static final boolean             TURRET_SENSOR_INVERTED                 = true;
-        public static final Angle               TURRET_SOFT_MIN_ANGLE                  = Degrees.of(-160.0);
-        public static final Angle               TURRET_SOFT_MAX_ANGLE                  = Degrees.of(160.0);
-        public static final Angle               TURRET_HOME_ANGLE                      = Degrees.of(0.0);
-        public static final Angle               TURRET_TOLERANCE                       = Degrees.of(1.25);
-        public static final Angle               TURRET_LINED_UP_HOLD_TOLERANCE         = Degrees.of(2.0);
-        public static final Angle               TURRET_TARGET_SETPOINT_DEADBAND        = Degrees.of(0.1);
-        public static final Angle               TURRET_TRACK_COMMAND_DEADBAND          = Degrees.of(0.5);
-        public static final Angle               TURRET_TRACK_COMMAND_MAX_STEP_PER_LOOP = Degrees.of(4.0);
-        public static final Angle               TURRET_TRACK_TX_DEADBAND               = Degrees.of(1.0);
-        public static final boolean             TURRET_USE_VISION_TX_TRIM              = false;
-        public static final Time                TURRET_VISION_TX_FILTER_WINDOW         = Milliseconds.of(100.0);
-        public static final Angle               TURRET_VISION_TX_MAX_STEP_PER_LOOP     = Degrees.of(0.4);
-        public static final Angle               TURRET_TRACK_BIAS                      = Degrees.zero(); // TODO: Tune static shot bias from log data
-        public static final boolean             TURRET_USE_LINEAR_DRIFT_COMPENSATION   = true;
-        public static final Distance            TURRET_DRIFT_LATERAL_BIAS              = Inches.of(11.060660171779821);
-        public static final Distance            TURRET_DRIFT_LATERAL_SINE_AMPLITUDE    = Inches.of(7.1890180494515015);
-        public static final Angle               TURRET_DRIFT_LATERAL_PHASE_OFFSET      = Degrees.of(-20.866427056070258);
-        public static final Angle               TURRET_LINEAR_DRIFT_MAX_CORRECTION     = Degrees.of(15.0);
-        public static final double              TURRET_LINEAR_DRIFT_CORRECTION_SIGN    = -1.0;
-        public static final String              LIMELIGHT_NAME                         = "limelight-shooter";
-        public static final Angle               TURRET_PASS_TARGET                     = Degrees.of(180.0); // TODO: Validate in driver practice
-        public static final Distance            TURRET_CENTER_TAG_TO_HUB_CENTER        = Inches.of(23.5);
-        public static final List<Integer>       BLUE_HUB_TAG_IDS                       = List.of(18, 20, 21, 26);
-        public static final List<Integer>       RED_HUB_TAG_IDS                        = List.of(2, 4, 5, 10);
-        public static final List<Integer>       ALL_HUB_TAG_IDS                        = Stream.concat(BLUE_HUB_TAG_IDS.stream(), RED_HUB_TAG_IDS.stream()).toList();
-        public static final Translation3d       CENTER_TAG_TO_HUB_CENTER_OFFSET        = new Translation3d(Inches.of(-23.5), Inches.zero(), Inches.zero());
-        public static final Angle               TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD  = Degrees.of(90); // Hub "zero" is 90 degrees
-                                                                                                         // left of robot forward
-        public static final Translation2d       BLUE_HUB                               = new Translation2d(Inches.of(182.1), Inches.of(158.85));
-        public static final Translation2d       RED_HUB                                = new Translation2d(Inches.of(469.1), Inches.of(158.85));
-        public static final Translation2d       ROBOT_TO_TURRET_PIVOT                  = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
-        public static final Translation2d       TURRET_PIVOT_TO_RELEASE                = new Translation2d(Inches.of(1.0), Inches.zero()); // Measured release point is ~1 in forward of the pivot (turret -90), not
-                                                                                                                                           // lateral
-        public static final Translation2d       ROBOT_TO_TURRET_RELEASE                = ROBOT_TO_TURRET_PIVOT.plus(TURRET_PIVOT_TO_RELEASE);
-        public static final Translation2d       ROBOT_TO_TURRET_CAMERA                 = new Translation2d(Inches.zero(), Inches.of(8.0));
-        public static final Distance            TURRET_LIMELIGHT_HEIGHT                = Inches.of(24.625); // 24 5/8"
-        public static final Distance            HUB_TAG_HEIGHT                         = Inches.of(44.25);
-        public static final Distance            TURRET_TO_HUB_HEIGHT_DELTA             = HUB_TAG_HEIGHT.minus(TURRET_LIMELIGHT_HEIGHT);
-        public static final Angle               TURRET_LIMELIGHT_PITCH                 = Degrees.zero();
-        public static final Time                SWM_RELEASE_PHASE_DELAY                = Seconds.of(0.03);
-        public static final int                 SWM_LOOKAHEAD_ITERATIONS               = 8;
-        public static final LinearVelocity      SWM_ENABLE_TRANSLATIONAL_SPEED         = MetersPerSecond.of(0.15);
-        public static final AngularVelocity     SWM_ENABLE_ANGULAR_SPEED               = DegreesPerSecond.of(10.0);
-        public static final LinearVelocity      SWM_FEED_MAX_TRANSLATIONAL_SPEED       = MetersPerSecond.of(1.5);
-        public static final AngularVelocity     SWM_FEED_MAX_ANGULAR_SPEED             = DegreesPerSecond.of(45.0);
-        public static final Angle               SWM_FEED_TURRET_TOLERANCE              = Degrees.of(5.0);
-        public static final Time                SWM_FEED_STABILITY_WINDOW              = Milliseconds.of(60.0);
-        private static final double             SWM_MIN_TOF_DISTANCE_IN                = 64.0;
-        private static final double             SWM_MAX_TOF_DISTANCE_IN                = 159.0;
+        public static final Current         TURRET_CURRENT_LIMIT                   = Amps.of(60.0);
+        public static final double          TURRET_KP                              = 0.19;
+        public static final double          TURRET_KI                              = 0.01;
+        public static final double          TURRET_KD                              = 0.0115;
+        public static final Voltage         TURRET_STATIC_FF                       = Volts.of(0.22);
+        public static final Angle           TURRET_STATIC_FF_ERROR_DEADBAND        = Degrees.of(0.75);
+        public static final Voltage         TURRET_MAX_OUTPUT_STEP_PER_LOOP        = Volts.of(3.0);
+        public static final Angle           TURRET_HARD_MIN_ANGLE                  = Degrees.of(-180.0);
+        public static final Angle           TURRET_HARD_MAX_ANGLE                  = Degrees.of(180.0);
+        public static final boolean         TURRET_SENSOR_INVERTED                 = true;
+        public static final Angle           TURRET_POT_OFFSET                      = Degrees.of(-10.0);
+        public static final Angle           TURRET_SOFT_MIN_ANGLE                  = Degrees.of(-160.0);
+        public static final Angle           TURRET_SOFT_MAX_ANGLE                  = Degrees.of(160.0);
+        public static final Angle           TURRET_HOME_ANGLE                      = Degrees.of(0.0);
+        public static final Angle           TURRET_TOLERANCE                       = Degrees.of(1.25);
+        public static final Angle           TURRET_LINED_UP_HOLD_TOLERANCE         = Degrees.of(2.0);
+        public static final Angle           TURRET_TARGET_SETPOINT_DEADBAND        = Degrees.of(0.1);
+        public static final Angle           TURRET_MAX_SETPOINT_STEP_PER_LOOP      = Degrees.of(4.0);
+        public static final Angle           TURRET_TRACK_COMMAND_DEADBAND          = Degrees.of(0.5);
+        public static final Angle           TURRET_TRACK_COMMAND_MAX_STEP_PER_LOOP = Degrees.of(4.0);
+        public static final Angle           TURRET_TRACK_TX_DEADBAND               = Degrees.of(1.0);
+        public static final boolean         TURRET_USE_VISION_TX_TRIM              = false;
+        public static final Time            TURRET_VISION_TX_FILTER_WINDOW         = Milliseconds.of(100.0);
+        public static final Angle           TURRET_VISION_TX_MAX_STEP_PER_LOOP     = Degrees.of(0.4);
+        public static final Angle           TURRET_TRACK_BIAS                      = Degrees.zero(); // TODO: Tune static shot bias from log data
+        public static final boolean         TURRET_USE_LINEAR_DRIFT_COMPENSATION   = true;
+        public static final Distance        TURRET_DRIFT_LATERAL_BIAS              = Inches.of(11.060660171779821);
+        public static final Distance        TURRET_DRIFT_LATERAL_SINE_AMPLITUDE    = Inches.of(7.1890180494515015);
+        public static final Angle           TURRET_DRIFT_LATERAL_PHASE_OFFSET      = Degrees.of(-20.866427056070258);
+        public static final Angle           TURRET_LINEAR_DRIFT_MAX_CORRECTION     = Degrees.of(15.0);
+        public static final double          TURRET_LINEAR_DRIFT_CORRECTION_SIGN    = -1.0;
+        public static final String          LIMELIGHT_NAME                         = "limelight-shooter";
+        public static final Angle           TURRET_PASS_TARGET                     = Degrees.of(180.0); // TODO: Validate in driver practice
+        public static final Distance        TURRET_CENTER_TAG_TO_HUB_CENTER        = Inches.of(23.5);
+        public static final List<Integer>   BLUE_HUB_TAG_IDS                       = List.of(18, 20, 21, 26);
+        public static final List<Integer>   RED_HUB_TAG_IDS                        = List.of(2, 4, 5, 10);
+        public static final List<Integer>   ALL_HUB_TAG_IDS                        = Stream.concat(BLUE_HUB_TAG_IDS.stream(), RED_HUB_TAG_IDS.stream()).toList();
+        public static final Translation3d   CENTER_TAG_TO_HUB_CENTER_OFFSET        = new Translation3d(Inches.of(-23.5), Inches.zero(), Inches.zero());
+        public static final Angle           TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD  = Degrees.of(90); // Hub "zero" is 90 degrees
+                                                                                                     // left of robot forward
+        public static final Translation2d   BLUE_HUB                               = new Translation2d(Inches.of(182.1), Inches.of(158.85));
+        public static final Translation2d   RED_HUB                                = new Translation2d(Inches.of(469.1), Inches.of(158.85));
+        public static final Translation2d   ROBOT_TO_TURRET_PIVOT                  = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
+        public static final Translation2d   TURRET_PIVOT_TO_RELEASE                = new Translation2d(Inches.of(1.0), Inches.zero()); // Measured release point is ~1 in forward of the pivot (turret -90), not
+                                                                                                                                       // lateral
+        public static final Translation2d   ROBOT_TO_TURRET_RELEASE                = ROBOT_TO_TURRET_PIVOT.plus(TURRET_PIVOT_TO_RELEASE);
+        public static final Translation2d   ROBOT_TO_TURRET_CAMERA                 = new Translation2d(Inches.zero(), Inches.of(8.0));
+        public static final Distance        TURRET_LIMELIGHT_HEIGHT                = Inches.of(24.625); // 24 5/8"
+        public static final Distance        HUB_TAG_HEIGHT                         = Inches.of(44.25);
+        public static final Distance        TURRET_TO_HUB_HEIGHT_DELTA             = HUB_TAG_HEIGHT.minus(TURRET_LIMELIGHT_HEIGHT);
+        public static final Angle           TURRET_LIMELIGHT_PITCH                 = Degrees.zero();
+        public static final Time            SWM_RELEASE_PHASE_DELAY                = Seconds.of(0.03);
+        public static final int             SWM_LOOKAHEAD_ITERATIONS               = 8;
+        public static final LinearVelocity  SWM_ENABLE_TRANSLATIONAL_SPEED         = MetersPerSecond.of(0.15);
+        public static final AngularVelocity SWM_ENABLE_ANGULAR_SPEED               = DegreesPerSecond.of(10.0);
+        public static final LinearVelocity  SWM_FEED_MAX_TRANSLATIONAL_SPEED       = MetersPerSecond.of(1.5);
+        public static final AngularVelocity SWM_FEED_MAX_ANGULAR_SPEED             = DegreesPerSecond.of(45.0);
+        public static final Angle           SWM_FEED_TURRET_TOLERANCE              = Degrees.of(5.0);
+        public static final Time            SWM_FEED_STABILITY_WINDOW              = Milliseconds.of(60.0);
+        private static final double         SWM_MIN_TOF_DISTANCE_IN                = 64.0;
+        private static final double         SWM_MAX_TOF_DISTANCE_IN                = 159.0;
 
         // @formatter:off
         private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
@@ -237,11 +246,12 @@ public final class Constants
         // @formatter:on
 
         // Feeder
-        public static final Current FEEDER_CURRENT_LIMIT = Amps.of(60);
-        public static final Voltage FEEDER_VOLTAGE       = Volts.of(6);
-        public static final Current ROTOR_CURRENT_LIMIT  = Amps.of(60);
-        public static final Voltage ROTOR_FAST_VOLTAGE   = Volts.of(3.0);
-        public static final Voltage ROTOR_SLOW_VOLTAGE   = Volts.of(1.5);
+        public static final Current FEEDER_CURRENT_LIMIT    = Amps.of(60);
+        public static final Voltage FEEDER_VOLTAGE          = Volts.of(6);
+        public static final Current ROTOR_CURRENT_LIMIT     = Amps.of(60);
+        public static final Voltage ROTOR_FAST_VOLTAGE      = Volts.of(3.0);
+        public static final Voltage ROTOR_MID_VOLTAGE       = Volts.of(1.5);
+        public static final Voltage ROTOR_RETRACTED_VOLTAGE = Volts.of(1.0);
 
         // TODO: Tune these values with testing!
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)

@@ -37,6 +37,7 @@ public class Shooter extends SubsystemBase
     public final TurretDirector              _turretDirector;
     private final Supplier<SwerveDriveState> _swerveStateSupplier;
     private final Supplier<Boolean>          _intakeExtendedSupplier;
+    private final Supplier<Boolean>          _intakeRetractedSupplier;
     private final Debouncer                  _movingFeedDebouncer;
     @Logged
     private ShooterState                     _state;
@@ -68,10 +69,11 @@ public class Shooter extends SubsystemBase
     @Logged
     private boolean                          _feedReady;
 
-    public Shooter(Supplier<SwerveDriveState> swerveStateSupplier, Supplier<Boolean> intakeExtendedSupplier)
+    public Shooter(Supplier<SwerveDriveState> swerveStateSupplier, Supplier<Boolean> intakeExtendedSupplier, Supplier<Boolean> intakeRetractedSupplier)
     {
         _swerveStateSupplier                  = swerveStateSupplier;
         _intakeExtendedSupplier               = intakeExtendedSupplier;
+        _intakeRetractedSupplier              = intakeRetractedSupplier;
         _flywheel                             = new Flywheel();
         _feeder                               = new Feeder();
         _rotor                                = new Rotor();
@@ -188,7 +190,12 @@ public class Shooter extends SubsystemBase
 
     public Command homeTurret()
     {
-        return runOnce(() -> setManualTurretAngle(ShooterConstants.TURRET_HOME_ANGLE));
+        return setManualTurretAngle(ShooterConstants.TURRET_HOME_ANGLE);
+    }
+
+    public Command setManualTurretAngle(Angle angle)
+    {
+        return runOnce(() -> setManualTurretAngleCommand(angle));
     }
 
     public Command trackOnly()
@@ -321,10 +328,9 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    private void setManualTurretAngle(Angle angle)
+    private void setManualTurretAngleCommand(Angle angle)
     {
         beginManualControl(true);
-        _turret.setDisabled(false);
         _turret.setManualAngle(angle);
     }
 
@@ -387,12 +393,8 @@ public class Shooter extends SubsystemBase
         _inRangeReady  = hasValidDistanceForCurrentShot();
         _rolloutReady  = isWithinMovingFeedRolloutEnvelope();
 
-        // Temporary rollout override: keep logging hub-active state, but do not block
-        // feed on it while we validate the rest of the moving-shot gate.
         var rawFeedReady = _solutionReady && _turretReady && _flywheelReady && _inRangeReady && _rolloutReady;
 
-        // Keep moving feed behind an explicit gate and short stability window so we
-        // can roll it out conservatively and see which bit is blocking launch.
         _stabilityReady = !_usingMovingShotMath || _movingFeedDebouncer.calculate(rawFeedReady);
         _feedReady      = rawFeedReady && _stabilityReady;
         return _feedReady;
@@ -432,8 +434,6 @@ public class Shooter extends SubsystemBase
 
     private boolean shouldUseMovingShotMath()
     {
-        // Keep track-mode behavior consistent between `trackOnly` and `shoot`:
-        // both should run the moving-shot calculator path.
         return _requestedShotMode == ShotMode.Track;
     }
 
@@ -480,7 +480,13 @@ public class Shooter extends SubsystemBase
             return;
         }
 
-        var rotorVoltage = _intakeExtendedSupplier.get() ? ShooterConstants.ROTOR_FAST_VOLTAGE : ShooterConstants.ROTOR_SLOW_VOLTAGE;
+        if (_intakeExtendedSupplier.get())
+        {
+            _rotor.setVoltage(ShooterConstants.ROTOR_FAST_VOLTAGE);
+            return;
+        }
+
+        var rotorVoltage = _intakeRetractedSupplier.get() ? ShooterConstants.ROTOR_RETRACTED_VOLTAGE : ShooterConstants.ROTOR_MID_VOLTAGE;
         _rotor.setVoltage(rotorVoltage);
     }
 }
