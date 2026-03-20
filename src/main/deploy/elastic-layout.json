@@ -107,54 +107,6 @@
               "data_type": "string",
               "show_submit_button": false
             }
-          },
-          {
-            "title": "Selected Trajectory",
-            "x": 1536.0,
-            "y": 640.0,
-            "width": 384.0,
-            "height": 64.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Auto Selected Trajectory",
-              "period": 0.06,
-              "data_type": "string",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "Uses Trajectory",
-            "x": 1536.0,
-            "y": 704.0,
-            "width": 192.0,
-            "height": 64.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Auto Uses Trajectory",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Selection Valid",
-            "x": 1728.0,
-            "y": 704.0,
-            "width": 192.0,
-            "height": 64.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Auto Selection Valid",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
           }
         ]
       }

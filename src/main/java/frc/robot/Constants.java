@@ -277,7 +277,7 @@ public final class Constants
         public static final String         RIGHT_CAMERA_NAME   = "limelight-right";
         public static final Distance       MAX_DETECTION_RANGE = Meters.of(6.0);
         public static final Distance       XY_STD_DEV          = Meters.of(0.7);
-        public static final Angle          THETA_STD_DEV       = Degrees.of(0.7); // Trust gyro for heading, not vision
+        public static final Angle          THETA_STD_DEV       = Degrees.of(999999); // Trust gyro for heading, not vision
         public static final Matrix<N3, N1> STD_DEVS            = VecBuilder.fill(XY_STD_DEV.in(Meters), XY_STD_DEV.in(Meters), THETA_STD_DEV.in(Degrees));
 
         // Camera translations
