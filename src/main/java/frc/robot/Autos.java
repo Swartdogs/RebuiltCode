@@ -102,8 +102,8 @@ public class Autos extends SubsystemBase
     private final Shooter                    _shooterSubsystem;
     private final AutoFactory                _autoFactory;
     private final SwerveRequest.FieldCentric _autoRequest            = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage).withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-    private final PIDController              _xController            = new PIDController(0.0, 0.0, 0.0);
-    private final PIDController              _yController            = new PIDController(0.0, 0.0, 0.0);
+    private final PIDController              _xController            = new PIDController(3.0, 0.0, 0.1);
+    private final PIDController              _yController            = new PIDController(3.0, 0.0, 0.1);
     private final PIDController              _headingController      = new PIDController(0.0, 0.0, 0.0);
     private final SendableChooser<String>    _modeChooser            = new SendableChooser<>();
     private final SendableChooser<String>    _startChooser           = new SendableChooser<>();
