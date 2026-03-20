@@ -5,13 +5,13 @@ import java.util.stream.IntStream;
 import choreo.auto.AutoFactory;
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -101,7 +101,7 @@ public class Autos extends SubsystemBase
     private final Drive                      _driveSubsystem;
     private final Shooter                    _shooterSubsystem;
     private final AutoFactory                _autoFactory;
-    private final SwerveRequest.FieldCentric _autoRequest            = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private final SwerveRequest.FieldCentric _autoRequest            = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage).withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
     private final PIDController              _xController            = new PIDController(0.0, 0.0, 0.0);
     private final PIDController              _yController            = new PIDController(0.0, 0.0, 0.0);
     private final PIDController              _headingController      = new PIDController(0.0, 0.0, 0.0);
@@ -229,7 +229,12 @@ public class Autos extends SubsystemBase
 
     private AutoMode getSelectedMode()
     {
-        var selected = getSelectedChooserValue(AUTO_MODE_CHOOSER_NAME, DEFAULT_AUTO_MODE.name());
+        var selected = _modeChooser.getSelected();
+        if (selected == null || selected.isEmpty())
+        {
+            return DEFAULT_AUTO_MODE;
+        }
+
         for (var mode : AutoMode.values())
         {
             if (mode.name().equals(selected))
@@ -243,7 +248,12 @@ public class Autos extends SubsystemBase
 
     private StartPosition getSelectedStartPosition()
     {
-        var selected = getSelectedChooserValue(AUTO_START_CHOOSER_NAME, DEFAULT_START_POSITION.name());
+        var selected = _startChooser.getSelected();
+        if (selected == null || selected.isEmpty())
+        {
+            return DEFAULT_START_POSITION;
+        }
+
         for (var startPosition : StartPosition.values())
         {
             if (startPosition.name().equals(selected))
@@ -257,7 +267,11 @@ public class Autos extends SubsystemBase
 
     private int getSelectedDelaySeconds()
     {
-        var selected = getSelectedChooserValue(AUTO_DELAY_CHOOSER_NAME, String.valueOf(DEFAULT_DELAY_SECONDS));
+        var selected = _delayChooser.getSelected();
+        if (selected == null || selected.isEmpty())
+        {
+            return DEFAULT_DELAY_SECONDS;
+        }
 
         try
         {
@@ -272,7 +286,11 @@ public class Autos extends SubsystemBase
     private AutoDriveOption getSelectedDriveOption(StartPosition startPosition)
     {
         var fallback = firstDrivePathKey(startPosition);
-        var selected = getSelectedChooserValue(AUTO_DRIVE_CHOOSER_NAME, fallback);
+        var selected = _driveChooser.getSelected();
+        if (selected == null || selected.isEmpty())
+        {
+            selected = fallback;
+        }
 
         for (var option : startPosition.driveOptions)
         {
@@ -291,17 +309,6 @@ public class Autos extends SubsystemBase
         }
 
         return startPosition.driveOptions[0];
-    }
-
-    private String getSelectedChooserValue(String chooserName, String fallback)
-    {
-        var selected = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(chooserName).getEntry("selected").getString("");
-        if (!selected.isEmpty())
-        {
-            return selected;
-        }
-
-        return fallback;
     }
 
     private String buildSummary(AutoMode mode, StartPosition startPosition, AutoDriveOption driveOption, int delaySeconds)
