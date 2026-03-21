@@ -435,6 +435,25 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 return false;
             }
 
+            var hasCloseTag = false;
+            for (var target : results.get().targets_Fiducials)
+            {
+                var targetPose = target.getTargetPose_CameraSpace();
+                var distance   = Meters.of(targetPose.getTranslation().getNorm());
+
+                if (distance.lt(VisionConstants.MAX_DETECTION_RANGE))
+                {
+                    hasCloseTag = true;
+                    break;
+                }
+            }
+
+            if (!hasCloseTag)
+            {
+                setVisionState(state, false, kInvalidVisionPose);
+                return false;
+            }
+
             Optional<PoseEstimate> estimate = state._poseEstimator.getPoseEstimate();
 
             if (estimate.isEmpty())

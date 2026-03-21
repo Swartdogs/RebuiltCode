@@ -3,6 +3,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
@@ -311,6 +312,9 @@ public final class Constants
 
         // Reject vision updates when robot is tilted more than this (on ramp)
         public static final Angle MAX_TILT_FOR_VISION = Degrees.of(10.0); // TODO: find the correct value
+
+        // Reject vision updates when no AprilTag is detected within this range
+        public static final Distance MAX_TARGET_DISTANCE = Feet.of(10);
     }
 
     public static class ClimberConstants

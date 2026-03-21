@@ -26,7 +26,7 @@ public record ChoreoTraj(String name, OptionalInt segment, double totalTimeSecs,
     public static final ChoreoTraj HubToOutpost = new ChoreoTraj("HubToOutpost", OptionalInt.empty(), 1.67965, new Pose2d(3.616, 4.035, Rotation2d.fromRadians(0)), new Pose2d(0.654, 0.687, Rotation2d.fromRadians(3.142)));
     public static final ChoreoTraj HubToTower = new ChoreoTraj("HubToTower", OptionalInt.empty(), 1.74265, new Pose2d(3.616, 4.035, Rotation2d.fromRadians(0)), new Pose2d(0.799, 4.895, Rotation2d.fromRadians(1.571)));
     public static final ChoreoTraj LeftBumpPickupFromMidScore = new ChoreoTraj(
-            "LeftBumpPickupFromMidScore", OptionalInt.empty(), 4.29782, new Pose2d(3.616, 5.559, Rotation2d.fromRadians(3.142)), new Pose2d(3.616, 4.035, Rotation2d.fromRadians(0))
+            "LeftBumpPickupFromMidScore", OptionalInt.empty(), 6.25788, new Pose2d(3.616, 5.559, Rotation2d.fromRadians(0)), new Pose2d(3.218, 5.674, Rotation2d.fromRadians(3.14))
     );
     public static final ChoreoTraj LeftBumpToDepot = new ChoreoTraj("LeftBumpToDepot", OptionalInt.empty(), 1.11437, new Pose2d(3.616, 5.559, Rotation2d.fromRadians(0)), new Pose2d(1.15, 5.963, Rotation2d.fromRadians(3.142)));
     public static final ChoreoTraj LeftBumpToTower = new ChoreoTraj("LeftBumpToTower", OptionalInt.empty(), 1.71082, new Pose2d(3.616, 5.559, Rotation2d.fromRadians(3.142)), new Pose2d(0.799, 4.895, Rotation2d.fromRadians(1.571)));

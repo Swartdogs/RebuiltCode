@@ -288,9 +288,12 @@ public class Autos extends SubsystemBase
             trajectory = flip(Arrays.asList(driveOption.trajectory.asAutoTraj(_trajectoryDrawRoutine).getRawTrajectory().getPoses()));
         }
 
-        _previewField.setRobotPose(startPose);
-        _previewField.getObject("Auto End Pose").setPose(endPose);
-        _previewField.getObject("Auto Trajectory").setPoses(trajectory);
+        if (startPose != null)
+        {
+            _previewField.setRobotPose(startPose);
+            _previewField.getObject("Auto End Pose").setPose(endPose);
+            _previewField.getObject("Auto Trajectory").setPoses(trajectory);
+        }
 
         SmartDashboard.putString("Auto Summary", buildSummary(mode, startPosition, driveOption, _delayChooser.getSelected()));
     }
@@ -353,6 +356,11 @@ public class Autos extends SubsystemBase
 
     private Pose2d flip(Pose2d bluePose)
     {
+        if (bluePose == null)
+        {
+            return null;
+        }
+
         if (Utilities.isRedAlliance())
         {
             return bluePose.rotateAround(GeneralConstants.FIELD_CENTER, Rotation2d.k180deg);
