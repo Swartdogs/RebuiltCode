@@ -79,7 +79,7 @@ public class RobotContainer
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drive.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(_shooter.shoot());
+        _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(), Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () -> _drive.disableVisionPoseCorrection(false))));
         _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier = DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier = DriveConstants.FULL_SPEED_SCALE));
         _driver.button(3).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
         _driver.button(5).whileTrue(_shooter.pass());

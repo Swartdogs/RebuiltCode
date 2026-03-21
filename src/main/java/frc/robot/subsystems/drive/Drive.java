@@ -62,6 +62,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     private double              _robotSpeedOmegaRadiansPerSecond    = 0.0;
     @Logged
     private Translation2d       _fieldRelativeTranslationalVelocity = new Translation2d();
+    @Logged
+    private boolean             _disableVisionPoseCorrection        = false;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -293,6 +295,11 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
+    public void disableVisionPoseCorrection(boolean disable)
+    {
+        _disableVisionPoseCorrection = disable;
+    }
+
     /**
      * Adds a vision measurement to the Kalman Filter. This will correct the
      * odometry pose estimate while still accounting for measurement noise.
@@ -305,7 +312,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Override
     public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds)
     {
-        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
+        if (!_disableVisionPoseCorrection)
+        {
+            super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
+        }
     }
 
     /**
@@ -327,7 +337,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Override
     public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds, Matrix<N3, N1> visionMeasurementStdDevs)
     {
-        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
+        if (!_disableVisionPoseCorrection)
+        {
+            super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
+        }
     }
 
     /**
