@@ -94,6 +94,22 @@ public final class Constants
         public static final int TURRET_POTENTIOMETER = 0; // TODO
     }
 
+    public static class AutoConstants
+    {
+        // Dashboard display
+        public static final String STAY_PUT_KEY            = "__STAY_PUT__";
+        public static final String AUTO_MODE_CHOOSER_NAME  = "Auto Mode";
+        public static final String AUTO_START_CHOOSER_NAME = "Auto Start Position";
+        public static final String AUTO_DRIVE_CHOOSER_NAME = "Auto Drive Path";
+        public static final String AUTO_DELAY_CHOOSER_NAME = "Auto Delay";
+
+        // Auto driving
+        public static final double DRIVE_KP  = 3.0;
+        public static final double DRIVE_KD  = 0.1;
+        public static final double ROTATE_KP = 0.0;
+        public static final double ROTATE_KD = 0.0;
+    }
+
     public static class DriveConstants
     {
         public static final LinearVelocity MAX_SPEED = TunerConstants.kSpeedAt12Volts.times(0.5); // kSpeedAt12Volts

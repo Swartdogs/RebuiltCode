@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.generated.ChoreoTraj;
 import frc.robot.generated.ChoreoVars;
@@ -29,7 +30,14 @@ public class Autos extends SubsystemBase
 {
     private enum AutoMode
     {
-        DoNothing("Do Nothing"), DriveOnly("Drive Only"), ShootOnly("Shoot Only"), ShootWithDelay("Shoot + Delay"), ShootThenDrive("Shoot Then Drive"), ShootWithDelayThenDrive("Shoot + Delay + Drive");
+        // @formatter:off
+        DoNothing("Do Nothing"),
+        DriveOnly("Drive Only"),
+        ShootOnly("Shoot Only"),
+        ShootWithDelay("Shoot + Delay"),
+        ShootThenDrive("Shoot Then Drive"),
+        ShootWithDelayThenDrive("Shoot + Delay + Drive");
+        // @formatter:on
 
         public final String displayName;
 
@@ -58,7 +66,7 @@ public class Autos extends SubsystemBase
 
         String key()
         {
-            return staysPut() ? STAY_PUT_KEY : trajectory.name();
+            return staysPut() ? AutoConstants.STAY_PUT_KEY : trajectory.name();
         }
 
         Pose2d endPoseBlue()
@@ -69,14 +77,48 @@ public class Autos extends SubsystemBase
 
     private enum StartPosition
     {
-        LeftTrench("Left Trench", ChoreoVars.Poses.LeftTrench, new AutoDriveOption("Stay Put", null), new AutoDriveOption("Drive To Depot", ChoreoTraj.LeftTrenchToDepot)),
-        LeftBump("Left Bump", ChoreoVars.Poses.LeftBump, new AutoDriveOption("Stay Put", null), new AutoDriveOption("Drive To Depot", ChoreoTraj.LeftBumpToDepot), new AutoDriveOption("Drive To Tower", ChoreoTraj.LeftBumpToTower),
-                new AutoDriveOption("Pickup From Mid", ChoreoTraj.LeftBumpPickupFromMidScore)),
-        Hub("Hub", ChoreoVars.Poses.HubStart, new AutoDriveOption("Stay Put", null), new AutoDriveOption("Drive To Depot", ChoreoTraj.HubToDepot), new AutoDriveOption("Drive To Outpost", ChoreoTraj.HubToOutpost),
-                new AutoDriveOption("Drive To Tower", ChoreoTraj.HubToTower)),
-        RightBump("Right Bump", ChoreoVars.Poses.RightBump, new AutoDriveOption("Stay Put", null), new AutoDriveOption("Drive To Outpost", ChoreoTraj.RightBumpToOutpost), new AutoDriveOption("Drive To Tower", ChoreoTraj.RightBumpToTower),
-                new AutoDriveOption("Pickup From Mid", ChoreoTraj.RightBumpPickupFromMidScore)),
-        RightTrench("Right Trench", ChoreoVars.Poses.RightTrench, new AutoDriveOption("Stay Put", null), new AutoDriveOption("Drive To Outpost", ChoreoTraj.RightTrenchToOutpost));
+        // @formatter:off
+        LeftTrench(
+            "Left Trench",
+            ChoreoVars.Poses.LeftTrench,
+            new AutoDriveOption("Stay Put", null),
+            new AutoDriveOption("Drive To Depot", ChoreoTraj.LeftTrenchToDepot)
+        ),
+
+        LeftBump(
+            "Left Bump",
+            ChoreoVars.Poses.LeftBump,
+            new AutoDriveOption("Stay Put", null),
+            new AutoDriveOption("Drive To Depot", ChoreoTraj.LeftBumpToDepot),
+            new AutoDriveOption("Drive To Tower", ChoreoTraj.LeftBumpToTower),
+            new AutoDriveOption("Pickup From Mid", ChoreoTraj.LeftBumpPickupFromMidScore)
+        ),
+
+        Hub(
+            "Hub",
+            ChoreoVars.Poses.HubStart,
+            new AutoDriveOption("Stay Put", null),
+            new AutoDriveOption("Drive To Depot", ChoreoTraj.HubToDepot),
+            new AutoDriveOption("Drive To Outpost", ChoreoTraj.HubToOutpost),
+            new AutoDriveOption("Drive To Tower", ChoreoTraj.HubToTower)
+        ),
+
+        RightBump(
+            "Right Bump",
+            ChoreoVars.Poses.RightBump,
+            new AutoDriveOption("Stay Put", null),
+            new AutoDriveOption("Drive To Outpost", ChoreoTraj.RightBumpToOutpost),
+            new AutoDriveOption("Drive To Tower", ChoreoTraj.RightBumpToTower),
+            new AutoDriveOption("Pickup From Mid", ChoreoTraj.RightBumpPickupFromMidScore)
+        ),
+
+        RightTrench(
+            "Right Trench",
+            ChoreoVars.Poses.RightTrench,
+            new AutoDriveOption("Stay Put", null),
+            new AutoDriveOption("Drive To Outpost", ChoreoTraj.RightTrenchToOutpost)
+        );
+        // @formatter:on
 
         public final String            displayName;
         public final Pose2d            blueStartPose;
@@ -90,27 +132,22 @@ public class Autos extends SubsystemBase
         }
     }
 
-    private static final String              STAY_PUT_KEY            = "__STAY_PUT__";
-    private static final String              AUTO_MODE_CHOOSER_NAME  = "Auto Mode";
-    private static final String              AUTO_START_CHOOSER_NAME = "Auto Start Position";
-    private static final String              AUTO_DRIVE_CHOOSER_NAME = "Auto Drive Path";
-    private static final String              AUTO_DELAY_CHOOSER_NAME = "Auto Delay";
-    private static final AutoMode            DEFAULT_AUTO_MODE       = AutoMode.ShootOnly;
-    private static final StartPosition       DEFAULT_START_POSITION  = StartPosition.Hub;
-    private static final int                 DEFAULT_DELAY_SECONDS   = 0;
-    private final Drive                      _driveSubsystem;
-    private final Shooter                    _shooterSubsystem;
-    private final AutoFactory                _autoFactory;
-    private final SwerveRequest.FieldCentric _autoRequest            = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage).withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-    private final PIDController              _xController            = new PIDController(3.0, 0.0, 0.1);
-    private final PIDController              _yController            = new PIDController(3.0, 0.0, 0.1);
-    private final PIDController              _headingController      = new PIDController(0.0, 0.0, 0.0);
-    private final SendableChooser<String>    _modeChooser            = new SendableChooser<>();
-    private final SendableChooser<String>    _startChooser           = new SendableChooser<>();
-    private final SendableChooser<String>    _delayChooser           = new SendableChooser<>();
-    private SendableChooser<String>          _driveChooser           = new SendableChooser<>();
-    private final Field2d                    _previewField           = new Field2d();
-    private StartPosition                    _lastStartPosition      = null;
+    private static final AutoMode                DEFAULT_AUTO_MODE      = AutoMode.ShootOnly;
+    private static final StartPosition           DEFAULT_START_POSITION = StartPosition.Hub;
+    private static final int                     DEFAULT_DELAY_SECONDS  = 0;
+    private final Drive                          _driveSubsystem;
+    private final Shooter                        _shooterSubsystem;
+    private final AutoFactory                    _autoFactory;
+    private final SwerveRequest.FieldCentric     _autoRequest           = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage).withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+    private final PIDController                  _xController           = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
+    private final PIDController                  _yController           = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
+    private final PIDController                  _headingController     = new PIDController(AutoConstants.ROTATE_KP, 0.0, AutoConstants.ROTATE_KD);
+    private final SendableChooser<AutoMode>      _modeChooser           = new SendableChooser<>();
+    private final SendableChooser<StartPosition> _startChooser          = new SendableChooser<>();
+    private final SendableChooser<Integer>       _delayChooser          = new SendableChooser<>();
+    private final Field2d                        _previewField          = new Field2d();
+    private SendableChooser<String>              _driveChooser          = new SendableChooser<>();
+    private StartPosition                        _lastStartPosition     = null;
 
     public Autos(Drive driveSubsystem, Shooter shooterSubsystem)
     {
@@ -128,7 +165,7 @@ public class Autos extends SubsystemBase
     @Override
     public void periodic()
     {
-        var selectedStart = getSelectedStartPosition();
+        var selectedStart = _startChooser.getSelected();
         if (_lastStartPosition != selectedStart)
         {
             rebuildDriveChooser(selectedStart);
@@ -139,9 +176,9 @@ public class Autos extends SubsystemBase
 
     public Command buildAuto()
     {
-        var mode          = getSelectedMode();
-        var startPosition = getSelectedStartPosition();
-        var delaySeconds  = getSelectedDelaySeconds();
+        var mode          = _modeChooser.getSelected();
+        var startPosition = _startChooser.getSelected();
+        var delaySeconds  = _delayChooser.getSelected();
         var driveOption   = getSelectedDriveOption(startPosition);
         var startPose     = flip(startPosition.blueStartPose);
         var resetPose     = Commands.runOnce(() -> _driveSubsystem.resetPose(startPose));
@@ -162,31 +199,31 @@ public class Autos extends SubsystemBase
 
     private void configureChoosers()
     {
-        _modeChooser.setDefaultOption(DEFAULT_AUTO_MODE.displayName, DEFAULT_AUTO_MODE.name());
+        _modeChooser.setDefaultOption(DEFAULT_AUTO_MODE.displayName, DEFAULT_AUTO_MODE);
         for (var mode : AutoMode.values())
         {
             if (mode != DEFAULT_AUTO_MODE)
             {
-                _modeChooser.addOption(mode.displayName, mode.name());
+                _modeChooser.addOption(mode.displayName, mode);
             }
         }
 
-        _startChooser.setDefaultOption(DEFAULT_START_POSITION.displayName, DEFAULT_START_POSITION.name());
+        _startChooser.setDefaultOption(DEFAULT_START_POSITION.displayName, DEFAULT_START_POSITION);
         for (var startPosition : StartPosition.values())
         {
             if (startPosition != DEFAULT_START_POSITION)
             {
-                _startChooser.addOption(startPosition.displayName, startPosition.name());
+                _startChooser.addOption(startPosition.displayName, startPosition);
             }
         }
 
-        _delayChooser.setDefaultOption(String.valueOf(DEFAULT_DELAY_SECONDS), String.valueOf(DEFAULT_DELAY_SECONDS));
-        IntStream.rangeClosed(1, 5).forEach(seconds -> _delayChooser.addOption(String.valueOf(seconds), String.valueOf(seconds)));
+        _delayChooser.setDefaultOption(String.valueOf(DEFAULT_DELAY_SECONDS), DEFAULT_DELAY_SECONDS);
+        IntStream.rangeClosed(1, 5).forEach(seconds -> _delayChooser.addOption(String.valueOf(seconds), seconds));
 
-        SmartDashboard.putData(AUTO_MODE_CHOOSER_NAME, _modeChooser);
-        SmartDashboard.putData(AUTO_START_CHOOSER_NAME, _startChooser);
-        SmartDashboard.putData(AUTO_DELAY_CHOOSER_NAME, _delayChooser);
-        SmartDashboard.putData(AUTO_DRIVE_CHOOSER_NAME, _driveChooser);
+        SmartDashboard.putData(AutoConstants.AUTO_MODE_CHOOSER_NAME, _modeChooser);
+        SmartDashboard.putData(AutoConstants.AUTO_START_CHOOSER_NAME, _startChooser);
+        SmartDashboard.putData(AutoConstants.AUTO_DELAY_CHOOSER_NAME, _delayChooser);
+        SmartDashboard.putData(AutoConstants.AUTO_DRIVE_CHOOSER_NAME, _driveChooser);
         SmartDashboard.putData("Autonomous Preview", _previewField);
     }
 
@@ -210,13 +247,13 @@ public class Autos extends SubsystemBase
 
         _driveChooser      = chooser;
         _lastStartPosition = startPosition;
-        SmartDashboard.putData(AUTO_DRIVE_CHOOSER_NAME, _driveChooser);
+        SmartDashboard.putData(AutoConstants.AUTO_DRIVE_CHOOSER_NAME, _driveChooser);
     }
 
     private void updateDashboard()
     {
-        var mode          = getSelectedMode();
-        var startPosition = getSelectedStartPosition();
+        var mode          = _modeChooser.getSelected();
+        var startPosition = _startChooser.getSelected();
         var driveOption   = getSelectedDriveOption(startPosition);
         var startPose     = flip(startPosition.blueStartPose);
         var endPose       = driveOption.staysPut() ? startPose : flip(driveOption.endPoseBlue());
@@ -224,69 +261,14 @@ public class Autos extends SubsystemBase
         _previewField.setRobotPose(startPose);
         _previewField.getObject("Auto End Pose").setPose(endPose);
 
-        SmartDashboard.putString("Auto Summary", buildSummary(mode, startPosition, driveOption, getSelectedDelaySeconds()));
-    }
-
-    private AutoMode getSelectedMode()
-    {
-        var selected = _modeChooser.getSelected();
-        if (selected == null || selected.isEmpty())
-        {
-            return DEFAULT_AUTO_MODE;
-        }
-
-        for (var mode : AutoMode.values())
-        {
-            if (mode.name().equals(selected))
-            {
-                return mode;
-            }
-        }
-
-        return DEFAULT_AUTO_MODE;
-    }
-
-    private StartPosition getSelectedStartPosition()
-    {
-        var selected = _startChooser.getSelected();
-        if (selected == null || selected.isEmpty())
-        {
-            return DEFAULT_START_POSITION;
-        }
-
-        for (var startPosition : StartPosition.values())
-        {
-            if (startPosition.name().equals(selected))
-            {
-                return startPosition;
-            }
-        }
-
-        return DEFAULT_START_POSITION;
-    }
-
-    private int getSelectedDelaySeconds()
-    {
-        var selected = _delayChooser.getSelected();
-        if (selected == null || selected.isEmpty())
-        {
-            return DEFAULT_DELAY_SECONDS;
-        }
-
-        try
-        {
-            return Integer.parseInt(selected);
-        }
-        catch (NumberFormatException exception)
-        {
-            return DEFAULT_DELAY_SECONDS;
-        }
+        SmartDashboard.putString("Auto Summary", buildSummary(mode, startPosition, driveOption, _delayChooser.getSelected()));
     }
 
     private AutoDriveOption getSelectedDriveOption(StartPosition startPosition)
     {
         var fallback = firstDrivePathKey(startPosition);
         var selected = _driveChooser.getSelected();
+
         if (selected == null || selected.isEmpty())
         {
             selected = fallback;
@@ -295,14 +277,6 @@ public class Autos extends SubsystemBase
         for (var option : startPosition.driveOptions)
         {
             if (option.key().equals(selected))
-            {
-                return option;
-            }
-        }
-
-        for (var option : startPosition.driveOptions)
-        {
-            if (option.key().equals(fallback))
             {
                 return option;
             }
