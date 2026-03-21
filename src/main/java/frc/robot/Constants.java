@@ -148,12 +148,13 @@ public final class Constants
 
     public static class GeneralConstants
     {
-        public static final Time     LOOP_PERIOD    = Milliseconds.of(20);
-        public static final Voltage  MOTOR_VOLTAGE  = Volts.of(12.0);
-        public static final Voltage  SENSOR_VOLTAGE = Volts.of(5.0);
-        public static final DCMotor  WINDOW_MOTOR   = new DCMotor(GeneralConstants.MOTOR_VOLTAGE.in(Volts), 9.2, 16.3, 1.6, RPM.of(90).in(RadiansPerSecond), 1);
-        public static final Distance FIELD_SIZE_X   = Inches.of(651.2);
-        public static final Distance FIELD_SIZE_Y   = Inches.of(317.7);
+        public static final Time          LOOP_PERIOD    = Milliseconds.of(20);
+        public static final Voltage       MOTOR_VOLTAGE  = Volts.of(12.0);
+        public static final Voltage       SENSOR_VOLTAGE = Volts.of(5.0);
+        public static final DCMotor       WINDOW_MOTOR   = new DCMotor(GeneralConstants.MOTOR_VOLTAGE.in(Volts), 9.2, 16.3, 1.6, RPM.of(90).in(RadiansPerSecond), 1);
+        public static final Distance      FIELD_SIZE_X   = Inches.of(651.2);
+        public static final Distance      FIELD_SIZE_Y   = Inches.of(317.7);
+        public static final Translation2d FIELD_CENTER   = new Translation2d(FIELD_SIZE_X.div(2), FIELD_SIZE_Y.div(2));
     }
 
     public static class ShooterConstants

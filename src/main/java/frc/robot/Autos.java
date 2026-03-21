@@ -1,8 +1,12 @@
 package frc.robot;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import choreo.auto.AutoFactory;
+import choreo.auto.AutoRoutine;
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
@@ -11,7 +15,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -135,6 +139,7 @@ public class Autos extends SubsystemBase
     private final Drive                          _driveSubsystem;
     private final Shooter                        _shooterSubsystem;
     private final AutoFactory                    _autoFactory;
+    private final AutoRoutine                    _trajectoryDrawRoutine;
     private final SwerveRequest.FieldCentric     _autoRequest           = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage).withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
     private final PIDController                  _xController           = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
     private final PIDController                  _yController           = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
@@ -148,11 +153,12 @@ public class Autos extends SubsystemBase
 
     public Autos(Drive driveSubsystem, Shooter shooterSubsystem)
     {
-        _driveSubsystem   = driveSubsystem;
-        _shooterSubsystem = shooterSubsystem;
+        _driveSubsystem        = driveSubsystem;
+        _shooterSubsystem      = shooterSubsystem;
+        _autoFactory           = new AutoFactory(() -> driveSubsystem.getState().Pose, driveSubsystem::resetPose, this::followTrajectory, true, driveSubsystem);
+        _trajectoryDrawRoutine = _autoFactory.newRoutine("Trajectory Drawing");
 
         _headingController.enableContinuousInput(-Math.PI, Math.PI);
-        _autoFactory = new AutoFactory(() -> driveSubsystem.getState().Pose, driveSubsystem::resetPose, this::followTrajectory, true, driveSubsystem);
 
         configureChoosers();
         rebuildDriveChooser(DEFAULT_START_POSITION);
@@ -162,6 +168,12 @@ public class Autos extends SubsystemBase
     @Override
     public void periodic()
     {
+        // Don't update the autonomous selections/display if the robot is enabled
+        if (DriverStation.isEnabled())
+        {
+            return;
+        }
+
         var selectedStart = _startChooser.getSelected();
         if (_lastStartPosition != selectedStart)
         {
@@ -177,7 +189,7 @@ public class Autos extends SubsystemBase
         var startPosition = _startChooser.getSelected();
         var delaySeconds  = _delayChooser.getSelected();
         var driveOption   = _driveChooser.getSelected();
-        var startPose     = getStartPose(startPosition, driveOption);
+        var startPose     = getStartPose(mode, startPosition, driveOption);
         var resetPose     = Commands.runOnce(() -> _driveSubsystem.resetPose(startPose));
         var shoot         = _shooterSubsystem.shoot().withTimeout(4.0);
         var delay         = Commands.waitSeconds(delaySeconds);
@@ -244,11 +256,18 @@ public class Autos extends SubsystemBase
         var mode          = _modeChooser.getSelected();
         var startPosition = _startChooser.getSelected();
         var driveOption   = _driveChooser.getSelected();
-        var startPose     = getStartPose(startPosition, driveOption);
+        var startPose     = getStartPose(mode, startPosition, driveOption);
         var endPose       = driveOption.staysPut() ? startPose : flip(driveOption.endPoseBlue());
+        var trajectory    = Collections.<Pose2d>emptyList();
+
+        if (!driveOption.staysPut() && mode.usesDrivePath())
+        {
+            trajectory = flip(Arrays.asList(driveOption.trajectory.asAutoTraj(_trajectoryDrawRoutine).getRawTrajectory().getPoses()));
+        }
 
         _previewField.setRobotPose(startPose);
         _previewField.getObject("Auto End Pose").setPose(endPose);
+        _previewField.getObject("Auto Trajectory").setPoses(trajectory);
 
         SmartDashboard.putString("Auto Summary", buildSummary(mode, startPosition, driveOption, _delayChooser.getSelected()));
     }
@@ -285,23 +304,33 @@ public class Autos extends SubsystemBase
         // @formatter:on
     }
 
-    private Pose2d getStartPose(StartPosition startPosition, AutoDriveOption driveOption)
+    private Pose2d getStartPose(AutoMode mode, StartPosition startPosition, AutoDriveOption driveOption)
     {
-        var pose = driveOption.startPoseBlue();
+        var pose = startPosition.blueStartPose;
 
-        if (driveOption == AutoDriveOption.STAY_PUT)
+        if (driveOption != null && (!driveOption.staysPut() || mode.usesDrivePath()))
         {
-            pose = startPosition.blueStartPose;
+            pose = driveOption.startPoseBlue();
         }
 
         return flip(pose);
+    }
+
+    private List<Pose2d> flip(List<Pose2d> bluePoses)
+    {
+        if (Utilities.isRedAlliance())
+        {
+            return bluePoses.stream().map(p -> p.rotateAround(GeneralConstants.FIELD_CENTER, Rotation2d.k180deg)).toList();
+        }
+
+        return bluePoses;
     }
 
     private Pose2d flip(Pose2d bluePose)
     {
         if (Utilities.isRedAlliance())
         {
-            return bluePose.rotateAround(new Translation2d(GeneralConstants.FIELD_SIZE_X.div(2), GeneralConstants.FIELD_SIZE_Y.div(2)), Rotation2d.k180deg);
+            return bluePose.rotateAround(GeneralConstants.FIELD_CENTER, Rotation2d.k180deg);
         }
 
         return bluePose;
