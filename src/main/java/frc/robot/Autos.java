@@ -59,17 +59,19 @@ public class Autos extends SubsystemBase
 
     private record AutoDriveOption(String displayName, ChoreoTraj trajectory)
     {
-        boolean staysPut()
+        public static final AutoDriveOption STAY_PUT = new AutoDriveOption("Stay Put", null);
+
+        public boolean staysPut()
         {
             return trajectory == null;
         }
 
-        String key()
+        public Pose2d startPoseBlue()
         {
-            return staysPut() ? AutoConstants.STAY_PUT_KEY : trajectory.name();
+            return staysPut() ? null : trajectory.initialPoseBlue();
         }
 
-        Pose2d endPoseBlue()
+        public Pose2d endPoseBlue()
         {
             return staysPut() ? null : trajectory.endPoseBlue();
         }
@@ -81,14 +83,12 @@ public class Autos extends SubsystemBase
         LeftTrench(
             "Left Trench",
             ChoreoVars.Poses.LeftTrench,
-            new AutoDriveOption("Stay Put", null),
             new AutoDriveOption("Drive To Depot", ChoreoTraj.LeftTrenchToDepot)
         ),
 
         LeftBump(
             "Left Bump",
             ChoreoVars.Poses.LeftBump,
-            new AutoDriveOption("Stay Put", null),
             new AutoDriveOption("Drive To Depot", ChoreoTraj.LeftBumpToDepot),
             new AutoDriveOption("Drive To Tower", ChoreoTraj.LeftBumpToTower),
             new AutoDriveOption("Pickup From Mid", ChoreoTraj.LeftBumpPickupFromMidScore)
@@ -97,7 +97,6 @@ public class Autos extends SubsystemBase
         Hub(
             "Hub",
             ChoreoVars.Poses.HubStart,
-            new AutoDriveOption("Stay Put", null),
             new AutoDriveOption("Drive To Depot", ChoreoTraj.HubToDepot),
             new AutoDriveOption("Drive To Outpost", ChoreoTraj.HubToOutpost),
             new AutoDriveOption("Drive To Tower", ChoreoTraj.HubToTower)
@@ -106,7 +105,6 @@ public class Autos extends SubsystemBase
         RightBump(
             "Right Bump",
             ChoreoVars.Poses.RightBump,
-            new AutoDriveOption("Stay Put", null),
             new AutoDriveOption("Drive To Outpost", ChoreoTraj.RightBumpToOutpost),
             new AutoDriveOption("Drive To Tower", ChoreoTraj.RightBumpToTower),
             new AutoDriveOption("Pickup From Mid", ChoreoTraj.RightBumpPickupFromMidScore)
@@ -115,7 +113,6 @@ public class Autos extends SubsystemBase
         RightTrench(
             "Right Trench",
             ChoreoVars.Poses.RightTrench,
-            new AutoDriveOption("Stay Put", null),
             new AutoDriveOption("Drive To Outpost", ChoreoTraj.RightTrenchToOutpost)
         );
         // @formatter:on
@@ -146,7 +143,7 @@ public class Autos extends SubsystemBase
     private final SendableChooser<StartPosition> _startChooser          = new SendableChooser<>();
     private final SendableChooser<Integer>       _delayChooser          = new SendableChooser<>();
     private final Field2d                        _previewField          = new Field2d();
-    private SendableChooser<String>              _driveChooser          = new SendableChooser<>();
+    private SendableChooser<AutoDriveOption>     _driveChooser          = new SendableChooser<>();
     private StartPosition                        _lastStartPosition     = null;
 
     public Autos(Drive driveSubsystem, Shooter shooterSubsystem)
@@ -179,8 +176,8 @@ public class Autos extends SubsystemBase
         var mode          = _modeChooser.getSelected();
         var startPosition = _startChooser.getSelected();
         var delaySeconds  = _delayChooser.getSelected();
-        var driveOption   = getSelectedDriveOption(startPosition);
-        var startPose     = flip(startPosition.blueStartPose);
+        var driveOption   = _driveChooser.getSelected();
+        var startPose     = getStartPose(startPosition, driveOption);
         var resetPose     = Commands.runOnce(() -> _driveSubsystem.resetPose(startPose));
         var shoot         = _shooterSubsystem.shoot().withTimeout(4.0);
         var delay         = Commands.waitSeconds(delaySeconds);
@@ -229,20 +226,12 @@ public class Autos extends SubsystemBase
 
     private void rebuildDriveChooser(StartPosition startPosition)
     {
-        var chooser    = new SendableChooser<String>();
-        var options    = startPosition.driveOptions;
-        var defaultKey = firstDrivePathKey(startPosition);
+        var chooser = new SendableChooser<AutoDriveOption>();
 
-        for (var option : options)
+        chooser.setDefaultOption(AutoDriveOption.STAY_PUT.displayName, AutoDriveOption.STAY_PUT);
+        for (var option : startPosition.driveOptions)
         {
-            if (option.key().equals(defaultKey))
-            {
-                chooser.setDefaultOption(option.displayName(), option.key());
-            }
-            else
-            {
-                chooser.addOption(option.displayName(), option.key());
-            }
+            chooser.addOption(option.displayName, option);
         }
 
         _driveChooser      = chooser;
@@ -254,35 +243,14 @@ public class Autos extends SubsystemBase
     {
         var mode          = _modeChooser.getSelected();
         var startPosition = _startChooser.getSelected();
-        var driveOption   = getSelectedDriveOption(startPosition);
-        var startPose     = flip(startPosition.blueStartPose);
+        var driveOption   = _driveChooser.getSelected();
+        var startPose     = getStartPose(startPosition, driveOption);
         var endPose       = driveOption.staysPut() ? startPose : flip(driveOption.endPoseBlue());
 
         _previewField.setRobotPose(startPose);
         _previewField.getObject("Auto End Pose").setPose(endPose);
 
         SmartDashboard.putString("Auto Summary", buildSummary(mode, startPosition, driveOption, _delayChooser.getSelected()));
-    }
-
-    private AutoDriveOption getSelectedDriveOption(StartPosition startPosition)
-    {
-        var fallback = firstDrivePathKey(startPosition);
-        var selected = _driveChooser.getSelected();
-
-        if (selected == null || selected.isEmpty())
-        {
-            selected = fallback;
-        }
-
-        for (var option : startPosition.driveOptions)
-        {
-            if (option.key().equals(selected))
-            {
-                return option;
-            }
-        }
-
-        return startPosition.driveOptions[0];
     }
 
     private String buildSummary(AutoMode mode, StartPosition startPosition, AutoDriveOption driveOption, int delaySeconds)
@@ -303,27 +271,30 @@ public class Autos extends SubsystemBase
         return summary.toString();
     }
 
-    private String firstDrivePathKey(StartPosition startPosition)
-    {
-        for (var option : startPosition.driveOptions)
-        {
-            if (!option.staysPut())
-            {
-                return option.key();
-            }
-        }
-
-        return startPosition.driveOptions[0].key();
-    }
-
     private void followTrajectory(SwerveSample sample)
     {
         var pose = _driveSubsystem.getState().Pose;
 
+        // @formatter:off
         _driveSubsystem.setControl(
-                _autoRequest.withVelocityX(sample.vx + _xController.calculate(pose.getX(), sample.x)).withVelocityY(sample.vy + _yController.calculate(pose.getY(), sample.y))
-                        .withRotationalRate(sample.omega + _headingController.calculate(pose.getRotation().getRadians(), sample.heading))
+            _autoRequest
+                .withVelocityX(sample.vx + _xController.calculate(pose.getX(), sample.x))
+                .withVelocityY(sample.vy + _yController.calculate(pose.getY(), sample.y))
+                .withRotationalRate(sample.omega + _headingController.calculate(pose.getRotation().getRadians(), sample.heading))
         );
+        // @formatter:on
+    }
+
+    private Pose2d getStartPose(StartPosition startPosition, AutoDriveOption driveOption)
+    {
+        var pose = driveOption.startPoseBlue();
+
+        if (driveOption == AutoDriveOption.STAY_PUT)
+        {
+            pose = startPosition.blueStartPose;
+        }
+
+        return flip(pose);
     }
 
     private Pose2d flip(Pose2d bluePose)

@@ -14,7 +14,6 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
@@ -38,7 +37,6 @@ import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Dimensionless;
@@ -97,7 +95,6 @@ public final class Constants
     public static class AutoConstants
     {
         // Dashboard display
-        public static final String STAY_PUT_KEY            = "__STAY_PUT__";
         public static final String AUTO_MODE_CHOOSER_NAME  = "Auto Mode";
         public static final String AUTO_START_CHOOSER_NAME = "Auto Start Position";
         public static final String AUTO_DRIVE_CHOOSER_NAME = "Auto Drive Path";
