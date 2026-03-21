@@ -10,7 +10,6 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Dimensionless;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -38,7 +37,6 @@ public class RobotContainer
     private final Drive                      _drive                    = TunerConstants.createDrivetrain();
     private final Intake                     _intake                   = new Intake();
     private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
-    @NotLogged
     private final Autos                      _autos                    = new Autos(_drive, _shooter);
     private Dimensionless                    _driveMultiplier          = DriveConstants.FULL_SPEED_SCALE;
     private double                           _manualFlywheelRPM        = MANUAL_FLYWHEEL_START_RPM;

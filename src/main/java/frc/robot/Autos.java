@@ -12,6 +12,8 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -30,6 +32,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Utilities;
 
+@Logged
 public class Autos extends SubsystemBase
 {
     private enum AutoMode
@@ -133,23 +136,42 @@ public class Autos extends SubsystemBase
         }
     }
 
-    private static final AutoMode                DEFAULT_AUTO_MODE      = AutoMode.ShootOnly;
-    private static final StartPosition           DEFAULT_START_POSITION = StartPosition.Hub;
-    private static final int                     DEFAULT_DELAY_SECONDS  = 0;
+    @NotLogged
+    private static final AutoMode                DEFAULT_AUTO_MODE       = AutoMode.ShootOnly;
+    @NotLogged
+    private static final StartPosition           DEFAULT_START_POSITION  = StartPosition.Hub;
+    @NotLogged
+    private static final int                     DEFAULT_DELAY_SECONDS   = 0;
+    @NotLogged
     private final Drive                          _driveSubsystem;
+    @NotLogged
     private final Shooter                        _shooterSubsystem;
+    @NotLogged
     private final AutoFactory                    _autoFactory;
+    @NotLogged
     private final AutoRoutine                    _trajectoryDrawRoutine;
-    private final SwerveRequest.FieldCentric     _autoRequest           = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage).withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-    private final PIDController                  _xController           = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
-    private final PIDController                  _yController           = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
-    private final PIDController                  _headingController     = new PIDController(AutoConstants.ROTATE_KP, 0.0, AutoConstants.ROTATE_KD);
-    private final SendableChooser<AutoMode>      _modeChooser           = new SendableChooser<>();
-    private final SendableChooser<StartPosition> _startChooser          = new SendableChooser<>();
-    private final SendableChooser<Integer>       _delayChooser          = new SendableChooser<>();
-    private final Field2d                        _previewField          = new Field2d();
-    private SendableChooser<AutoDriveOption>     _driveChooser          = new SendableChooser<>();
-    private StartPosition                        _lastStartPosition     = null;
+    @NotLogged
+    private final SwerveRequest.FieldCentric     _autoRequest            = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage).withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+    @NotLogged
+    private final PIDController                  _xController            = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
+    @NotLogged
+    private final PIDController                  _yController            = new PIDController(AutoConstants.DRIVE_KP, 0.0, AutoConstants.DRIVE_KD);
+    @NotLogged
+    private final PIDController                  _headingController      = new PIDController(AutoConstants.ROTATE_KP, 0.0, AutoConstants.ROTATE_KD);
+    @NotLogged
+    private final SendableChooser<AutoMode>      _modeChooser            = new SendableChooser<>();
+    @NotLogged
+    private final SendableChooser<StartPosition> _startChooser           = new SendableChooser<>();
+    @NotLogged
+    private final SendableChooser<Integer>       _delayChooser           = new SendableChooser<>();
+    @NotLogged
+    private final Field2d                        _previewField           = new Field2d();
+    @NotLogged
+    private SendableChooser<AutoDriveOption>     _driveChooser           = new SendableChooser<>();
+    @NotLogged
+    private StartPosition                        _lastStartPosition      = null;
+    @Logged
+    private Pose2d                               _currentDesiredPathPose = new Pose2d();
 
     public Autos(Drive driveSubsystem, Shooter shooterSubsystem)
     {
@@ -194,15 +216,16 @@ public class Autos extends SubsystemBase
         var shoot         = _shooterSubsystem.shoot().withTimeout(4.0);
         var delay         = Commands.waitSeconds(delaySeconds);
         var drive         = driveOption.staysPut() ? Commands.none() : _autoFactory.trajectoryCmd(driveOption.trajectory().name());
+        var stop          = driveOption.staysPut() ? Commands.none() : _driveSubsystem.runOnce(() -> _driveSubsystem.setControl(_autoRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0)));
 
         return switch (mode)
         {
             case DoNothing -> resetPose;
-            case DriveOnly -> Commands.sequence(resetPose, drive);
+            case DriveOnly -> Commands.sequence(resetPose, drive, stop);
             case ShootOnly -> Commands.sequence(resetPose, shoot);
             case ShootWithDelay -> Commands.sequence(resetPose, delay, shoot);
-            case ShootThenDrive -> Commands.sequence(resetPose, shoot, drive);
-            case ShootWithDelayThenDrive -> Commands.sequence(resetPose, delay, shoot, drive);
+            case ShootThenDrive -> Commands.sequence(resetPose, shoot, drive, stop);
+            case ShootWithDelayThenDrive -> Commands.sequence(resetPose, delay, shoot, drive, stop);
         };
     }
 
@@ -293,6 +316,8 @@ public class Autos extends SubsystemBase
     private void followTrajectory(SwerveSample sample)
     {
         var pose = _driveSubsystem.getState().Pose;
+
+        _currentDesiredPathPose = sample.getPose();
 
         // @formatter:off
         _driveSubsystem.setControl(
