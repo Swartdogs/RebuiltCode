@@ -37,7 +37,7 @@ public class RobotContainer
     private final Drive                      _drive                    = TunerConstants.createDrivetrain();
     private final Intake                     _intake                   = new Intake();
     private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
-    private final Autos                      _autos                    = new Autos(_drive, _shooter);
+    private final Autos                      _autos                    = new Autos(_drive, _shooter, _intake);
     private Dimensionless                    _driveMultiplier          = DriveConstants.FULL_SPEED_SCALE;
     private double                           _manualFlywheelRPM        = MANUAL_FLYWHEEL_START_RPM;
 

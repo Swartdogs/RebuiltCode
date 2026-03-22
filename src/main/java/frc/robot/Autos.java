@@ -29,6 +29,7 @@ import frc.robot.Constants.GeneralConstants;
 import frc.robot.generated.ChoreoTraj;
 import frc.robot.generated.ChoreoVars;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Utilities;
 
@@ -42,8 +43,10 @@ public class Autos extends SubsystemBase
         DriveOnly("Drive Only"),
         ShootOnly("Shoot Only"),
         ShootWithDelay("Shoot + Delay"),
-        ShootThenDrive("Shoot Then Drive"),
-        ShootWithDelayThenDrive("Shoot + Delay + Drive");
+        DriveThenShoot("Drive Then Shoot"),
+        ShootWithDelayThenDrive("Shoot + Delay + Drive"),
+        DrivePickupThenShoot("Drive + Pickup + Shoot"),
+        DriveWithDelayPickupThenShoot("Drive + Delay + Pickup + Shoot");
         // @formatter:on
 
         public final String displayName;
@@ -55,7 +58,7 @@ public class Autos extends SubsystemBase
 
         public boolean usesDrivePath()
         {
-            return this == DriveOnly || this == ShootThenDrive || this == ShootWithDelayThenDrive;
+            return this == DriveOnly || this == DriveThenShoot || this == ShootWithDelayThenDrive;
         }
 
         public boolean usesDelay()
@@ -147,6 +150,8 @@ public class Autos extends SubsystemBase
     @NotLogged
     private final Shooter                        _shooterSubsystem;
     @NotLogged
+    private final Intake                         _intakeSubsystem;
+    @NotLogged
     private final AutoFactory                    _autoFactory;
     @NotLogged
     private final AutoRoutine                    _trajectoryDrawRoutine;
@@ -173,10 +178,11 @@ public class Autos extends SubsystemBase
     @Logged
     private Pose2d                               _currentDesiredPathPose = new Pose2d();
 
-    public Autos(Drive driveSubsystem, Shooter shooterSubsystem)
+    public Autos(Drive driveSubsystem, Shooter shooterSubsystem, Intake intakeSubsystem)
     {
         _driveSubsystem        = driveSubsystem;
         _shooterSubsystem      = shooterSubsystem;
+        _intakeSubsystem       = intakeSubsystem;
         _autoFactory           = new AutoFactory(() -> driveSubsystem.getState().Pose, driveSubsystem::resetPose, this::followTrajectory, true, driveSubsystem);
         _trajectoryDrawRoutine = _autoFactory.newRoutine("Trajectory Drawing");
 
@@ -213,19 +219,24 @@ public class Autos extends SubsystemBase
         var driveOption   = _driveChooser.getSelected();
         var startPose     = getStartPose(mode, startPosition, driveOption);
         var resetPose     = Commands.runOnce(() -> _driveSubsystem.resetPose(startPose));
-        var shoot         = _shooterSubsystem.shoot().withTimeout(4.0);
+        var shoot         = _shooterSubsystem.shoot();
         var delay         = Commands.waitSeconds(delaySeconds);
-        var drive         = driveOption.staysPut() ? Commands.none() : _autoFactory.trajectoryCmd(driveOption.trajectory().name());
-        var stop          = driveOption.staysPut() ? Commands.none() : _driveSubsystem.runOnce(() -> _driveSubsystem.setControl(_autoRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0)));
+        var extend        = _intakeSubsystem.getExtendCmd();
+        var pickup        = _intakeSubsystem.runRollersForward();
+        var jiggle        = _intakeSubsystem.jiggle();
+        var drive         = driveOption.staysPut() ? Commands.none()
+                : _autoFactory.trajectoryCmd(driveOption.trajectory().name()).andThen(_driveSubsystem.runOnce(() -> _driveSubsystem.setControl(_autoRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0))));
 
         return switch (mode)
         {
             case DoNothing -> resetPose;
-            case DriveOnly -> Commands.sequence(resetPose, drive, stop);
+            case DriveOnly -> Commands.sequence(resetPose, drive);
             case ShootOnly -> Commands.sequence(resetPose, shoot);
             case ShootWithDelay -> Commands.sequence(resetPose, delay, shoot);
-            case ShootThenDrive -> Commands.sequence(resetPose, shoot, drive, stop);
-            case ShootWithDelayThenDrive -> Commands.sequence(resetPose, delay, shoot, drive, stop);
+            case DriveThenShoot -> Commands.sequence(resetPose, drive, shoot);
+            case ShootWithDelayThenDrive -> Commands.sequence(resetPose, delay, shoot, drive);
+            case DrivePickupThenShoot -> Commands.sequence(resetPose, extend, Commands.deadline(drive, pickup), shoot.alongWith(jiggle));
+            case DriveWithDelayPickupThenShoot -> Commands.sequence(resetPose, delay, extend, Commands.deadline(drive, pickup), shoot.alongWith(jiggle));
         };
     }
 
