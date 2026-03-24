@@ -17,7 +17,7 @@ on:
 jobs:
   spotless-check:
     # The type of runner that the job will run on. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings
-    runs-on: ubuntu-slim
+    runs-on: ${{vars.RUNNER||'ubuntu-22.04'}}
     # This grabs the WPIlib docker container. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings
     container: ${{ vars.CONTAINER}}
     # Steps represent a sequence of tasks that will be executed as part of the job
