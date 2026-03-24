@@ -21,7 +21,6 @@ jobs:
     # The type of runner that the job will run on.  
     runs-on: ${{vars.RUNNER||'ubuntu-latest' }}
     # This grabs the WPILib docker container
-    # The type of runner that the job will run on. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings
     container: ${{vars.CONTAINER||'wpilib/roborio-cross-ubuntu:2025-22.04' }}
     steps:
   # THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings alongside the container
