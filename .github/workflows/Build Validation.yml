@@ -26,7 +26,7 @@ jobs:
     steps:
     #THIS ALWAYS RUNS, TODO FIX
     - name: Warn if runner is not set
-      #if: vars.RUNNER == 'ubuntu-latest'
+      if: vars.RUNNER == 'ubuntu-latest'
       run: echo "::warning ::The RUNNER variable is not set" 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v6
