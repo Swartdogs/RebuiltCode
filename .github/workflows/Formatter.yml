@@ -36,7 +36,6 @@ jobs:
           #Sets up branch system properly per https://github.com/marketplace/actions/add-commit#working-with-prs
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
-          run: echo Trigged by ${{ github.event_name }}  
           
       - name: Check with spotless
         id: spot-check
