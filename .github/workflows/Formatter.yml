@@ -16,9 +16,9 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   spotless-check:
-    # The type of runner that the job will run on
+    # The type of runner that the job will run on. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings
     runs-on: ${{ vars.RUNNER }}
-    # This grabs the WPILib docker container
+    # This grabs the WPIlib docker container. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings
     container: ${{ vars.CONTAINER }}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
