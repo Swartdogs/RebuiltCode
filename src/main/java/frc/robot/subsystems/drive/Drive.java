@@ -364,6 +364,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         private final VisionState   _leftVision;
         @Logged
         private final VisionState   _rightVision;
+        private Matrix<N3,N1> _activeVisionStdDevs = null;
         private static final Pose2d kInvalidVisionPose = new Pose2d(-1.0, -1.0, Rotation2d.kZero);
 
         public static final class VisionState
@@ -408,12 +409,14 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 _leftVision  = new VisionState(null, null);
                 _rightVision = new VisionState(null, null);
             }
-            setVisionMeasurementStdDevs(VisionConstants.STD_DEVS);
+            updateVisionMeasurementStdDevs();
         }
 
         public void update()
         {
             if (RobotBase.isSimulation()) return;
+
+            updateVisionMeasurementStdDevs();
 
             var robotHeading                 = getState().Pose.getRotation();
             var robotYawRateDegreesPerSecond = Math.toDegrees(getState().Speeds.omegaRadiansPerSecond);
@@ -425,6 +428,15 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             _rightVision._acceptedVision = processLimelight(_rightVision);
         }
 
+        public void updateVisionMeasurementStdDevs()
+        {
+            Matrix<N3,N1> desiredVisionStdDevs = DriverStation.isAutonomousEnabled() ? VisionConstants.AUTO_STD_DEVS : VisionConstants.TELEOP_STD_DEVS;
+            if (_activeVisionStdDevs != desiredVisionStdDevs)
+            {
+                setVisionMeasurementStdDevs(desiredVisionStdDevs);
+                _activeVisionStdDevs = desiredVisionStdDevs;
+            }
+        }
         private void setRobotOrientation(VisionState state, Rotation2d robotHeading, double robotYawRateDegreesPerSecond, ImuMode imuMode)
         {
             state._settings.withImuMode(imuMode)
