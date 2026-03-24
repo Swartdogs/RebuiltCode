@@ -17,7 +17,7 @@ on:
 jobs:
   spotless-check:
     # The type of runner that the job will run on
-    runs-on: ubuntu-22.04-arm
+    runs-on: ${{ vars.CONTAINER }}
     # This grabs the WPILib docker container
     container: ${{ vars.CONTAINER }}
     # Steps represent a sequence of tasks that will be executed as part of the job
