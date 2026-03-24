@@ -18,17 +18,16 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings
-    #TODO: Add back  vars.RUNNER||
-    runs-on: ${{'ubuntu-latest' }}
+    # The type of runner that the job will run on. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings 
+    runs-on: ${{vars.RUNNER||'ubuntu-latest' }}
     # This grabs the WPILib docker container
     # The type of runner that the job will run on. THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings
-    # TODO add back: vars.CONTAINER||
-    container: ${{'wpilib/roborio-cross-ubuntu:2025-22.04' }}
+    container: ${{vars.CONTAINER||'wpilib/roborio-cross-ubuntu:2025-22.04' }}
     steps:
-    - name: Warn if not set
-      if: vars.RUNNER != 'ubuntu-latest'
-      run: echo "This step will be skipped on Monday and Wednesday"
+    #THIS ALWAYS RUNS, TODO FIX
+    - name: Warn if runner is not set
+      #if: vars.RUNNER == 'ubuntu-latest'
+      run: echo "::warning ::The RUNNER variable is not set" 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v6
     # Declares the repository safe and not under dubious ownership.
