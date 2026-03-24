@@ -19,9 +19,9 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-22.04
+    runs-on: ${{ vars.RUNNER }}
     # This grabs the WPILib docker container
-    container: wpilib/roborio-cross-ubuntu:2025-22.04
+    container: ${{ vars.CONTAINER }}
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v6
