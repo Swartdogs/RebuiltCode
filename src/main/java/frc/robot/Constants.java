@@ -249,17 +249,6 @@ public final class Constants
         private static final double         SWM_MAX_TOF_DISTANCE_IN                = 159.0;
 
         // @formatter:off
-        private static final InterpolatingDoubleTreeMap FLYWHEEL_SPEED_TABLE = InterpolatingDoubleTreeMap.ofEntries
-        (
-            Map.entry(50.0, 2500.0),
-            Map.entry(75.5, 2950.0),
-            Map.entry(101.0, 3400.0),
-            Map.entry(113.0, 3850.0),
-            Map.entry(130.0, 3900.0),
-            Map.entry(151.0, 4600.0),
-            Map.entry(183.0, 5100.0),
-            Map.entry(204.0, 5850.0)
-        );
 
         // Keep TOF as its own lookup so the moving-shot solve matches the empirical
         // map-based pattern used by teams like 5000, 6328, and Eeshwar's writeup.
@@ -282,10 +271,6 @@ public final class Constants
         public static final Voltage ROTOR_RETRACTED_VOLTAGE = Volts.of(1.0);
 
         // TODO: Tune these values with testing!
-        public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
-        {
-            return RPM.of(FLYWHEEL_SPEED_TABLE.get(distance.in(Inches)));
-        }
 
         public static Time getShotTimeOfFlight(Distance distance)
         {

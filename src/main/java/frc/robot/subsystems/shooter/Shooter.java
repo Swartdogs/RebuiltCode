@@ -1,10 +1,14 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.InchesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.function.DoubleSupplier;
@@ -17,9 +21,10 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.TurretDirector.ShotMode;
@@ -71,6 +76,7 @@ public class Shooter extends SubsystemBase
     private double                           _robotAngularSpeedRadiansPerSecond;
     @Logged
     private boolean                          _feedReady;
+    private final double[][]                 _speeds = { { 50.0, 2500.0 }, { 75.5, 2950.0 }, { 101.0, 3400.0 }, { 113.0, 3850.0 }, { 130.0, 3900.0 }, { 151.0, 4600.0 }, { 183.0, 5100.0 }, { 204.0, 5850.0 } };
 
     public Shooter(Supplier<SwerveDriveState> swerveStateSupplier, Supplier<Boolean> intakeExtendedSupplier, Supplier<Boolean> intakeRetractedSupplier)
     {
@@ -380,7 +386,7 @@ public class Shooter extends SubsystemBase
 
         if (spinFlywheel)
         {
-            _flywheel.setVelocity(ShooterConstants.getFlywheelSpeedForDistance(_currentShotSolution.distance()));
+            _flywheel.setVelocity(princeGetFlywheelSpeed(_currentShotSolution.distance()));
         }
     }
 
@@ -501,5 +507,32 @@ public class Shooter extends SubsystemBase
 
         var rotorVoltage = _intakeRetractedSupplier.get() ? ShooterConstants.ROTOR_RETRACTED_VOLTAGE : ShooterConstants.ROTOR_MID_VOLTAGE;
         _rotor.setVoltage(rotorVoltage);
+    }
+
+    private AngularVelocity princeGetFlywheelSpeed(Distance distance) // TODO
+    {
+        Distance        bestDist  = null;
+        AngularVelocity bestSpeed = null;
+        for (double[] entry : _speeds)
+        {
+            if (bestDist == null || Math.abs(distance.in(Inches) - entry[0]) < Math.abs(bestDist.in(Inches) - entry[0]))
+            {
+                bestDist  = Inches.of(entry[0]);
+                bestSpeed = RPM.of(entry[1]);
+            }
+        }
+
+        double k = bestSpeed.in(RPM) / speed(bestDist).in(RPM);
+        return speed(distance).times(k);
+    }
+
+    private AngularVelocity speed(Distance x)
+    {
+        final Angle              theta       = Degrees.of(70);
+        final LinearAcceleration g           = MetersPerSecondPerSecond.of(9.8);
+        final Distance           hubHeight   = Inches.of(53); // TODO: not sure if this is the correct height to the inside of the hub
+        final Distance           robotHeight = Inches.of(30);
+
+        return RadiansPerSecond.of(x.in(Inches) / (2 * Math.cos(theta.in(Radians))) * Math.sqrt(g.in(InchesPerSecondPerSecond) / (-2 * hubHeight.in(Inches) + 2 * robotHeight.in(Inches) + 2 * x.in(Inches) * Math.tan(theta.in(Radians)))));
     }
 }
