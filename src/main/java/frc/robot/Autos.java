@@ -3,6 +3,7 @@ package frc.robot;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.IntStream;
 
 import choreo.auto.AutoFactory;
@@ -45,6 +46,7 @@ public class Autos extends SubsystemBase
         ShootWithDelay("Shoot + Delay"),
         DriveThenShoot("Drive Then Shoot"),
         ShootWithDelayThenDrive("Shoot + Delay + Drive"),
+        HubOutpostDelayTowerShoot("Hub -> Outpost -> 4s -> Tower -> Shoot"),
         DrivePickupThenShoot("Drive + Pickup + Shoot"),
         DriveWithDelayPickupThenShoot("Drive + Delay + Pickup + Shoot");
         // @formatter:on
@@ -146,6 +148,8 @@ public class Autos extends SubsystemBase
     @NotLogged
     private static final int                     DEFAULT_DELAY_SECONDS   = 0;
     @NotLogged
+    private static final int                     HUB_OUTPOST_TOWER_DELAY = 4;
+    @NotLogged
     private final Drive                          _driveSubsystem;
     @NotLogged
     private final Shooter                        _shooterSubsystem;
@@ -213,19 +217,20 @@ public class Autos extends SubsystemBase
 
     public Command buildAuto()
     {
-        var mode          = _modeChooser.getSelected();
-        var startPosition = _startChooser.getSelected();
-        var delaySeconds  = _delayChooser.getSelected();
-        var driveOption   = _driveChooser.getSelected();
-        var startPose     = getStartPose(mode, startPosition, driveOption);
-        var resetPose     = Commands.runOnce(() -> _driveSubsystem.resetPose(startPose));
-        var shoot         = _shooterSubsystem.shoot();
-        var delay         = Commands.waitSeconds(delaySeconds);
-        var extend        = _intakeSubsystem.getExtendCmd();
-        var pickup        = _intakeSubsystem.runRollersForward();
-        var jiggle        = _intakeSubsystem.jiggle();
-        var drive         = driveOption.staysPut() ? Commands.none()
-                : _autoFactory.trajectoryCmd(driveOption.trajectory().name()).andThen(_driveSubsystem.runOnce(() -> _driveSubsystem.setControl(_autoRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0))));
+        var mode           = _modeChooser.getSelected();
+        var startPosition  = _startChooser.getSelected();
+        var delaySeconds   = _delayChooser.getSelected();
+        var driveOption    = _driveChooser.getSelected();
+        var startPose      = getStartPose(mode, startPosition, driveOption);
+        var resetPose      = Commands.runOnce(() -> _driveSubsystem.resetPose(startPose));
+        var shoot          = _shooterSubsystem.shoot();
+        var delay          = Commands.waitSeconds(delaySeconds);
+        var extend         = _intakeSubsystem.getExtendCmd();
+        var pickup         = _intakeSubsystem.runRollersForward();
+        var jiggle         = _intakeSubsystem.jiggle();
+        var drive          = buildDriveCommand(driveOption.trajectory());
+        var hubToOutpost   = buildDriveCommand(ChoreoTraj.HubToOutpost);
+        var outpostToTower = buildDriveCommand(ChoreoTraj.OutpostToTower);
 
         return switch (mode)
         {
@@ -235,6 +240,7 @@ public class Autos extends SubsystemBase
             case ShootWithDelay -> Commands.sequence(resetPose, delay, shoot);
             case DriveThenShoot -> Commands.sequence(resetPose, drive, shoot);
             case ShootWithDelayThenDrive -> Commands.sequence(resetPose, delay, shoot, drive);
+            case HubOutpostDelayTowerShoot -> Commands.sequence(resetPose, hubToOutpost, Commands.waitSeconds(HUB_OUTPOST_TOWER_DELAY), outpostToTower, shoot);
             case DrivePickupThenShoot -> Commands.sequence(resetPose, extend, Commands.deadline(drive, pickup), shoot.alongWith(jiggle));
             case DriveWithDelayPickupThenShoot -> Commands.sequence(resetPose, delay, extend, Commands.deadline(drive, pickup), shoot.alongWith(jiggle));
         };
@@ -291,13 +297,8 @@ public class Autos extends SubsystemBase
         var startPosition = _startChooser.getSelected();
         var driveOption   = _driveChooser.getSelected();
         var startPose     = getStartPose(mode, startPosition, driveOption);
-        var endPose       = driveOption.staysPut() ? startPose : flip(driveOption.endPoseBlue());
-        var trajectory    = Collections.<Pose2d>emptyList();
-
-        if (!driveOption.staysPut() && mode.usesDrivePath())
-        {
-            trajectory = flip(Arrays.asList(driveOption.trajectory.asAutoTraj(_trajectoryDrawRoutine).getRawTrajectory().getPoses()));
-        }
+        var endPose       = getEndPose(mode, startPose, driveOption);
+        var trajectory    = getTrajectoryPreview(mode, driveOption);
 
         if (startPose != null)
         {
@@ -311,6 +312,11 @@ public class Autos extends SubsystemBase
 
     private String buildSummary(AutoMode mode, StartPosition startPosition, AutoDriveOption driveOption, int delaySeconds)
     {
+        if (mode == AutoMode.HubOutpostDelayTowerShoot)
+        {
+            return "Hub -> Outpost | 4s Delay | Tower -> Shoot";
+        }
+
         var summary = new StringBuilder();
         summary.append(mode.displayName).append(" | ").append(startPosition.displayName);
 
@@ -345,6 +351,11 @@ public class Autos extends SubsystemBase
 
     private Pose2d getStartPose(AutoMode mode, StartPosition startPosition, AutoDriveOption driveOption)
     {
+        if (mode == AutoMode.HubOutpostDelayTowerShoot)
+        {
+            return flip(ChoreoTraj.HubToOutpost.initialPoseBlue());
+        }
+
         var pose = startPosition.blueStartPose;
 
         if (driveOption != null && (!driveOption.staysPut() || mode.usesDrivePath()))
@@ -353,6 +364,44 @@ public class Autos extends SubsystemBase
         }
 
         return flip(pose);
+    }
+
+    private Pose2d getEndPose(AutoMode mode, Pose2d startPose, AutoDriveOption driveOption)
+    {
+        if (mode == AutoMode.HubOutpostDelayTowerShoot)
+        {
+            return flip(ChoreoTraj.OutpostToTower.endPoseBlue());
+        }
+
+        return driveOption.staysPut() ? startPose : flip(driveOption.endPoseBlue());
+    }
+
+    private List<Pose2d> getTrajectoryPreview(AutoMode mode, AutoDriveOption driveOption)
+    {
+        if (mode == AutoMode.HubOutpostDelayTowerShoot)
+        {
+            var trajectory = new ArrayList<Pose2d>();
+            trajectory.addAll(Arrays.asList(ChoreoTraj.HubToOutpost.asAutoTraj(_trajectoryDrawRoutine).getRawTrajectory().getPoses()));
+            trajectory.addAll(Arrays.asList(ChoreoTraj.OutpostToTower.asAutoTraj(_trajectoryDrawRoutine).getRawTrajectory().getPoses()));
+            return flip(trajectory);
+        }
+
+        if (!driveOption.staysPut() && mode.usesDrivePath())
+        {
+            return flip(Arrays.asList(driveOption.trajectory.asAutoTraj(_trajectoryDrawRoutine).getRawTrajectory().getPoses()));
+        }
+
+        return Collections.emptyList();
+    }
+
+    private Command buildDriveCommand(ChoreoTraj trajectory)
+    {
+        if (trajectory == null)
+        {
+            return Commands.none();
+        }
+
+        return _autoFactory.trajectoryCmd(trajectory.name()).andThen(_driveSubsystem.runOnce(() -> _driveSubsystem.setControl(_autoRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0))));
     }
 
     private List<Pose2d> flip(List<Pose2d> bluePoses)
