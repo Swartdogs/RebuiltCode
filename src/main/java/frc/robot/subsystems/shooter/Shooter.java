@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -17,6 +18,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.TurretDirector.ShotMode;
@@ -196,6 +199,16 @@ public class Shooter extends SubsystemBase
     public Command setManualTurretAngle(Angle angle)
     {
         return runOnce(() -> setManualTurretAngleCommand(angle));
+    }
+
+    public Command manualShootCmd(DoubleSupplier speed)
+    {
+        // @formatter:off
+        return Commands.parallel(
+            Commands.startEnd(() -> setManualFlywheel(speed.getAsDouble()), () -> stopManualFlywheel()),
+            runManualFeeder()
+        );
+        // @formatter:on
     }
 
     public Command trackOnly()

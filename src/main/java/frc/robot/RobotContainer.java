@@ -79,17 +79,22 @@ public class RobotContainer
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drive.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(), Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () -> _drive.disableVisionPoseCorrection(false))));
+        // _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(),
+        // Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () ->
+        // _drive.disableVisionPoseCorrection(false))));
+        _driver.button(1).whileTrue(_shooter.manualShootCmd(() -> _manualFlywheelRPM));
         _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier = DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier = DriveConstants.FULL_SPEED_SCALE));
         _driver.button(3).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
         _driver.button(5).whileTrue(_shooter.pass());
         _driver.button(6).whileTrue(_shooter.trackOnly());
         _driver.button(7).onTrue(_drive.runOnce(_drive::seedFieldCentric));
-        _driver.button(8).onTrue(_shooter.homeTurret());
+        _driver.button(8).onTrue(_shooter.setManualTurretAngle(Degrees.zero()));
         _driver.button(9).onTrue(_shooter.setManualTurretAngle(Degrees.of(45.0)));
         _driver.button(10).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45.0)));
         _driver.button(11).onTrue(_shooter.setManualTurretAngle(Degrees.of(90.0)));
         _driver.button(12).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90.0)));
+        _driver.button(13).onTrue(_shooter.setManualTurretAngle(Degrees.of(135.0)));
+        _driver.button(14).onTrue(_shooter.setManualTurretAngle(Degrees.of(-135.0)));
 
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
