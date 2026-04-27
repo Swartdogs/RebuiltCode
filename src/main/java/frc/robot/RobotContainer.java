@@ -48,17 +48,17 @@ public class RobotContainer
 
     private LinearVelocity getDrive()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())).times(_driver.getRawAxis(3)), DriveConstants.TRANSLATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())).times((-_driver.getRawAxis(3) + 1) / 2.0), DriveConstants.TRANSLATE_DEADBAND);
     }
 
     private LinearVelocity getStrafe()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())).times(_driver.getRawAxis(3)), DriveConstants.TRANSLATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())).times((-_driver.getRawAxis(3) + 1) / 2.0), DriveConstants.TRANSLATE_DEADBAND);
     }
 
     private AngularVelocity getRotate()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())).times(_driver.getRawAxis(3)), DriveConstants.ROTATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())).times((-_driver.getRawAxis(3) + 1) / 2.0), DriveConstants.ROTATE_DEADBAND);
     }
 
     private SwerveRequest.FieldCentric getFieldCentricRequest()
