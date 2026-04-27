@@ -38,8 +38,8 @@ public class RobotContainer
     private final Intake                     _intake                   = new Intake();
     private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
     private final Autos                      _autos                    = new Autos(_drive, _shooter, _intake);
-    private Dimensionless                    _driveMultiplier          = DriveConstants.FULL_SPEED_SCALE;
-    private double                           _manualFlywheelRPM        = MANUAL_FLYWHEEL_START_RPM;
+    // private Dimensionless _driveMultiplier = DriveConstants.FULL_SPEED_SCALE;
+    private double _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
 
     public RobotContainer()
     {
@@ -48,17 +48,17 @@ public class RobotContainer
 
     private LinearVelocity getDrive()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())).times(_driveMultiplier), DriveConstants.TRANSLATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())).times((-_driver.getRawAxis(3) + 1) / 2.0), DriveConstants.TRANSLATE_DEADBAND);
     }
 
     private LinearVelocity getStrafe()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())).times(_driveMultiplier), DriveConstants.TRANSLATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())).times((-_driver.getRawAxis(3) + 1) / 2.0), DriveConstants.TRANSLATE_DEADBAND);
     }
 
     private AngularVelocity getRotate()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())).times(_driveMultiplier), DriveConstants.ROTATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())).times((-_driver.getRawAxis(3) + 1) / 2.0), DriveConstants.ROTATE_DEADBAND);
     }
 
     private SwerveRequest.FieldCentric getFieldCentricRequest()
@@ -79,17 +79,27 @@ public class RobotContainer
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drive.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(), Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () -> _drive.disableVisionPoseCorrection(false))));
-        _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier = DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier = DriveConstants.FULL_SPEED_SCALE));
-        _driver.button(3).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
+        // _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(),
+        // Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () ->
+        // _drive.disableVisionPoseCorrection(false))));
+        _driver.button(1).whileTrue(_shooter.manualShootCmd(() -> _manualFlywheelRPM));
+        // _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier =
+        // DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier =
+        // DriveConstants.FULL_SPEED_SCALE));
+        _driver.button(2).whileTrue(_intake.runRollersForward());
+        _driver.button(3).onTrue(_intake.getExtendCmd());
+        _driver.button(4).onTrue(_intake.getRetractCmd());
         _driver.button(5).whileTrue(_shooter.pass());
         _driver.button(6).whileTrue(_shooter.trackOnly());
         _driver.button(7).onTrue(_drive.runOnce(_drive::seedFieldCentric));
-        _driver.button(8).onTrue(_shooter.homeTurret());
+        _driver.button(8).onTrue(_shooter.setManualTurretAngle(Degrees.zero()));
         _driver.button(9).onTrue(_shooter.setManualTurretAngle(Degrees.of(45.0)));
         _driver.button(10).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45.0)));
         _driver.button(11).onTrue(_shooter.setManualTurretAngle(Degrees.of(90.0)));
         _driver.button(12).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90.0)));
+        _driver.button(13).onTrue(_shooter.setManualTurretAngle(Degrees.of(135.0)));
+        _driver.button(14).onTrue(_shooter.setManualTurretAngle(Degrees.of(-135.0)));
+        _driver.button(16).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
 
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
