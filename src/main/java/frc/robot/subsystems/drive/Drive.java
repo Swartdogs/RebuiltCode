@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -47,10 +48,22 @@ import limelight.networktables.PoseEstimate;
 @Logged
 public class Drive extends TunerSwerveDrivetrain implements Subsystem
 {
-    private static final double kSimLoopPeriod = 0.004; // 4 ms
+    private static final double kSimLoopPeriod                      = 0.004; // 4 ms
     private final DriveVision   _vision;
-    private Notifier            m_simNotifier  = null;
+    private Notifier            m_simNotifier                       = null;
     private double              m_lastSimTime;
+    @Logged
+    private Pose2d              _robotPoseNow                       = new Pose2d();
+    @Logged
+    private double              _robotSpeedVxMetersPerSecond        = 0.0;
+    @Logged
+    private double              _robotSpeedVyMetersPerSecond        = 0.0;
+    @Logged
+    private double              _robotSpeedOmegaRadiansPerSecond    = 0.0;
+    @Logged
+    private Translation2d       _fieldRelativeTranslationalVelocity = new Translation2d();
+    @Logged
+    private boolean             _disableVisionPoseCorrection        = false;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -235,6 +248,16 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Override
     public void periodic()
     {
+        var driveState = getState();
+        var robotPose  = driveState.Pose;
+        var robotSpeed = driveState.Speeds;
+
+        _robotPoseNow                       = robotPose;
+        _robotSpeedVxMetersPerSecond        = robotSpeed.vxMetersPerSecond;
+        _robotSpeedVyMetersPerSecond        = robotSpeed.vyMetersPerSecond;
+        _robotSpeedOmegaRadiansPerSecond    = robotSpeed.omegaRadiansPerSecond;
+        _fieldRelativeTranslationalVelocity = new Translation2d(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond).rotateBy(robotPose.getRotation());
+
         /*
          * Periodically try to apply the operator perspective. If we haven't applied the
          * operator perspective before, then we should apply it regardless of DS state.
@@ -272,6 +295,11 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
+    public void disableVisionPoseCorrection(boolean disable)
+    {
+        _disableVisionPoseCorrection = disable;
+    }
+
     /**
      * Adds a vision measurement to the Kalman Filter. This will correct the
      * odometry pose estimate while still accounting for measurement noise.
@@ -284,7 +312,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Override
     public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds)
     {
-        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
+        if (!_disableVisionPoseCorrection)
+        {
+            super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
+        }
     }
 
     /**
@@ -306,7 +337,10 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
     @Override
     public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds, Matrix<N3, N1> visionMeasurementStdDevs)
     {
-        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
+        if (!_disableVisionPoseCorrection)
+        {
+            super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
+        }
     }
 
     /**
@@ -330,7 +364,8 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
         private final VisionState   _leftVision;
         @Logged
         private final VisionState   _rightVision;
-        private static final Pose2d kInvalidVisionPose = new Pose2d(-1.0, -1.0, Rotation2d.kZero);
+        private Matrix<N3, N1>      _activeVisionStdDevs = null;
+        private static final Pose2d kInvalidVisionPose   = new Pose2d(-1.0, -1.0, Rotation2d.kZero);
 
         public static final class VisionState
         {
@@ -358,7 +393,7 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
                 _settings = _limelight.getSettings();
                 _settings.withCameraOffset(cameraOffset).save();
-                _poseEstimator = _limelight.createPoseEstimator(EstimationMode.MEGATAG2);
+                _poseEstimator = _limelight.createPoseEstimator(EstimationMode.MEGATAG1);
             }
         }
 
@@ -374,12 +409,14 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
                 _leftVision  = new VisionState(null, null);
                 _rightVision = new VisionState(null, null);
             }
-            setVisionMeasurementStdDevs(VisionConstants.STD_DEVS);
+            updateVisionMeasurementStdDevs();
         }
 
         public void update()
         {
             if (RobotBase.isSimulation()) return;
+
+            updateVisionMeasurementStdDevs();
 
             var robotHeading                 = getState().Pose.getRotation();
             var robotYawRateDegreesPerSecond = Math.toDegrees(getState().Speeds.omegaRadiansPerSecond);
@@ -389,6 +426,16 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
 
             _leftVision._acceptedVision  = processLimelight(_leftVision);
             _rightVision._acceptedVision = processLimelight(_rightVision);
+        }
+
+        public void updateVisionMeasurementStdDevs()
+        {
+            Matrix<N3, N1> desiredVisionStdDevs = DriverStation.isAutonomousEnabled() ? VisionConstants.AUTO_STD_DEVS : VisionConstants.TELEOP_STD_DEVS;
+            if (_activeVisionStdDevs != desiredVisionStdDevs)
+            {
+                setVisionMeasurementStdDevs(desiredVisionStdDevs);
+                _activeVisionStdDevs = desiredVisionStdDevs;
+            }
         }
 
         private void setRobotOrientation(VisionState state, Rotation2d robotHeading, double robotYawRateDegreesPerSecond, ImuMode imuMode)
@@ -409,6 +456,25 @@ public class Drive extends TunerSwerveDrivetrain implements Subsystem
             var results = state._limelight.getLatestResults();
 
             if (results.isEmpty() || results.get().targets_Fiducials.length <= 0)
+            {
+                setVisionState(state, false, kInvalidVisionPose);
+                return false;
+            }
+
+            var hasCloseTag = false;
+            for (var target : results.get().targets_Fiducials)
+            {
+                var targetPose = target.getTargetPose_CameraSpace();
+                var distance   = Meters.of(targetPose.getTranslation().getNorm());
+
+                if (distance.lt(VisionConstants.MAX_DETECTION_RANGE))
+                {
+                    hasCloseTag = true;
+                    break;
+                }
+            }
+
+            if (!hasCloseTag)
             {
                 setVisionState(state, false, kInvalidVisionPose);
                 return false;

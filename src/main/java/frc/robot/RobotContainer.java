@@ -3,14 +3,13 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
-import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Dimensionless;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -29,22 +28,18 @@ import frc.robot.util.MeasureUtil;
 @Logged
 public class RobotContainer
 {
-    private static final double MANUAL_FLYWHEEL_START_RPM = 3500.0;
-    private static final double MANUAL_FLYWHEEL_STEP_RPM  = 50.0;
-
-    /* Setting up bindings for necessary control of the swerve drive platform */
-    private final SwerveRequest.FieldCentric _fieldCentric      = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-    private final SwerveRequest.RobotCentric _robotCentric      = new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-    private final Telemetry                  _logger            = new Telemetry(DriveConstants.MAX_SPEED.in(MetersPerSecond));
-    private final CommandJoystick            _driver            = new CommandJoystick(0);
-    private final CommandXboxController      _operator          = new CommandXboxController(1);
-    private final Drive                      _drive             = TunerConstants.createDrivetrain();
-    private final Intake                     _intake            = new Intake();
-    private final Shooter                    _shooter           = new Shooter(_drive::getState);
-    @NotLogged
-    private final Autos                      _autos             = new Autos(_drive, _shooter);
-    private Dimensionless                    _driveMultiplier   = DriveConstants.FULL_SPEED_SCALE;
-    private double                           _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
+    private static final double              MANUAL_FLYWHEEL_START_RPM = 3500.0;
+    private static final double              MANUAL_FLYWHEEL_STEP_RPM  = 50.0;
+    private final SwerveRequest.FieldCentric _fieldCentric             = new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private final SwerveRequest.RobotCentric _robotCentric             = new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private final CommandJoystick            _driver                   = new CommandJoystick(0);
+    private final CommandXboxController      _operator                 = new CommandXboxController(1);
+    private final Drive                      _drive                    = TunerConstants.createDrivetrain();
+    private final Intake                     _intake                   = new Intake();
+    private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
+    private final Autos                      _autos                    = new Autos(_drive, _shooter, _intake);
+    private Dimensionless                    _driveMultiplier          = DriveConstants.FULL_SPEED_SCALE;
+    private double                           _manualFlywheelRPM        = MANUAL_FLYWHEEL_START_RPM;
 
     public RobotContainer()
     {
@@ -84,23 +79,25 @@ public class RobotContainer
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(_drive.applyRequest(() -> idle).ignoringDisable(true));
 
-        _driver.button(1).whileTrue(_shooter.shoot());
+        _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(), Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () -> _drive.disableVisionPoseCorrection(false))));
         _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier = DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier = DriveConstants.FULL_SPEED_SCALE));
         _driver.button(3).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
         _driver.button(5).whileTrue(_shooter.pass());
+        _driver.button(6).whileTrue(_shooter.trackOnly());
         _driver.button(7).onTrue(_drive.runOnce(_drive::seedFieldCentric));
-
-        _drive.registerTelemetry(_logger::telemeterize);
+        _driver.button(8).onTrue(_shooter.homeTurret());
+        _driver.button(9).onTrue(_shooter.setManualTurretAngle(Degrees.of(45.0)));
+        _driver.button(10).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45.0)));
+        _driver.button(11).onTrue(_shooter.setManualTurretAngle(Degrees.of(90.0)));
+        _driver.button(12).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90.0)));
 
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
         _operator.rightTrigger().whileTrue(_intake.jiggle());
-        _operator.start().and(_operator.back()).onTrue(_shooter.setManualMode(true));
-        _operator.start().and(_operator.back().negate()).onTrue(_shooter.setManualMode(false));
-        _operator.y().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(MANUAL_FLYWHEEL_START_RPM)).onlyIf(_shooter::inManualMode));
-        _operator.x().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM - MANUAL_FLYWHEEL_STEP_RPM)).onlyIf(_shooter::inManualMode));
-        _operator.b().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM + MANUAL_FLYWHEEL_STEP_RPM)).onlyIf(_shooter::inManualMode));
-        _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel).onlyIf(_shooter::inManualMode));
+        _operator.y().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(MANUAL_FLYWHEEL_START_RPM)));
+        _operator.x().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM - MANUAL_FLYWHEEL_STEP_RPM)));
+        _operator.b().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM + MANUAL_FLYWHEEL_STEP_RPM)));
+        _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel));
         _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());

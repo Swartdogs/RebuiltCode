@@ -7,53 +7,66 @@
       "grid_layout": {
         "layouts": [
           {
-            "title": "List Layout",
-            "x": 1568.0,
+            "title": "Auto Setup",
+            "x": 1536.0,
             "y": 0.0,
-            "width": 352.0,
-            "height": 448.0,
+            "width": 384.0,
+            "height": 544.0,
             "type": "List Layout",
             "properties": {
               "label_position": "TOP"
             },
             "children": [
               {
-                "title": "Auto Delay",
-                "x": 1984.0,
-                "y": 416.0,
-                "width": 288.0,
-                "height": 128.0,
+                "title": "Auto Mode",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 320.0,
+                "height": 112.0,
                 "type": "ComboBox Chooser",
                 "properties": {
-                  "topic": "/SmartDashboard/Auto Delay",
+                  "topic": "/SmartDashboard/Auto Mode",
                   "period": 0.06,
                   "sort_options": false
                 }
               },
               {
                 "title": "Start Position",
-                "x": 1984.0,
-                "y": 480.0,
-                "width": 288.0,
-                "height": 128.0,
+                "x": 0.0,
+                "y": 0.0,
+                "width": 320.0,
+                "height": 112.0,
                 "type": "ComboBox Chooser",
                 "properties": {
-                  "topic": "/SmartDashboard/Start Position",
+                  "topic": "/SmartDashboard/Auto Start Position",
                   "period": 0.06,
                   "sort_options": false
                 }
               },
               {
-                "title": "Shoot",
-                "x": 1664.0,
-                "y": 320.0,
-                "width": 128.0,
-                "height": 128.0,
-                "type": "Toggle Switch",
+                "title": "Drive Path",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 320.0,
+                "height": 112.0,
+                "type": "ComboBox Chooser",
                 "properties": {
-                  "topic": "/SmartDashboard/Shoot",
+                  "topic": "/SmartDashboard/Auto Drive Path",
                   "period": 0.06,
-                  "data_type": "boolean"
+                  "sort_options": false
+                }
+              },
+              {
+                "title": "Auto Delay",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 320.0,
+                "height": 112.0,
+                "type": "ComboBox Chooser",
+                "properties": {
+                  "topic": "/SmartDashboard/Auto Delay",
+                  "period": 0.06,
+                  "sort_options": false
                 }
               }
             ]
@@ -61,26 +74,14 @@
         ],
         "containers": [
           {
-            "title": "Alerts",
-            "x": 1568.0,
-            "y": 448.0,
-            "width": 352.0,
-            "height": 320.0,
-            "type": "Alerts",
-            "properties": {
-              "topic": "/SmartDashboard/Alerts",
-              "period": 0.02
-            }
-          },
-          {
-            "title": "Autonomous Mode",
+            "title": "Autonomous Preview",
             "x": 0.0,
             "y": 0.0,
-            "width": 1568.0,
+            "width": 1536.0,
             "height": 768.0,
             "type": "Field",
             "properties": {
-              "topic": "/SmartDashboard/Autonomous Mode",
+              "topic": "/SmartDashboard/Autonomous Preview",
               "period": 0.06,
               "field_game": "Rebuilt",
               "robot_width": 0.85,
@@ -92,715 +93,19 @@
               "trajectory_color": 4294967295,
               "show_robot_outside_widget": true
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Teleoperated",
-      "grid_layout": {
-        "layouts": [],
-        "containers": [
-          {
-            "title": "Alerts",
-            "x": 1664.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 768.0,
-            "type": "Alerts",
-            "properties": {
-              "topic": "/SmartDashboard/Alerts",
-              "period": 0.02
-            }
           },
           {
-            "title": "Match Time",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 1152.0,
-            "height": 768.0,
-            "type": "Match Time",
-            "properties": {
-              "topic": "Dashboard/Robot Values/Match Time",
-              "period": 0.02,
-              "data_type": "double",
-              "time_display_mode": "Minutes and Seconds",
-              "red_start_time": 15,
-              "yellow_start_time": 30
-            }
-          },
-          {
-            "title": "Hub Active",
-            "x": 1152.0,
-            "y": 0.0,
-            "width": 512.0,
-            "height": 192.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "Dashboard/Robot Values/Hub Active",
-              "period": 0.02,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Turret Has Target",
-            "x": 1152.0,
-            "y": 576.0,
-            "width": 256.0,
-            "height": 192.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "Dashboard/Robot Values/Turret Has Target",
-              "period": 0.02,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Hub State Timer",
-            "x": 1152.0,
-            "y": 192.0,
-            "width": 512.0,
-            "height": 192.0,
+            "title": "Auto Summary",
+            "x": 1536.0,
+            "y": 544.0,
+            "width": 384.0,
+            "height": 96.0,
             "type": "Text Display",
             "properties": {
-              "topic": "Dashboard/Robot Values/Hub State Time Remaining",
-              "period": 0.02,
-              "data_type": "double",
+              "topic": "/SmartDashboard/Auto Summary",
+              "period": 0.06,
+              "data_type": "string",
               "show_submit_button": false
-            }
-          },
-          {
-            "title": "Shooter Mode",
-            "x": 1152.0,
-            "y": 384.0,
-            "width": 512.0,
-            "height": 192.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "Dashboard/Robot Values/Shooter Is Shoot Mode",
-              "period": 0.02,
-              "data_type": "boolean",
-              "true_color": 4278190335,
-              "false_color": 4294934272,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Turret Lined Up",
-            "x": 1408.0,
-            "y": 576.0,
-            "width": 256.0,
-            "height": 192.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "Dashboard/Robot Values/Turret Lined Up",
-              "period": 0.02,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Programmer",
-      "grid_layout": {
-        "layouts": [
-          {
-            "title": "Hood & Turret",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 736.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "TOP"
-            },
-            "children": [
-              {
-                "title": "Hood PID",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 128.0,
-                "type": "PIDController",
-                "properties": {
-                  "topic": "/SmartDashboard/Hood PID",
-                  "period": 0.05
-                }
-              },
-              {
-                "title": "Turret PID",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 128.0,
-                "type": "PIDController",
-                "properties": {
-                  "topic": "/SmartDashboard/Turret PID",
-                  "period": 0.05
-                }
-              }
-            ]
-          },
-          {
-            "title": "Auto Driving",
-            "x": 256.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 736.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "TOP"
-            },
-            "children": [
-              {
-                "title": "Auto X PID",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 128.0,
-                "type": "PIDController",
-                "properties": {
-                  "topic": "/SmartDashboard/Auto X PID",
-                  "period": 0.05
-                }
-              },
-              {
-                "title": "Auto Y PID",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 128.0,
-                "type": "PIDController",
-                "properties": {
-                  "topic": "/SmartDashboard/Auto Y PID",
-                  "period": 0.05
-                }
-              },
-              {
-                "title": "Auto Heading PID",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 128.0,
-                "type": "PIDController",
-                "properties": {
-                  "topic": "/SmartDashboard/Auto Heading PID",
-                  "period": 0.05
-                }
-              }
-            ]
-          },
-          {
-            "title": "Intake",
-            "x": 512.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "RIGHT"
-            },
-            "children": [
-              {
-                "title": "Forward Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Intake Forward Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Reverse Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Intake Reverse Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Extension Max Position",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Intake Extension Max Position",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Extend Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Intake Extend Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Retract Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Intake Retract Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              }
-            ]
-          },
-          {
-            "title": "Hood",
-            "x": 768.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "RIGHT"
-            },
-            "children": [
-              {
-                "title": "Min Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Hood Min Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Max Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Hood Max Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Shoot Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Hood Shoot Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Pass Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Hood Pass Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Tolerance",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Hood Tolerance",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              }
-            ]
-          },
-          {
-            "title": "Turret",
-            "x": 1024.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "RIGHT"
-            },
-            "children": [
-              {
-                "title": "Min Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Turret Min Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Max Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Turret Max Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Home Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Turret Home Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Tolerance",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Turret Tolerance",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Pass Angle",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Turret Pass Angle",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              }
-            ]
-          },
-          {
-            "title": "Flywheel",
-            "x": 1280.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "RIGHT"
-            },
-            "children": [
-              {
-                "title": "Tolerance",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Flywheel Tolerance",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Pass Velocity",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Flywheel Pass Velocity",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              }
-            ]
-          },
-          {
-            "title": "Feeder",
-            "x": 1280.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "RIGHT"
-            },
-            "children": [
-              {
-                "title": "Feed Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Feeder Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              }
-            ]
-          },
-          {
-            "title": "Vision",
-            "x": 512.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "RIGHT"
-            },
-            "children": [
-              {
-                "title": "Max Angular Rate",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Vision Max Angular Rate",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Max Tilt",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Vision Max Tilt",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              }
-            ]
-          },
-          {
-            "title": "Climber",
-            "x": 1536.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 736.0,
-            "type": "List Layout",
-            "properties": {
-              "label_position": "RIGHT"
-            },
-            "children": [
-              {
-                "title": "L1 Rotation",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber L1 Rotation",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "L3 Rotation",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber L3 Rotation",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Extension Threshold",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber Extension Threshold",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Retraction Threshold",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber Retraction Threshold",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Extend Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber Extend Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Retract Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber Retract Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Rotate Voltage",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber Rotate Voltage",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              },
-              {
-                "title": "Tolerance",
-                "x": 0.0,
-                "y": 0.0,
-                "width": 121.0,
-                "height": 64.0,
-                "type": "Text Display",
-                "properties": {
-                  "topic": "/Preferences/Dashboard/Dashboard Settings/Climber Tolerance",
-                  "period": 0.02,
-                  "data_type": "double",
-                  "show_submit_button": true
-                }
-              }
-            ]
-          }
-        ],
-        "containers": [
-          {
-            "title": "Turret Test Mode",
-            "x": 768.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 192.0,
-            "type": "Command",
-            "properties": {
-              "topic": "/SmartDashboard/Turret Test Mode",
-              "period": 0.05,
-              "show_type": true,
-              "maximize_button_space": true
             }
           }
         ]

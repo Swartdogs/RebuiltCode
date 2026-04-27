@@ -2,11 +2,7 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Volts;
-
-import java.util.List;
-import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -14,69 +10,60 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AIOConstants;
 import frc.robot.Constants.CANConstants;
-import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.util.MeasureUtil;
-import frc.robot.util.Utilities;
-import limelight.Limelight;
-import limelight.networktables.target.AprilTagFiducial;
 
 @Logged
 public class Turret
 {
-    public enum TurretState
+    private static final int    kCandidateWrapCount     = 2;
+    private static final double kComparisonToleranceDeg = 1e-9;
+
+    enum ControlMode
     {
-        Idle, Track, Pass
+        Idle, TargetAngle, ManualAngle
     }
 
-    private final TalonFX                    _turretMotor;
-    private final AnalogPotentiometer        _turretSensor;
-    private final Supplier<SwerveDriveState> _swerveStateSupplier;
-    private final Limelight                  _limelight;
-    private final PIDController              _pidController;
-    private SwerveDriveState                 _currentSwerveState;
-    private TurretState                      _turretState;
+    private final TalonFX             _turretMotor;
+    private final AnalogPotentiometer _turretPotentiometer;
+    private final PIDController       _pidController;
+    private ControlMode               _controlMode;
     @Logged
-    private Angle                            _turretAngle;
+    private Angle                     _manualAngleSetpoint;
     @Logged
-    private Angle                            _turretSetpoint;
+    private Angle                     _targetAngleSetpoint;
     @Logged
-    private boolean                          _hasSetpoint;
+    private Angle                     _turretAngle;
     @Logged
-    private Voltage                          _motorVoltage;
+    private Angle                     _rawTurretAngle;
     @Logged
-    private Distance                         _targetDistance;
+    private Angle                     _turretSetpoint;
     @Logged
-    private Pose2d                           _targetPose;
+    private Angle                     _commandedTargetAngle;
     @Logged
-    private boolean                          _limelightHasTarget;
+    private Angle                     _targetAngleError;
     @Logged
-    private boolean                          _targetValid;
+    private boolean                   _hasSetpoint;
     @Logged
-    private boolean                          _disabled;
+    private Voltage                   _motorVoltage;
+    private Voltage                   _lastCommandedMotorVoltage;
+    @Logged
+    private boolean                   _disabled;
+    @Logged
+    private boolean                   _linedUp;
+    @Logged
+    private double                    _motorPositionRotations;
 
-    public Turret(Supplier<SwerveDriveState> swerveStateSupplier)
+    public Turret()
     {
-        _swerveStateSupplier = swerveStateSupplier;
-
         var sensorRange  = ShooterConstants.TURRET_HARD_MAX_ANGLE.minus(ShooterConstants.TURRET_HARD_MIN_ANGLE);
         var sensorOffset = ShooterConstants.TURRET_HARD_MIN_ANGLE;
 
@@ -86,21 +73,23 @@ public class Turret
             sensorOffset = sensorOffset.unaryMinus();
         }
 
-        _turretMotor        = new TalonFX(CANConstants.TURRET_MOTOR);
-        _turretSensor       = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
-        _limelight          = new Limelight(ShooterConstants.LIMELIGHT_NAME);
-        _pidController      = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
-        _currentSwerveState = new SwerveDriveState();
-        _turretState        = TurretState.Idle;
-        _turretAngle        = Degrees.zero();
-        _turretSetpoint     = ShooterConstants.TURRET_HOME_ANGLE;
-        _hasSetpoint        = false;
-        _motorVoltage       = Volts.zero();
-        _targetDistance     = Meters.zero();
-        _targetPose         = new Pose2d();
-        _limelightHasTarget = false;
-        _targetValid        = false;
-        _disabled           = false;
+        _turretMotor               = new TalonFX(CANConstants.TURRET_MOTOR);
+        _turretPotentiometer       = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
+        _pidController             = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
+        _controlMode               = ControlMode.Idle;
+        _manualAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
+        _turretAngle               = Degrees.zero();
+        _rawTurretAngle            = Degrees.zero();
+        _turretSetpoint            = ShooterConstants.TURRET_HOME_ANGLE;
+        _commandedTargetAngle      = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleError          = Degrees.zero();
+        _hasSetpoint               = false;
+        _motorVoltage              = Volts.zero();
+        _lastCommandedMotorVoltage = Volts.zero();
+        _disabled                  = false;
+        _linedUp                   = false;
+        _motorPositionRotations    = 0.0;
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -111,160 +100,113 @@ public class Turret
         outputConfig.Inverted    = InvertedValue.Clockwise_Positive;
 
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig));
-
         _pidController.setTolerance(ShooterConstants.TURRET_TOLERANCE.in(Degrees));
-        _pidController.setSetpoint(ShooterConstants.TURRET_HOME_ANGLE.in(Degrees));
-
-        _limelight.getSettings().withAprilTagOffset(ShooterConstants.CENTER_TAG_TO_HUB_CENTER_OFFSET).withAprilTagIdFilter(ShooterConstants.RED_HUB_TAG_IDS).save();
-
-        var blueTrigger  = new Trigger(Utilities::isBlueAlliance);
-        var redTrigger   = new Trigger(Utilities::isRedAlliance);
-        var emptyTrigger = new Trigger(() -> DriverStation.getAlliance().isEmpty());
-
-        blueTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.BLUE_HUB_TAG_IDS)));
-        redTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.RED_HUB_TAG_IDS)));
-        emptyTrigger.onTrue(Commands.runOnce(() -> updateFilter(ShooterConstants.ALL_HUB_TAG_IDS)));
     }
 
     public void periodic()
     {
-        _currentSwerveState = _swerveStateSupplier.get();
+        _rawTurretAngle         = Degrees.of(_turretPotentiometer.get());
+        _turretAngle            = _rawTurretAngle.plus(ShooterConstants.TURRET_POT_OFFSET);
+        _motorPositionRotations = _turretMotor.getPosition().getValue().baseUnitMagnitude();
+        _motorVoltage           = _turretMotor.getMotorVoltage().getValue();
 
-        _turretAngle        = Degrees.of(_turretSensor.get());
-        _motorVoltage       = _turretMotor.getMotorVoltage().getValue();
-        _limelightHasTarget = false;
-        _targetValid        = false;
-
-        var fiducials   = new AprilTagFiducial[0];
         var motorOutput = Volts.zero();
-        var rawSetpoint = Degrees.zero();
 
-        switch (_turretState)
+        switch (_controlMode)
         {
-            case Track:
+            case TargetAngle:
                 _hasSetpoint = true;
-                var results = _limelight.getLatestResults();
-
-                if (results.isPresent())
-                {
-                    fiducials = results.get().targets_Fiducials;
-                }
-
-                var localHubTranslation = getHubTranslationInRobotFrame();
-                var turretToHubTranslation = localHubTranslation.minus(ShooterConstants.TURRET_POSITION);
-
-                _targetDistance = Meters.of(turretToHubTranslation.getNorm());
-                rawSetpoint = getTurretSetpointForRobotFrameTarget(turretToHubTranslation);
-
-                AprilTagFiducial bestTag = null;
-
-                for (AprilTagFiducial tag : fiducials)
-                {
-                    // Limelight reports the tag ID as a double, but our tag lists are ints.
-                    var tagId = (int)Math.round(tag.fiducialID);
-
-                    if (!Utilities.getOurHubTagIds().contains(tagId))
-                    {
-                        continue;
-                    }
-
-                    if (bestTag == null || tag.ta > bestTag.ta || tag.ta == bestTag.ta && Math.abs(tag.tx) < Math.abs(bestTag.tx))
-                    {
-                        bestTag = tag;
-                    }
-                }
-
-                if (bestTag != null)
-                {
-                    _limelightHasTarget = true;
-                    var txCorrection = Degrees.of(-bestTag.tx);
-
-                    // Ignore tiny Limelight yaw error so we don't keep hunting on vision noise.
-                    if (!MathUtil.isNear(0.0, txCorrection.in(Degrees), ShooterConstants.TURRET_TRACK_TX_DEADBAND.in(Degrees)))
-                    {
-                        rawSetpoint = rawSetpoint.minus(txCorrection);
-                    }
-                }
-
-                _targetValid = Utilities.isHubActive();
+                _turretSetpoint = selectLegalSetpoint(_targetAngleSetpoint);
                 break;
 
-            case Pass:
+            case ManualAngle:
                 _hasSetpoint = true;
-                _targetValid = true;
-                Angle fieldTargetAngle;
-
-                if (Utilities.isBlueAlliance())
-                {
-                    _targetDistance  = _currentSwerveState.Pose.getMeasureX();
-                    fieldTargetAngle = Degrees.of(180);
-                }
-                else
-                {
-                    _targetDistance  = GeneralConstants.FIELD_SIZE_X.minus(_currentSwerveState.Pose.getMeasureX());
-                    fieldTargetAngle = Degrees.zero();
-                }
-
-                rawSetpoint = fieldTargetAngle.minus(_currentSwerveState.Pose.getRotation().getMeasure()).minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+                _turretSetpoint = selectLegalSetpoint(_manualAngleSetpoint);
                 break;
 
             case Idle:
             default:
                 _hasSetpoint = false;
-                _targetValid = false;
-                rawSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
-                _targetDistance = Meters.zero();
+                _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
                 break;
         }
 
-        var forwardTranslation    = new Translation2d(_targetDistance, Meters.zero());
-        var rotatedByTurretOffset = forwardTranslation.rotateBy(new Rotation2d(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD));
-        var rotatedBySetpoint     = rotatedByTurretOffset.rotateBy(new Rotation2d(rawSetpoint));
+        if (_hasSetpoint)
+        {
+            _turretSetpoint = limitSetpointStep(_commandedTargetAngle, _turretSetpoint);
+        }
 
-        _targetPose     = _currentSwerveState.Pose.plus(new Transform2d(rotatedBySetpoint, new Rotation2d()));
-        _turretSetpoint = MeasureUtil.clamp(moduloAngle(rawSetpoint), ShooterConstants.TURRET_SOFT_MIN_ANGLE, ShooterConstants.TURRET_SOFT_MAX_ANGLE);
+        updateLinedUpState();
+
+        _commandedTargetAngle = _turretSetpoint;
+        _targetAngleError     = _commandedTargetAngle.minus(_turretAngle);
 
         if (_hasSetpoint && !_disabled)
         {
-            motorOutput = Volts.of(_pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees)));
+            var errorDegrees  = _turretSetpoint.minus(_turretAngle).in(Degrees);
+            var outputVolts   = _pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees));
+            var staticFFVolts = ShooterConstants.TURRET_STATIC_FF.in(Volts);
+
+            if (!MathUtil.isNear(0.0, errorDegrees, ShooterConstants.TURRET_STATIC_FF_ERROR_DEADBAND.in(Degrees)))
+            {
+                outputVolts += Math.copySign(staticFFVolts, errorDegrees);
+            }
+
+            motorOutput = Volts.of(outputVolts);
         }
 
+        motorOutput = Volts.of(limitOutputStep(motorOutput.in(Volts)));
         motorOutput = applySoftLimit(motorOutput);
         _turretMotor.setVoltage(motorOutput.in(Volts));
+        _lastCommandedMotorVoltage = motorOutput;
     }
 
     public void simulationPeriodic()
     {
     }
 
-    public Distance getTargetDistance()
+    public void setTargetAngle(Angle angle)
     {
-        return _targetDistance;
+        var targetDeltaDegrees = Math.abs(MathUtil.inputModulus(angle.minus(_targetAngleSetpoint).in(Degrees), -180.0, 180.0));
+
+        if (_controlMode != ControlMode.TargetAngle || targetDeltaDegrees >= ShooterConstants.TURRET_TARGET_SETPOINT_DEADBAND.in(Degrees))
+        {
+            _targetAngleSetpoint = angle;
+        }
+
+        _controlMode = ControlMode.TargetAngle;
     }
 
-    public void setTurretState(TurretState state)
+    public void clearTargetAngle()
     {
-        _turretState = state;
+        _controlMode = ControlMode.Idle;
     }
 
-    public TurretState getTurretState()
+    public void setManualAngle(Angle angle)
     {
-        return _turretState;
+        _manualAngleSetpoint = angle;
+        _controlMode         = ControlMode.ManualAngle;
+    }
+
+    public void bumpManualAngle(Angle delta)
+    {
+        _manualAngleSetpoint = _manualAngleSetpoint.plus(delta);
+        _controlMode         = ControlMode.ManualAngle;
+    }
+
+    public Angle getManualAngle()
+    {
+        return _manualAngleSetpoint;
     }
 
     public boolean isLinedUp()
     {
-        return _hasSetpoint && _pidController.atSetpoint();
+        return _linedUp;
     }
 
-    public boolean hasValidTarget()
+    public Angle getTargetAngleError()
     {
-        return _targetValid;
-    }
-
-    public boolean isReadyToShoot()
-    {
-        return hasValidTarget() && isLinedUp();
+        return _targetAngleError;
     }
 
     public void setDisabled(boolean disabled)
@@ -272,29 +214,82 @@ public class Turret
         _disabled = disabled;
     }
 
-    private void updateFilter(List<Integer> filters)
+    private Angle selectLegalSetpoint(Angle requestedAngle)
     {
-        if (DriverStation.isDisabled())
-        {
-            _limelight.getSettings().withAprilTagIdFilter(filters).save();
-        }
+        return chooseNearestLegalAngle(_turretAngle, requestedAngle);
     }
 
-    private Angle moduloAngle(Angle angle)
+    static Angle chooseNearestLegalAngle(Angle currentAngle, Angle requestedAngle)
     {
-        var degrees = angle.in(Degrees);
+        var    currentDegrees   = currentAngle.in(Degrees);
+        var    requestedDegrees = requestedAngle.in(Degrees);
+        var    minDegrees       = ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Degrees);
+        var    maxDegrees       = ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Degrees);
+        var    wrapCenter       = (int)Math.round((currentDegrees - requestedDegrees) / 360.0);
+        var    bestTravel       = Double.POSITIVE_INFINITY;
+        var    bestWrapDistance = Integer.MAX_VALUE;
+        Double bestLegalAngle   = null;
 
-        return Degrees.of(MathUtil.inputModulus(degrees, -180, 180));
+        for (int wrapOffset = -kCandidateWrapCount; wrapOffset <= kCandidateWrapCount; wrapOffset++)
+        {
+            var wrapIndex      = wrapCenter + wrapOffset;
+            var wrappedDegrees = requestedDegrees + 360.0 * wrapIndex;
+            if (wrappedDegrees < minDegrees || wrappedDegrees > maxDegrees)
+            {
+                continue;
+            }
+
+            var travelDegrees = Math.abs(wrappedDegrees - currentDegrees);
+            var wrapDistance  = Math.abs(wrapIndex);
+
+            var isBetterCandidate = travelDegrees < bestTravel
+                    || MathUtil.isNear(travelDegrees, bestTravel, kComparisonToleranceDeg) && (wrapDistance < bestWrapDistance || wrapDistance == bestWrapDistance && (bestLegalAngle == null || wrappedDegrees > bestLegalAngle));
+
+            if (isBetterCandidate)
+            {
+                bestLegalAngle   = wrappedDegrees;
+                bestTravel       = travelDegrees;
+                bestWrapDistance = wrapDistance;
+            }
+        }
+
+        if (bestLegalAngle != null)
+        {
+            return Degrees.of(bestLegalAngle);
+        }
+
+        return Degrees.of(MathUtil.clamp(requestedDegrees, minDegrees, maxDegrees));
+    }
+
+    private Angle limitSetpointStep(Angle previousSetpoint, Angle requestedSetpoint)
+    {
+        var maxStepDeg      = ShooterConstants.TURRET_MAX_SETPOINT_STEP_PER_LOOP.in(Degrees);
+        var deltaDeg        = requestedSetpoint.minus(previousSetpoint).in(Degrees);
+        var limitedDeltaDeg = MathUtil.clamp(deltaDeg, -maxStepDeg, maxStepDeg);
+        var limitedSetpoint = previousSetpoint.plus(Degrees.of(limitedDeltaDeg));
+        return selectLegalSetpoint(limitedSetpoint);
+    }
+
+    private double limitOutputStep(double requestedVolts)
+    {
+        var previousVolts     = _lastCommandedMotorVoltage.in(Volts);
+        var maxStepVolts      = ShooterConstants.TURRET_MAX_OUTPUT_STEP_PER_LOOP.in(Volts);
+        var deltaVolts        = requestedVolts - previousVolts;
+        var limitedDeltaVolts = MathUtil.clamp(deltaVolts, -maxStepVolts, maxStepVolts);
+        return previousVolts + limitedDeltaVolts;
     }
 
     private Voltage applySoftLimit(Voltage requestedVoltage)
     {
-        if (_turretAngle.lte(ShooterConstants.TURRET_SOFT_MIN_ANGLE) && requestedVoltage.lt(Volts.zero()))
+        var requestedVolts = requestedVoltage.in(Volts);
+        var turretDegrees  = _turretAngle.in(Degrees);
+
+        if (turretDegrees <= ShooterConstants.TURRET_SOFT_MIN_ANGLE.in(Degrees) && requestedVolts < 0.0)
         {
             return Volts.zero();
         }
 
-        if (_turretAngle.gte(ShooterConstants.TURRET_SOFT_MAX_ANGLE) && requestedVoltage.gt(Volts.zero()))
+        if (turretDegrees >= ShooterConstants.TURRET_SOFT_MAX_ANGLE.in(Degrees) && requestedVolts > 0.0)
         {
             return Volts.zero();
         }
@@ -302,15 +297,19 @@ public class Turret
         return requestedVoltage;
     }
 
-    private Translation2d getHubTranslationInRobotFrame()
+    private void updateLinedUpState()
     {
-        var robotToHubField = Utilities.getHubCoordinates().minus(_currentSwerveState.Pose.getTranslation());
+        if (!_hasSetpoint || _disabled)
+        {
+            _linedUp = false;
+            return;
+        }
 
-        return robotToHubField.rotateBy(_currentSwerveState.Pose.getRotation().unaryMinus());
-    }
+        var angleErrorDegrees   = Math.abs(_turretSetpoint.minus(_turretAngle).in(Degrees));
+        var acquireTolerance    = ShooterConstants.TURRET_TOLERANCE.in(Degrees);
+        var holdTolerance       = ShooterConstants.TURRET_LINED_UP_HOLD_TOLERANCE.in(Degrees);
+        var allowedErrorDegrees = _linedUp ? holdTolerance : acquireTolerance;
 
-    private Angle getTurretSetpointForRobotFrameTarget(Translation2d targetTranslation)
-    {
-        return targetTranslation.getAngle().getMeasure().minus(ShooterConstants.TURRET_ZERO_OFFSET_FROM_ROBOT_FORWARD);
+        _linedUp = angleErrorDegrees <= allowedErrorDegrees;
     }
 }
