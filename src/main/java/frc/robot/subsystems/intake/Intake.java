@@ -104,7 +104,7 @@ public class Intake extends SubsystemBase
 
     public Command getRetractCmd()
     {
-        return Commands.sequence(runOnce(() -> setRollerCurrentLimitMode(RollerCurrentLimitMode.ForceActive)), startRollersForward(), setExtensionCmd(false), Commands.waitUntil(this::isRetracted)).finallyDo(() ->
+        return Commands.sequence(runOnce(() -> setRollerCurrentLimitMode(RollerCurrentLimitMode.ForceActive)), startRollersForward(), setExtensionCmd(false), Commands.waitUntil(this::isRetracted)).withTimeout(2.0).finallyDo(() ->
         {
             setIntakeState(IntakeState.Off);
             setRollerCurrentLimitMode(RollerCurrentLimitMode.AutoByExtension);

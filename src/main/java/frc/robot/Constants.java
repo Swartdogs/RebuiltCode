@@ -77,12 +77,12 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE          = 14;  // Vortex
-        public static final int INTAKE_EXTEND   = 15;  // Vortex
-        public static final int FEEDER_MOTOR    = 16;  // Vortex
-        public static final int TURRET_MOTOR    = 17;  // Talon
-        public static final int FLYWHEEL_LEAD   = 18;  // Vortex
-        public static final int FLYWHEEL_FOLLOW = 19;  // Vortex
+        public static final int INTAKE          = 14; // Vortex
+        public static final int INTAKE_EXTEND   = 15; // Vortex
+        public static final int FEEDER_MOTOR    = 16; // Vortex
+        public static final int TURRET_MOTOR    = 17; // Talon
+        public static final int FLYWHEEL_LEAD   = 18; // Vortex
+        public static final int FLYWHEEL_FOLLOW = 19; // Vortex
         public static final int CLIMBER_EXTEND  = 21;
         public static final int CLIMBER_ROTATE  = 22;
         public static final int ROTOR_MOTOR     = 23; // Vortex
@@ -123,8 +123,8 @@ public final class Constants
 
     public static class IntakeConstants
     {
-        public static final Voltage                      INTAKE_VOLTS                  = Volts.of(9.0);
-        public static final Voltage                      REVERSE_VOLTS                 = Volts.of(-9.0);
+        public static final Voltage                      INTAKE_VOLTS                  = Volts.of(4.0);
+        public static final Voltage                      REVERSE_VOLTS                 = Volts.of(-6.0);
         public static final Current                      ROLLER_CURRENT_LIMIT_EXTENDED = Amps.of(80);
         public static final Current                      ROLLER_CURRENT_LIMIT_ACTIVE   = Amps.of(40);
         public static final Current                      EXTENSION_CURRENT_LIMIT       = Amps.of(60);
@@ -145,6 +145,7 @@ public final class Constants
         public static final Distance                     JIGGLE_LIMIT_MARGIN           = Inches.of(0.0);
         public static final Time                         JIGGLE_MOVE_TIMEOUT           = Seconds.of(0.60);
         public static final Time                         JIGGLE_PAUSE_TIME             = Seconds.of(0.02);
+        public static final Time                         RETRACT_TIMEOUT               = Seconds.of(4.0);
     }
 
     public static class GeneralConstants
@@ -216,7 +217,19 @@ public final class Constants
         public static final Translation2d   BLUE_HUB                               = new Translation2d(Inches.of(182.1), Inches.of(158.85));
         public static final Translation2d   RED_HUB                                = new Translation2d(Inches.of(469.1), Inches.of(158.85));
         public static final Translation2d   ROBOT_TO_TURRET_PIVOT                  = new Translation2d(Inches.of(-0.5), Inches.of(5.75));
-        public static final Translation2d   TURRET_PIVOT_TO_RELEASE                = new Translation2d(Inches.of(1.0), Inches.zero()); // Measured release point is ~1 in forward of the pivot (turret -90), not
+        public static final Translation2d   TURRET_PIVOT_TO_RELEASE                = new Translation2d(Inches.of(1.0), Inches.zero()); // Measured
+                                                                                                                                       // release
+                                                                                                                                       // point
+                                                                                                                                       // is
+                                                                                                                                       // ~1
+                                                                                                                                       // in
+                                                                                                                                       // forward
+                                                                                                                                       // of
+                                                                                                                                       // the
+                                                                                                                                       // pivot
+                                                                                                                                       // (turret
+                                                                                                                                       // -90),
+                                                                                                                                       // not
                                                                                                                                        // lateral
         public static final Translation2d   ROBOT_TO_TURRET_RELEASE                = ROBOT_TO_TURRET_PIVOT.plus(TURRET_PIVOT_TO_RELEASE);
         public static final Translation2d   ROBOT_TO_TURRET_CAMERA                 = new Translation2d(Inches.zero(), Inches.of(8.0));
