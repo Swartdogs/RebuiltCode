@@ -8,7 +8,7 @@
 name: Java CI with Gradle, with basic WPILib integration
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the main branch.
-on: 
+on:
   push:
     branches: [ "main" ]
   pull_request:
@@ -18,11 +18,19 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-22.04
+    # The type of runner that the job will run on.  
+    runs-on: ${{vars.RUNNER||'ubuntu-latest' }}
     # This grabs the WPILib docker container
-    container: wpilib/roborio-cross-ubuntu:2025-22.04
+    container: ${{vars.CONTAINER||'wpilib/roborio-cross-ubuntu:2025-22.04' }}
     steps:
+  # THIS MUST BE SET YEARLY PER https://hub.docker.com/r/wpilib/roborio-cross-ubuntu in repo settings alongside the container
+    - name: Warn if runner is not set
+      if: vars.RUNNER == 'ubuntu-latest'
+      run: echo "::warning ::The RUNNER variable is not set" 
+      #AS SAID ABOVE, THIS MUST BE SET YEARLY
+    - name: Warn if container is not set
+      if: vars.CONTAINER == 'wpilib/roborio-cross-ubuntu:2025-22.04'
+      run: echo "::warning ::The CONTAINER variable is not set" 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v6
     # Declares the repository safe and not under dubious ownership.
