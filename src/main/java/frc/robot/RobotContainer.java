@@ -38,8 +38,8 @@ public class RobotContainer
     private final Intake                     _intake                   = new Intake();
     private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
     private final Autos                      _autos                    = new Autos(_drive, _shooter, _intake);
-    private Dimensionless                    _driveMultiplier          = DriveConstants.FULL_SPEED_SCALE;
-    private double                           _manualFlywheelRPM        = MANUAL_FLYWHEEL_START_RPM;
+    // private Dimensionless _driveMultiplier = DriveConstants.FULL_SPEED_SCALE;
+    private double _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
 
     public RobotContainer()
     {
@@ -48,17 +48,17 @@ public class RobotContainer
 
     private LinearVelocity getDrive()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())).times(_driveMultiplier), DriveConstants.TRANSLATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getY())).times(_driver.getRawAxis(3)), DriveConstants.TRANSLATE_DEADBAND);
     }
 
     private LinearVelocity getStrafe()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())).times(_driveMultiplier), DriveConstants.TRANSLATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_SPEED.times(Value.of(-_driver.getX())).times(_driver.getRawAxis(3)), DriveConstants.TRANSLATE_DEADBAND);
     }
 
     private AngularVelocity getRotate()
     {
-        return MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())).times(_driveMultiplier), DriveConstants.ROTATE_DEADBAND);
+        return MeasureUtil.applyDeadband(DriveConstants.MAX_ANGULAR_RATE.times(Value.of(-_driver.getTwist())).times(_driver.getRawAxis(3)), DriveConstants.ROTATE_DEADBAND);
     }
 
     private SwerveRequest.FieldCentric getFieldCentricRequest()
