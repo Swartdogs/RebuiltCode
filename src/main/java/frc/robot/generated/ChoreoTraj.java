@@ -20,34 +20,40 @@ import choreo.auto.AutoTrajectory;
 public record ChoreoTraj(String name, OptionalInt segment, double totalTimeSecs, Pose2d initialPoseBlue, Pose2d endPoseBlue)
 {
 
-    public static final ChoreoTraj DepotToOutpost = new ChoreoTraj("DepotToOutpost", OptionalInt.empty(), 1.70772, new Pose2d(1.15, 5.963, Rotation2d.fromRadians(3.142)), new Pose2d(0.654, 0.687, Rotation2d.fromRadians(3.142)));
-    public static final ChoreoTraj DepotToTower = new ChoreoTraj("DepotToTower", OptionalInt.empty(), 1.1836, new Pose2d(1.15, 5.963, Rotation2d.fromRadians(3.142)), new Pose2d(0.799, 4.895, Rotation2d.fromRadians(1.571)));
-    public static final ChoreoTraj HubToDepot = new ChoreoTraj("HubToDepot", OptionalInt.empty(), 1.25742, new Pose2d(3.616, 4.035, Rotation2d.fromRadians(0)), new Pose2d(1.15, 5.963, Rotation2d.fromRadians(3.142)));
-    public static final ChoreoTraj HubToOutpost = new ChoreoTraj("HubToOutpost", OptionalInt.empty(), 1.67965, new Pose2d(3.616, 4.035, Rotation2d.fromRadians(0)), new Pose2d(0.654, 0.687, Rotation2d.fromRadians(3.142)));
-    public static final ChoreoTraj HubToTower = new ChoreoTraj("HubToTower", OptionalInt.empty(), 1.10566, new Pose2d(3.616, 4.035, Rotation2d.fromRadians(0)), new Pose2d(1.851, 4.056, Rotation2d.fromRadians(-1.555)));
+    public static final ChoreoTraj LeftBumpToDepot = new ChoreoTraj("LeftBumpToDepot", OptionalInt.empty(), 1.11437, new Pose2d(3.61569, 5.55879, Rotation2d.fromRadians(0)), new Pose2d(1.15, 5.96257, Rotation2d.fromRadians(3.14159)));
+    public static final ChoreoTraj OutpostToTower = new ChoreoTraj(
+            "OutpostToTower", OptionalInt.empty(), 0.95975, new Pose2d(0.65435, 0.68695, Rotation2d.fromRadians(-1.5708)), new Pose2d(1.35449, 2.64052, Rotation2d.fromRadians(-1.5708))
+    );
+    public static final ChoreoTraj RightTrenchToOutpost = new ChoreoTraj(
+            "RightTrenchToOutpost", OptionalInt.empty(), 1.61166, new Pose2d(3.616, 0.62, Rotation2d.fromRadians(0)), new Pose2d(0.65435, 0.68695, Rotation2d.fromRadians(3.14159))
+    );
+    public static final ChoreoTraj HubToOutpost = new ChoreoTraj("HubToOutpost", OptionalInt.empty(), 1.6667, new Pose2d(3.61569, 4.03479, Rotation2d.fromRadians(0)), new Pose2d(0.65435, 0.68695, Rotation2d.fromRadians(-1.5708)));
+    public static final ChoreoTraj HubToTower = new ChoreoTraj("HubToTower", OptionalInt.empty(), 1.10566, new Pose2d(3.61569, 4.03479, Rotation2d.fromRadians(0)), new Pose2d(1.85137, 4.05598, Rotation2d.fromRadians(-1.55492)));
+    public static final ChoreoTraj DepotToTower = new ChoreoTraj("DepotToTower", OptionalInt.empty(), 1.1836, new Pose2d(1.15, 5.96257, Rotation2d.fromRadians(3.14159)), new Pose2d(0.79933, 4.89541, Rotation2d.fromRadians(1.5708)));
+    public static final ChoreoTraj RightBumpToTower = new ChoreoTraj("RightBumpToTower", OptionalInt.empty(), 0.76635, new Pose2d(3.616, 2.511, Rotation2d.fromRadians(0)), new Pose2d(1.35449, 2.64052, Rotation2d.fromRadians(-1.5708)));
+    public static final ChoreoTraj DepotToOutpost = new ChoreoTraj("DepotToOutpost", OptionalInt.empty(), 1.70772, new Pose2d(1.15, 5.96257, Rotation2d.fromRadians(3.14159)), new Pose2d(0.65435, 0.68695, Rotation2d.fromRadians(3.14159)));
     public static final ChoreoTraj LeftBumpPickupFromMidScore = new ChoreoTraj(
-            "LeftBumpPickupFromMidScore", OptionalInt.empty(), 6.27732, new Pose2d(3.652, 5.514, Rotation2d.fromRadians(0)), new Pose2d(1.974, 5.587, Rotation2d.fromRadians(-2.437))
+            "LeftBumpPickupFromMidScore", OptionalInt.empty(), 6.27732, new Pose2d(3.65206, 5.51369, Rotation2d.fromRadians(0)), new Pose2d(1.97387, 5.58719, Rotation2d.fromRadians(-2.4371))
     );
-    public static final ChoreoTraj LeftBumpToDepot = new ChoreoTraj("LeftBumpToDepot", OptionalInt.empty(), 1.11437, new Pose2d(3.616, 5.559, Rotation2d.fromRadians(0)), new Pose2d(1.15, 5.963, Rotation2d.fromRadians(3.142)));
-    public static final ChoreoTraj LeftBumpToTower = new ChoreoTraj("LeftBumpToTower", OptionalInt.empty(), 1.71082, new Pose2d(3.616, 5.559, Rotation2d.fromRadians(3.142)), new Pose2d(0.799, 4.895, Rotation2d.fromRadians(1.571)));
-    public static final ChoreoTraj LeftTrenchToDepot = new ChoreoTraj("LeftTrenchToDepot", OptionalInt.empty(), 1.66476, new Pose2d(3.616, 7.45, Rotation2d.fromRadians(3.142)), new Pose2d(1.15, 5.963, Rotation2d.fromRadians(3.142)));
-    public static final ChoreoTraj OutpostToDepot = new ChoreoTraj("OutpostToDepot", OptionalInt.empty(), 1.6899, new Pose2d(0.654, 0.687, Rotation2d.fromRadians(3.142)), new Pose2d(1.15, 5.963, Rotation2d.fromRadians(3.142)));
-    public static final ChoreoTraj OutpostToTower = new ChoreoTraj("OutpostToTower", OptionalInt.empty(), 0.97514, new Pose2d(0.654, 0.687, Rotation2d.fromRadians(3.142)), new Pose2d(1.354, 2.641, Rotation2d.fromRadians(-1.571)));
     public static final ChoreoTraj RightBumpPickupFromMidScore = new ChoreoTraj(
-            "RightBumpPickupFromMidScore", OptionalInt.empty(), 6.62509, new Pose2d(3.625, 2.535, Rotation2d.fromRadians(0)), new Pose2d(2.456, 2.535, Rotation2d.fromRadians(-1.622))
+            "RightBumpPickupFromMidScore", OptionalInt.empty(), 6.62509, new Pose2d(3.62538, 2.53495, Rotation2d.fromRadians(0)), new Pose2d(2.45598, 2.53495, Rotation2d.fromRadians(-1.62203))
     );
-    public static final ChoreoTraj RightBumpToOutpost = new ChoreoTraj("RightBumpToOutpost", OptionalInt.empty(), 1.32723, new Pose2d(3.616, 2.511, Rotation2d.fromRadians(0)), new Pose2d(0.654, 0.687, Rotation2d.fromRadians(3.142)));
-    public static final ChoreoTraj RightBumpToTower = new ChoreoTraj("RightBumpToTower", OptionalInt.empty(), 0.76635, new Pose2d(3.616, 2.511, Rotation2d.fromRadians(0)), new Pose2d(1.354, 2.641, Rotation2d.fromRadians(-1.571)));
-    public static final ChoreoTraj RightTrenchToOutpost = new ChoreoTraj("RightTrenchToOutpost", OptionalInt.empty(), 1.61166, new Pose2d(3.616, 0.62, Rotation2d.fromRadians(0)), new Pose2d(0.654, 0.687, Rotation2d.fromRadians(3.142)));
+    public static final ChoreoTraj LeftTrenchToDepot = new ChoreoTraj("LeftTrenchToDepot", OptionalInt.empty(), 1.66476, new Pose2d(3.616, 7.45, Rotation2d.fromRadians(3.14159)), new Pose2d(1.15, 5.96257, Rotation2d.fromRadians(3.14159)));
+    public static final ChoreoTraj HubToDepot = new ChoreoTraj("HubToDepot", OptionalInt.empty(), 1.25742, new Pose2d(3.61569, 4.03479, Rotation2d.fromRadians(0)), new Pose2d(1.15, 5.96257, Rotation2d.fromRadians(3.14159)));
+    public static final ChoreoTraj LeftBumpToTower = new ChoreoTraj(
+            "LeftBumpToTower", OptionalInt.empty(), 1.71082, new Pose2d(3.61569, 5.55879, Rotation2d.fromRadians(3.14159)), new Pose2d(0.79933, 4.89541, Rotation2d.fromRadians(1.5708))
+    );
+    public static final ChoreoTraj RightBumpToOutpost = new ChoreoTraj("RightBumpToOutpost", OptionalInt.empty(), 1.32723, new Pose2d(3.616, 2.511, Rotation2d.fromRadians(0)), new Pose2d(0.65435, 0.68695, Rotation2d.fromRadians(3.14159)));
+    public static final ChoreoTraj OutpostToDepot = new ChoreoTraj("OutpostToDepot", OptionalInt.empty(), 1.6899, new Pose2d(0.65435, 0.68695, Rotation2d.fromRadians(3.14159)), new Pose2d(1.15, 5.96257, Rotation2d.fromRadians(3.14159)));
     /**
      * A map between trajectory names and their corresponding data. This allows for
      * trajectory data to be looked up with strings during runtime.
      */
     public static final Map<String, ChoreoTraj> ALL_TRAJECTORIES = Map.ofEntries(
-            Map.entry("DepotToOutpost", DepotToOutpost), Map.entry("DepotToTower", DepotToTower), Map.entry("HubToDepot", HubToDepot), Map.entry("HubToOutpost", HubToOutpost), Map.entry("HubToTower", HubToTower),
-            Map.entry("LeftBumpPickupFromMidScore", LeftBumpPickupFromMidScore), Map.entry("LeftBumpToDepot", LeftBumpToDepot), Map.entry("LeftBumpToTower", LeftBumpToTower), Map.entry("LeftTrenchToDepot", LeftTrenchToDepot),
-            Map.entry("OutpostToDepot", OutpostToDepot), Map.entry("OutpostToTower", OutpostToTower), Map.entry("RightBumpPickupFromMidScore", RightBumpPickupFromMidScore), Map.entry("RightBumpToOutpost", RightBumpToOutpost),
-            Map.entry("RightBumpToTower", RightBumpToTower), Map.entry("RightTrenchToOutpost", RightTrenchToOutpost)
+            Map.entry("LeftBumpToDepot", LeftBumpToDepot), Map.entry("OutpostToTower", OutpostToTower), Map.entry("RightTrenchToOutpost", RightTrenchToOutpost), Map.entry("HubToOutpost", HubToOutpost), Map.entry("HubToTower", HubToTower),
+            Map.entry("DepotToTower", DepotToTower), Map.entry("RightBumpToTower", RightBumpToTower), Map.entry("DepotToOutpost", DepotToOutpost), Map.entry("LeftBumpPickupFromMidScore", LeftBumpPickupFromMidScore),
+            Map.entry("RightBumpPickupFromMidScore", RightBumpPickupFromMidScore), Map.entry("LeftTrenchToDepot", LeftTrenchToDepot), Map.entry("HubToDepot", HubToDepot), Map.entry("LeftBumpToTower", LeftBumpToTower),
+            Map.entry("RightBumpToOutpost", RightBumpToOutpost), Map.entry("OutpostToDepot", OutpostToDepot)
     );
     /**
      * Looks up the ChoreoTraj segment of the given overall ChoreoTraj. WARNING:
