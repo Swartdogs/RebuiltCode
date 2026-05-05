@@ -5,5 +5,13 @@
       "version": "21",
       "installGradle": true
     }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "wpilibsuite.vscode-wpilib",
+        "vscjava.vscode-java-pack"
+      ]
+    }
   }
 }
