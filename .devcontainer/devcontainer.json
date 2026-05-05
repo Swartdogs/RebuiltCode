@@ -1,0 +1,11 @@
+{
+  "image": "wpilib/roborio-cross-ubuntu:2025-24.04",
+  "features": 
+  {
+    "ghcr.io/devcontainers/features/java:1": 
+    {
+      "version": "21",
+      "installGradle": true
+    }
+  }
+}
