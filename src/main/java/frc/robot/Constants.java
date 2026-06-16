@@ -277,9 +277,9 @@ public final class Constants
         public static final Current FEEDER_CURRENT_LIMIT    = Amps.of(60);
         public static final Voltage FEEDER_VOLTAGE          = Volts.of(6);
         public static final Current ROTOR_CURRENT_LIMIT     = Amps.of(80);
-        public static final Voltage ROTOR_FAST_VOLTAGE      = Volts.of(3.0);
-        public static final Voltage ROTOR_MID_VOLTAGE       = Volts.of(1.5);
-        public static final Voltage ROTOR_RETRACTED_VOLTAGE = Volts.of(1.0);
+        public static final Voltage ROTOR_FAST_VOLTAGE      = Volts.of(8.0);
+        public static final Voltage ROTOR_MID_VOLTAGE       = Volts.of(8.0);
+        public static final Voltage ROTOR_RETRACTED_VOLTAGE = Volts.of(8.0);
 
         // TODO: Tune these values with testing!
         public static AngularVelocity getFlywheelSpeedForDistance(Distance distance)
