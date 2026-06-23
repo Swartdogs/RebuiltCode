@@ -25,6 +25,7 @@ public class Feeder
     private Voltage         _feederMotorVoltage = Volts.of(0.0);
     @Logged
     private boolean         _enabled            = false;
+    private Voltage         _feederMotorRate    = Volts.of(0);
 
     public Feeder()
     {
@@ -34,6 +35,8 @@ public class Feeder
         config.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)ShooterConstants.FEEDER_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
         _feederMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        _feederMotorRate = ShooterConstants.FEEDER_VOLTAGE;
     }
 
     public void periodic()
@@ -44,8 +47,13 @@ public class Feeder
     public void set(boolean on)
     {
         _enabled = on;
-        Voltage targetVoltage = on ? ShooterConstants.FEEDER_VOLTAGE : Volts.zero();
+        Voltage targetVoltage = on ? _feederMotorRate : Volts.zero();
         _feederMotor.setVoltage(targetVoltage.in(Volts));
+    }
+
+    public void setRate(double rate)
+    {
+        _feederMotorRate = GeneralConstants.MOTOR_VOLTAGE.times(rate);
     }
 
     private class FeederHook extends MotorHook

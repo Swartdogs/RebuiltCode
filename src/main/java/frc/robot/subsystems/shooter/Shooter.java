@@ -156,11 +156,12 @@ public class Shooter extends SubsystemBase
         });
     }
 
-    public Command runManualFeeder()
+    public Command runManualFeeder(DoubleSupplier rate, DoubleSupplier rotation)
     {
         return startEnd(() ->
         {
             beginManualControl(false);
+            _feeder.setRate(rate.getAsDouble());
             _feeder.set(true);
             setRotorEnabled(true);
         }, () ->
@@ -206,12 +207,17 @@ public class Shooter extends SubsystemBase
         return runOnce(() -> setManualTurretAngleCommand(Degrees.of(angle.getAsDouble())));
     }
 
-    public Command manualShootCmd(DoubleSupplier speed)
+    public Command setManualFeederRate(DoubleSupplier rate)
+    {
+        return runOnce(() -> setManualFeederCommand(rate.getAsDouble()));
+    }
+
+    public Command manualShootCmd(DoubleSupplier speed, DoubleSupplier rate, DoubleSupplier rotation)
     {
         // @formatter:off
         return Commands.parallel(
             Commands.startEnd(() -> setManualFlywheel(speed.getAsDouble()), () -> stopManualFlywheel()),
-            runManualFeeder()
+            runManualFeeder(rate, rotation)
         );
         // @formatter:on
     }
@@ -350,6 +356,11 @@ public class Shooter extends SubsystemBase
     {
         beginManualControl(true);
         _turret.setManualAngle(angle);
+    }
+
+    private void setManualFeederCommand(double rate)
+    {
+        _feeder.setRate(rate);
     }
 
     public void stopShooter()
