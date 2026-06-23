@@ -79,7 +79,7 @@ public class RobotContainer
         // _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(),
         // Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () ->
         // _drive.disableVisionPoseCorrection(false))));
-        _driver.button(1).whileTrue(_shooter.manualShootCmd(() -> _params.flywheelSpeed));
+        _driver.button(1).whileTrue(_shooter.manualShootCmd(() -> _params.flywheelSpeed, () -> _params.feederRate, () -> 1));
         // _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier =
         // DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier =
         // DriveConstants.FULL_SPEED_SCALE));
@@ -102,7 +102,7 @@ public class RobotContainer
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
         _operator.rightTrigger().whileTrue(_intake.jiggle());
         _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel));
-        _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
+        _operator.rightBumper().whileTrue(_shooter.runManualFeeder(() -> _params.feederRate, () -> 1));
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
 
