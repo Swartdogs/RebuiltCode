@@ -201,6 +201,11 @@ public class Shooter extends SubsystemBase
         return runOnce(() -> setManualTurretAngleCommand(angle));
     }
 
+    public Command setTurretAngleCmd(DoubleSupplier angle)
+    {
+        return runOnce(() -> setManualTurretAngleCommand(Degrees.of(angle.getAsDouble())));
+    }
+
     public Command manualShootCmd(DoubleSupplier speed)
     {
         // @formatter:off
