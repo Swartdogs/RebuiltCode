@@ -103,7 +103,6 @@ public class Shooter extends SubsystemBase
         _rotor.stop();
         _flywheel.stop();
         _turret.clearTargetAngle();
-        _turret.setDisabled(false);
     }
 
     public Command startShooter()
@@ -222,7 +221,6 @@ public class Shooter extends SubsystemBase
         {
             _state             = ShooterState.TrackingOnly;
             _requestedShotMode = ShotMode.Track;
-            _turret.setDisabled(false);
         }, this::stopShooter);
     }
 
@@ -323,7 +321,6 @@ public class Shooter extends SubsystemBase
     private void beginShootingSequence(ShotMode shotMode, boolean autoShoot)
     {
         _feeder.set(false);
-        _turret.setDisabled(false);
         _requestedShotMode = shotMode;
         _autoShootEnabled  = autoShoot;
         _state             = ShooterState.Preparing;
@@ -338,7 +335,6 @@ public class Shooter extends SubsystemBase
         clearReadinessGate();
         _feeder.set(false);
         setRotorEnabled(false);
-        _turret.setDisabled(false);
 
         if (clearTurretTarget)
         {
@@ -356,7 +352,6 @@ public class Shooter extends SubsystemBase
     {
         _state            = ShooterState.Idle;
         _autoShootEnabled = false;
-        _turret.setDisabled(false);
         clearShotRequest();
     }
 

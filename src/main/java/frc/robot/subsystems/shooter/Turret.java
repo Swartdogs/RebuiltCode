@@ -56,8 +56,6 @@ public class Turret
     private Voltage                   _motorVoltage;
     private Voltage                   _lastCommandedMotorVoltage;
     @Logged
-    private boolean                   _disabled;
-    @Logged
     private boolean                   _linedUp;
     @Logged
     private double                    _motorPositionRotations;
@@ -87,7 +85,6 @@ public class Turret
         _hasSetpoint               = false;
         _motorVoltage              = Volts.zero();
         _lastCommandedMotorVoltage = Volts.zero();
-        _disabled                  = false;
         _linedUp                   = false;
         _motorPositionRotations    = 0.0;
 
@@ -141,7 +138,7 @@ public class Turret
         _commandedTargetAngle = _turretSetpoint;
         _targetAngleError     = _commandedTargetAngle.minus(_turretAngle);
 
-        if (_hasSetpoint && !_disabled)
+        if (_hasSetpoint)
         {
             var errorDegrees  = _turretSetpoint.minus(_turretAngle).in(Degrees);
             var outputVolts   = _pidController.calculate(_turretAngle.in(Degrees), _turretSetpoint.in(Degrees));
@@ -207,11 +204,6 @@ public class Turret
     public Angle getTargetAngleError()
     {
         return _targetAngleError;
-    }
-
-    public void setDisabled(boolean disabled)
-    {
-        _disabled = disabled;
     }
 
     private Angle selectLegalSetpoint(Angle requestedAngle)
@@ -299,7 +291,7 @@ public class Turret
 
     private void updateLinedUpState()
     {
-        if (!_hasSetpoint || _disabled)
+        if (!_hasSetpoint)
         {
             _linedUp = false;
             return;
