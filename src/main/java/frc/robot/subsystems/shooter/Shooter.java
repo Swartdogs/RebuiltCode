@@ -197,12 +197,12 @@ public class Shooter extends SubsystemBase
 
     public Command setManualTurretAngle(Angle angle)
     {
-        return runOnce(() -> setManualTurretAngleCommand(angle));
+        return runOnce(() -> _turret.setTargetAngle(angle));
     }
 
     public Command setTurretAngleCmd(DoubleSupplier angle)
     {
-        return runOnce(() -> setManualTurretAngleCommand(Degrees.of(angle.getAsDouble())));
+        return runOnce(() -> _turret.setTargetAngle(Degrees.of(angle.getAsDouble())));
     }
 
     public Command manualShootCmd(DoubleSupplier speed)
@@ -222,11 +222,6 @@ public class Shooter extends SubsystemBase
             _state             = ShooterState.TrackingOnly;
             _requestedShotMode = ShotMode.Track;
         }, this::stopShooter);
-    }
-
-    public void bumpManualTurretAngle(double deltaDeg)
-    {
-        setManualTurretAngle(_turret.getManualAngle().plus(Degrees.of(deltaDeg)));
     }
 
     @Override
@@ -340,12 +335,6 @@ public class Shooter extends SubsystemBase
         {
             _turret.clearTargetAngle();
         }
-    }
-
-    private void setManualTurretAngleCommand(Angle angle)
-    {
-        beginManualControl(true);
-        _turret.setManualAngle(angle);
     }
 
     public void stopShooter()

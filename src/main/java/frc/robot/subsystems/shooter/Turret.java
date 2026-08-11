@@ -29,15 +29,13 @@ public class Turret
 
     enum ControlMode
     {
-        Idle, TargetAngle, ManualAngle
+        Idle, TargetAngle
     }
 
     private final TalonFX             _turretMotor;
     private final AnalogPotentiometer _turretPotentiometer;
     private final PIDController       _pidController;
     private ControlMode               _controlMode;
-    @Logged
-    private Angle                     _manualAngleSetpoint;
     @Logged
     private Angle                     _targetAngleSetpoint;
     @Logged
@@ -75,7 +73,6 @@ public class Turret
         _turretPotentiometer       = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
         _pidController             = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
         _controlMode               = ControlMode.Idle;
-        _manualAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
         _targetAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
         _turretAngle               = Degrees.zero();
         _rawTurretAngle            = Degrees.zero();
@@ -114,11 +111,6 @@ public class Turret
             case TargetAngle:
                 _hasSetpoint = true;
                 _turretSetpoint = selectLegalSetpoint(_targetAngleSetpoint);
-                break;
-
-            case ManualAngle:
-                _hasSetpoint = true;
-                _turretSetpoint = selectLegalSetpoint(_manualAngleSetpoint);
                 break;
 
             case Idle:
@@ -177,23 +169,6 @@ public class Turret
     public void clearTargetAngle()
     {
         _controlMode = ControlMode.Idle;
-    }
-
-    public void setManualAngle(Angle angle)
-    {
-        _manualAngleSetpoint = angle;
-        _controlMode         = ControlMode.ManualAngle;
-    }
-
-    public void bumpManualAngle(Angle delta)
-    {
-        _manualAngleSetpoint = _manualAngleSetpoint.plus(delta);
-        _controlMode         = ControlMode.ManualAngle;
-    }
-
-    public Angle getManualAngle()
-    {
-        return _manualAngleSetpoint;
     }
 
     public boolean isLinedUp()
