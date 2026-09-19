@@ -29,7 +29,7 @@ public class Turret
 
     enum ControlMode
     {
-        Idle, TargetAngle, ManualAngle
+        Idle, TargetAngle, ManualAngle, Voltage
     }
 
     private final TalonFX             _turretMotor;
@@ -56,6 +56,8 @@ public class Turret
     private Voltage                   _motorVoltage;
     private Voltage                   _lastCommandedMotorVoltage;
     @Logged
+    private Voltage                   _currentCommandedMotorVoltage;
+    @Logged
     private boolean                   _linedUp;
     @Logged
     private double                    _motorPositionRotations;
@@ -71,22 +73,23 @@ public class Turret
             sensorOffset = sensorOffset.unaryMinus();
         }
 
-        _turretMotor               = new TalonFX(CANConstants.TURRET_MOTOR);
-        _turretPotentiometer       = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
-        _pidController             = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
-        _controlMode               = ControlMode.Idle;
-        _manualAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
-        _targetAngleSetpoint       = ShooterConstants.TURRET_HOME_ANGLE;
-        _turretAngle               = Degrees.zero();
-        _rawTurretAngle            = Degrees.zero();
-        _turretSetpoint            = ShooterConstants.TURRET_HOME_ANGLE;
-        _commandedTargetAngle      = ShooterConstants.TURRET_HOME_ANGLE;
-        _targetAngleError          = Degrees.zero();
-        _hasSetpoint               = false;
-        _motorVoltage              = Volts.zero();
-        _lastCommandedMotorVoltage = Volts.zero();
-        _linedUp                   = false;
-        _motorPositionRotations    = 0.0;
+        _turretMotor                  = new TalonFX(CANConstants.TURRET_MOTOR);
+        _turretPotentiometer          = new AnalogPotentiometer(AIOConstants.TURRET_POTENTIOMETER, sensorRange.in(Degrees), sensorOffset.in(Degrees));
+        _pidController                = new PIDController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD);
+        _controlMode                  = ControlMode.Idle;
+        _manualAngleSetpoint          = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleSetpoint          = ShooterConstants.TURRET_HOME_ANGLE;
+        _turretAngle                  = Degrees.zero();
+        _rawTurretAngle               = Degrees.zero();
+        _turretSetpoint               = ShooterConstants.TURRET_HOME_ANGLE;
+        _commandedTargetAngle         = ShooterConstants.TURRET_HOME_ANGLE;
+        _targetAngleError             = Degrees.zero();
+        _hasSetpoint                  = false;
+        _motorVoltage                 = Volts.zero();
+        _lastCommandedMotorVoltage    = Volts.zero();
+        _currentCommandedMotorVoltage = Volts.zero();
+        _linedUp                      = false;
+        _motorPositionRotations       = 0.0;
 
         var currentConfig = new CurrentLimitsConfigs();
         currentConfig.StatorCurrentLimit       = ShooterConstants.TURRET_CURRENT_LIMIT.in(Amps);
@@ -98,6 +101,7 @@ public class Turret
 
         _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig));
         _pidController.setTolerance(ShooterConstants.TURRET_TOLERANCE.in(Degrees));
+
     }
 
     public void periodic()
@@ -119,6 +123,12 @@ public class Turret
             case ManualAngle:
                 _hasSetpoint = true;
                 _turretSetpoint = selectLegalSetpoint(_manualAngleSetpoint);
+                break;
+
+            case Voltage:
+                _hasSetpoint = false;
+                _turretSetpoint = ShooterConstants.TURRET_HOME_ANGLE;
+                motorOutput = _currentCommandedMotorVoltage;
                 break;
 
             case Idle:
@@ -152,10 +162,15 @@ public class Turret
             motorOutput = Volts.of(outputVolts);
         }
 
-        motorOutput = Volts.of(limitOutputStep(motorOutput.in(Volts)));
-        motorOutput = applySoftLimit(motorOutput);
+        if (_controlMode != ControlMode.Voltage)
+        {
+            motorOutput = Volts.of(limitOutputStep(motorOutput.in(Volts)));
+            motorOutput = applySoftLimit(motorOutput);
+        }
+
         _turretMotor.setVoltage(motorOutput.in(Volts));
         _lastCommandedMotorVoltage = motorOutput;
+
     }
 
     public void simulationPeriodic()
@@ -303,5 +318,11 @@ public class Turret
         var allowedErrorDegrees = _linedUp ? holdTolerance : acquireTolerance;
 
         _linedUp = angleErrorDegrees <= allowedErrorDegrees;
+    }
+
+    public void setVoltage(Voltage volts)
+    {
+        _controlMode                  = ControlMode.Voltage;
+        _currentCommandedMotorVoltage = volts;
     }
 }
