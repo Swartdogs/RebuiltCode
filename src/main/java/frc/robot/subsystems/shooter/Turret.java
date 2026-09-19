@@ -111,10 +111,11 @@ public class Turret
 
         // 3. Define mechanical reduction if using internal sensor for mechanism units
         // Example: 10:1 gear ratio. 10 motor turns = 1 mechanism turn
-        config.Feedback.SensorToMechanismRatio = 10.0;
+        config.Feedback.SensorToMechanismRatio = 13.0; // 130 teeth on turret gear / 10 teeth on motor gear
 
         // Apply configuration to the Talon FX hardware
         _turretMotor.getConfigurator().apply(config);
+        _turretMotor.setPosition(Degrees.of(_turretPotentiometer.get()));
     }
 
     public void periodic()
