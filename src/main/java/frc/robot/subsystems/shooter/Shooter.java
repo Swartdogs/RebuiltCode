@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.TurretDirector.ShotMode;
 import frc.robot.subsystems.shooter.TurretDirector.ShotSolution;
@@ -42,6 +43,7 @@ public class Shooter extends SubsystemBase
     private final Supplier<Boolean>          _intakeExtendedSupplier;
     private final Supplier<Boolean>          _intakeRetractedSupplier;
     private final Debouncer                  _movingFeedDebouncer;
+    private SysIdRoutine                     _sysid;
     @Logged
     private ShooterState                     _state;
     @Logged
@@ -103,6 +105,10 @@ public class Shooter extends SubsystemBase
         _rotor.stop();
         _flywheel.stop();
         _turret.clearTargetAngle();
+
+        SysIdRoutine.Config config = new SysIdRoutine.Config();
+        SysIdRoutine.Mechanism mechanism = new SysIdRoutine.Mechanism(_turret::setVoltage, null, this);
+        _sysid = new SysIdRoutine(null, null)
     }
 
     public Command startShooter()
