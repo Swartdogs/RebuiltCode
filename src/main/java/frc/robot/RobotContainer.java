@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.TunerConstants;
@@ -123,14 +124,19 @@ public class RobotContainer
 
         _driver.pov(-1).onTrue(Commands.runOnce(() -> _driverPOVReleased = true));
 
-        _operator.leftTrigger().whileTrue(_intake.runRollersForward());
-        _operator.leftBumper().whileTrue(_intake.runRollersReverse());
-        _operator.rightTrigger().whileTrue(_intake.jiggle());
+        // _operator.leftTrigger().whileTrue(_intake.runRollersForward());
+        // _operator.leftBumper().whileTrue(_intake.runRollersReverse());
+        // _operator.rightTrigger().whileTrue(_intake.jiggle());
+        // _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
+        _operator.leftBumper().whileTrue(_shooter.getDynamic(Direction.kReverse));
+        _operator.rightBumper().whileTrue(_shooter.getDynamic(Direction.kForward));
+        _operator.leftTrigger().whileTrue(_shooter.getQuasistatic(Direction.kReverse));
+        _operator.rightTrigger().whileTrue(_shooter.getQuasistatic(Direction.kForward));
+
         _operator.y().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(MANUAL_FLYWHEEL_START_RPM)));
         _operator.x().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM - MANUAL_FLYWHEEL_STEP_RPM)));
         _operator.b().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM + MANUAL_FLYWHEEL_STEP_RPM)));
         _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel));
-        _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
     }
