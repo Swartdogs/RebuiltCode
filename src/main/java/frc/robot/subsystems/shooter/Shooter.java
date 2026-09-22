@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -17,6 +18,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -107,8 +109,16 @@ public class Shooter extends SubsystemBase
         _turret.clearTargetAngle();
 
         SysIdRoutine.Config config = new SysIdRoutine.Config();
-        SysIdRoutine.Mechanism mechanism = new SysIdRoutine.Mechanism(_turret::setVoltage, null, this);
-        _sysid = new SysIdRoutine(null, null)
+        // @formatter:off
+        Consumer<SysIdRoutineLog> logConsumer =
+                (log) -> log.motor("Turret Motor")
+                            .voltage(_turret.getVoltage())
+                            .angularPosition(_turret.getAngle())
+                            .angularVelocity(_turret.getVelocity());
+
+        // @formatter:on
+        SysIdRoutine.Mechanism mechanism = new SysIdRoutine.Mechanism(_turret::setVoltage, logConsumer, this);
+        _sysid = new SysIdRoutine(config, mechanism);
     }
 
     public Command startShooter()

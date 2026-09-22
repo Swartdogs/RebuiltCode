@@ -15,6 +15,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import frc.robot.Constants.AIOConstants;
@@ -324,5 +325,20 @@ public class Turret
     {
         _controlMode                  = ControlMode.Voltage;
         _currentCommandedMotorVoltage = volts;
+    }
+
+    public Voltage getVoltage()
+    {
+        return _turretMotor.getMotorVoltage().getValue();
+    }
+
+    public Angle getAngle()
+    {
+        return _turretMotor.getPosition().getValue();
+    }
+
+    public AngularVelocity getVelocity()
+    {
+        return _turretMotor.getVelocity().getValue();
     }
 }
