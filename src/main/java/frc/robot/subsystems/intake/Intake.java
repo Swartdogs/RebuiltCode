@@ -124,13 +124,10 @@ public class Intake extends SubsystemBase
 
     private final SparkFlex        _intakeMotor;
     private final SparkFlex        _extendMotor;
-    private final SparkLimitSwitch _outLimitSwitch;
-    private final SparkLimitSwitch _inLimitSwitch;
     private final SparkFlexSim     _intakeMotorSim;
     private final SparkFlexSim     _extensionMotorSim;
     private final DCMotor          _neoVortex;
     private final DCMotor          _extensionMotorModel;
-    private final Alert            _limitSwitchAlert;
     @NotLogged
     private final SparkFlexConfig  _rollerBaseConfig;
     @NotLogged
@@ -151,16 +148,11 @@ public class Intake extends SubsystemBase
     private Distance               _currentExtension            = Inches.zero();
     @Logged
     private Voltage                _motorVoltage                = Volts.zero();
-    @Logged
-    private boolean                _outSwitchTriggered          = false;
-    @Logged
-    private boolean                _inSwitchTriggered           = false;
+    private boolean                _isHomed                     = false;
 
     public Intake()
     {
-        _extendMotor    = new SparkFlex(CANConstants.INTAKE_EXTEND, MotorType.kBrushless);
-        _outLimitSwitch = _extendMotor.getForwardLimitSwitch();
-        _inLimitSwitch  = _extendMotor.getReverseLimitSwitch();
+        _extendMotor = new SparkFlex(CANConstants.INTAKE_EXTEND, MotorType.kBrushless);
 
         var extensionConfig = new SparkFlexConfig();
         extensionConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.EXTENSION_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
@@ -175,7 +167,6 @@ public class Intake extends SubsystemBase
                 .reverseLimitSwitchType(Type.kNormallyOpen).reverseLimitSwitchPosition(IntakeConstants.EXTENSION_MIN_POSITION.in(Inches)).reverseLimitSwitchTriggerBehavior(Behavior.kStopMovingMotorAndSetPosition);
 
         _extendMotor.configure(extensionConfig.apply(encoderConfig).apply(limitSwitchConfig), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        _limitSwitchAlert = new Alert("Both in and out limit switches are triggered for motor CAN ID " + CANConstants.INTAKE_EXTEND + ".", Alert.AlertType.kWarning);
 
         _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
 
@@ -202,9 +193,8 @@ public class Intake extends SubsystemBase
     @Override
     public void periodic()
     {
-        _outSwitchTriggered = _outLimitSwitch.isPressed();
-        _inSwitchTriggered  = _inLimitSwitch.isPressed();
-        _limitSwitchAlert.set(_outSwitchTriggered && _inSwitchTriggered);
+        // _outSwitchTriggered = _outLimitSwitch.isPressed();
+        // _inSwitchTriggered = _inLimitSwitch.isPressed();
 
         _currentExtension   = Inches.of(_extendMotor.getEncoder().getPosition());
         _motorVoltage       = Volts.of(_extendMotor.getAppliedOutput() * _extendMotor.getBusVoltage());
