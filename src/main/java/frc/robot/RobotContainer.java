@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.TunerConstants;
@@ -98,13 +99,18 @@ public class RobotContainer
         _driver.button(14).onTrue(_shooter.setManualTurretAngle(Degrees.of(-135.0)));
         _driver.button(16).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
 
-        _operator.leftTrigger().whileTrue(_intake.runRollersForward());
-        _operator.leftBumper().whileTrue(_intake.runRollersReverse());
-        _operator.rightTrigger().whileTrue(_intake.jiggle());
-        _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel));
-        _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
-        _operator.povDown().onTrue(_intake.getRetractCmd());
-        _operator.povUp().onTrue(_intake.getExtendCmd());
+        // _operator.leftTrigger().whileTrue(_intake.runRollersForward());
+        // _operator.leftBumper().whileTrue(_intake.runRollersReverse());
+        // _operator.rightTrigger().whileTrue(_intake.jiggle());
+        // _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel));
+        // _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
+        // _operator.povDown().onTrue(_intake.getRetractCmd());
+        // _operator.povUp().onTrue(_intake.getExtendCmd());
+
+        _operator.leftBumper().whileTrue(_shooter.getDynamic(Direction.kReverse));
+        _operator.rightBumper().whileTrue(_shooter.getDynamic(Direction.kForward));
+        _operator.leftTrigger().whileTrue(_shooter.getQuasistatic(Direction.kReverse));
+        _operator.rightTrigger().whileTrue(_shooter.getQuasistatic(Direction.kForward));
 
         SmartDashboard.putData(_shooter.setTurretAngleCmd(() -> _params.turretAngle));
     }

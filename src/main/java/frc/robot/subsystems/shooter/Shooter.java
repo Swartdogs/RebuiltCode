@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.shooter.TurretDirector.ShotMode;
 import frc.robot.subsystems.shooter.TurretDirector.ShotSolution;
@@ -119,6 +120,16 @@ public class Shooter extends SubsystemBase
         // @formatter:on
         SysIdRoutine.Mechanism mechanism = new SysIdRoutine.Mechanism(_turret::setVoltage, logConsumer, this);
         _sysid = new SysIdRoutine(config, mechanism);
+    }
+
+    public Command getDynamic(Direction direction)
+    {
+        return _sysid.dynamic(direction);
+    }
+
+    public Command getQuasistatic(Direction direction)
+    {
+        return _sysid.quasistatic(direction);
     }
 
     public Command startShooter()
