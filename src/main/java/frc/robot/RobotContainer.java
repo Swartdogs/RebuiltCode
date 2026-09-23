@@ -89,14 +89,20 @@ public class RobotContainer
         _driver.button(5).whileTrue(_shooter.pass());
         _driver.button(6).whileTrue(_shooter.trackOnly());
         _driver.button(7).onTrue(_drive.runOnce(_drive::seedFieldCentric));
-        _driver.button(8).onTrue(_shooter.setManualTurretAngle(Degrees.zero()));
-        _driver.button(9).onTrue(_shooter.setManualTurretAngle(Degrees.of(45.0)));
-        _driver.button(10).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45.0)));
-        _driver.button(11).onTrue(_shooter.setManualTurretAngle(Degrees.of(90.0)));
-        _driver.button(12).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90.0)));
-        _driver.button(13).onTrue(_shooter.setManualTurretAngle(Degrees.of(135.0)));
-        _driver.button(14).onTrue(_shooter.setManualTurretAngle(Degrees.of(-135.0)));
+        // _driver.button(8).onTrue(_shooter.setManualTurretAngle(Degrees.zero()));
+        // _driver.button(9).onTrue(_shooter.setManualTurretAngle(Degrees.of(45.0)));
+        // _driver.button(10).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45.0)));
+        // _driver.button(11).onTrue(_shooter.setManualTurretAngle(Degrees.of(90.0)));
+        // _driver.button(12).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90.0)));
+        // _driver.button(13).onTrue(_shooter.setManualTurretAngle(Degrees.of(135.0)));
+        // _driver.button(14).onTrue(_shooter.setManualTurretAngle(Degrees.of(-135.0)));
         _driver.button(16).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
+
+        _driver.pov(0).onTrue(_shooter.setManualTurretAngle(Degrees.of(90)));
+        _driver.pov(180).onTrue(_shooter.setManualTurretAngle(Degrees.of(90)));
+        _driver.pov(225).onTrue(_shooter.setManualTurretAngle(Degrees.of(45)));
+        _driver.pov(270).onTrue(_shooter.setManualTurretAngle(Degrees.of(0)));
+        _driver.pov(315).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45)));
 
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
