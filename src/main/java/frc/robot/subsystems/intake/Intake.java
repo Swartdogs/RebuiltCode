@@ -12,24 +12,25 @@ import static edu.wpi.first.units.Units.Volts;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.sim.SparkFlexSim;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLimitSwitch;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.EncoderConfig;
-import com.revrobotics.spark.config.LimitSwitchConfig;
-import com.revrobotics.spark.config.LimitSwitchConfig.Behavior;
-import com.revrobotics.spark.config.LimitSwitchConfig.Type;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Dimensionless;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -37,304 +38,348 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CANConstants;
 import frc.robot.Constants.GeneralConstants;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.SimulationConstants;
-import frc.robot.subsystems.test.MotorHook;
-import frc.robot.subsystems.test.TestHook;
 
 @Logged
 public class Intake extends SubsystemBase
 {
-    private enum RollerCurrentLimitMode
+    public enum RollerState
     {
-        AutoByExtension, ForceActive
-    }
+        // @formatter:off
 
-    public enum IntakeState
-    {
-        Off, Forward, Reverse
-    }
+        Off(Volts.zero()),
+        Forward(IntakeConstants.ROLLER_FORWARD_VOLTS),
+        Reverse(IntakeConstants.ROLLER_REVERSE_VOLTS),
+        SysId(Volts.zero());
 
-    public Command runRollersForward()
-    {
-        return startEnd(() -> setIntakeState(IntakeState.Forward), () -> setIntakeState(IntakeState.Off));
-    }
+        // @formatter:on
 
-    public Command startRollersForward()
-    {
-        return runOnce(() -> setIntakeState(IntakeState.Forward));
-    }
+        public Voltage voltage;
 
-    public Command runRollersReverse()
-    {
-        return startEnd(() -> setIntakeState(IntakeState.Reverse), () -> setIntakeState(IntakeState.Off));
-    }
-
-    public Command jiggle()
-    {
-        Distance extensionRange       = IntakeConstants.EXTENSION_MAX_POSITION.minus(IntakeConstants.EXTENSION_MIN_POSITION);
-        double   extensionRangeInches = extensionRange.in(Inches);
-
-        return runOnce(() ->
+        private RollerState(Voltage voltage)
         {
-            setIntakeVoltage(GeneralConstants.MOTOR_VOLTAGE);
-            setRollerCurrentLimitMode(RollerCurrentLimitMode.ForceActive);
-            _jiggleRetractFraction     = IntakeConstants.JIGGLE_RETRACT_FRACTION;
-            _jiggleRetractTravelInches = extensionRangeInches * _jiggleRetractFraction;
-        }).andThen(
-                Commands.sequence(
-                        runOnce(() -> setExtensionVoltage(IntakeConstants.JIGGLE_EXTEND_VOLTS)), Commands.waitUntil(this::isExtended).withTimeout(IntakeConstants.JIGGLE_MOVE_TIMEOUT.in(Seconds)),
-                        runOnce(() -> setExtensionVoltage(Volts.zero())), Commands.waitSeconds(IntakeConstants.JIGGLE_PAUSE_TIME.in(Seconds)), Commands.repeatingSequence(runOnce(() ->
-                        {
-                            _jiggleLegStartInches = getMotorPosition().in(Inches);
-                            _jiggleRetractTravelInches = extensionRangeInches * _jiggleRetractFraction;
-                        }), runOnce(() -> setExtensionVoltage(IntakeConstants.JIGGLE_RETRACT_VOLTS)),
-                                Commands.waitUntil(() -> isRetracted() || Math.abs(getMotorPosition().in(Inches) - _jiggleLegStartInches) >= _jiggleRetractTravelInches).withTimeout(IntakeConstants.JIGGLE_MOVE_TIMEOUT.in(Seconds)),
-                                runOnce(() -> setExtensionVoltage(Volts.zero())), Commands.waitSeconds(IntakeConstants.JIGGLE_PAUSE_TIME.in(Seconds)), runOnce(() -> setExtensionVoltage(IntakeConstants.JIGGLE_EXTEND_VOLTS)),
-                                Commands.waitUntil(this::isExtended).withTimeout(IntakeConstants.JIGGLE_MOVE_TIMEOUT.in(Seconds)), runOnce(() -> setExtensionVoltage(Volts.zero())),
-                                Commands.waitSeconds(IntakeConstants.JIGGLE_PAUSE_TIME.in(Seconds)), runOnce(() -> _jiggleRetractFraction = Math.min(1.0, _jiggleRetractFraction + IntakeConstants.JIGGLE_RETRACT_STEP_FRACTION))
-                        )
-                )
-        ).finallyDo(() ->
+            this.voltage = voltage;
+        }
+    }
+
+    public enum ExtendState
+    {
+        // @formatter:off
+
+        Homing(Inches.zero()),
+        Extended(IntakeConstants.EXTENSION_MAX_POSITION),
+        Retracted(IntakeConstants.EXTENSION_MIN_POSITION),
+        SysId(Inches.zero());
+
+        // @formatter:on
+
+        public Distance distance;
+
+        private ExtendState(Distance distance)
         {
-            setIntakeState(IntakeState.Off);
-            setRollerCurrentLimitMode(RollerCurrentLimitMode.AutoByExtension);
-            setExtensionVoltage(Volts.zero());
-        });
+            this.distance = distance;
+        }
     }
 
-    public Command getRetractCmd()
-    {
-        return Commands.sequence(runOnce(() -> setRollerCurrentLimitMode(RollerCurrentLimitMode.ForceActive)), startRollersForward(), setExtensionCmd(false), Commands.waitUntil(this::isRetracted)).withTimeout(2.0).finallyDo(() ->
-        {
-            setIntakeState(IntakeState.Off);
-            setRollerCurrentLimitMode(RollerCurrentLimitMode.AutoByExtension);
-        });
-    }
-
-    @NotLogged
-    public Command getExtendCmd()
-    {
-        return setExtensionCmd(true);
-    }
-
-    private Command setExtensionCmd(boolean finalState)
-    {
-        return runOnce(() -> extend(finalState));
-    }
-
-    private final SparkFlex        _intakeMotor;
-    private final SparkFlex        _extendMotor;
-    private final SparkFlexSim     _intakeMotorSim;
-    private final SparkFlexSim     _extensionMotorSim;
-    private final DCMotor          _neoVortex;
-    private final DCMotor          _extensionMotorModel;
-    @NotLogged
-    private final SparkFlexConfig  _rollerBaseConfig;
-    @NotLogged
-    private double                 _jiggleLegStartInches        = 0.0;
-    @NotLogged
-    private double                 _jiggleRetractTravelInches   = 0.0;
-    @NotLogged
-    private double                 _jiggleRetractFraction       = IntakeConstants.JIGGLE_RETRACT_FRACTION;
-    @NotLogged
-    private RollerCurrentLimitMode _rollerCurrentLimitMode      = RollerCurrentLimitMode.AutoByExtension;
-    @NotLogged
-    private int                    _lastAppliedCurrentLimitAmps = Integer.MIN_VALUE;
+    private final SparkFlex                 _rollerMotor;
+    private final SparkFlex                 _extendMotor;
+    private final SparkFlexSim              _rollerMotorSim;
+    private final SparkFlexSim              _extendMotorSim;
+    private final SparkClosedLoopController _extendMotorPid;
+    private final DCMotor                   _rollerMotorModel;
+    private final DCMotor                   _extendMotorModel;
     @Logged
-    private IntakeState            _intakeState                 = IntakeState.Off;
+    private RollerState                     _rollerState;
     @Logged
-    private Voltage                _intakeMotorVoltage          = Volts.of(0.0);
+    private ExtendState                     _extendState;
     @Logged
-    private Distance               _currentExtension            = Inches.zero();
+    private Distance                        _extendDistance;
     @Logged
-    private Voltage                _motorVoltage                = Volts.zero();
-    private boolean                _isHomed                     = false;
+    private Voltage                         _rollerMotorVoltage;
+    @Logged
+    private Voltage                         _extendMotorVoltage;
+    @Logged
+    private Current                         _rollerMotorCurrent;
+    @Logged
+    private Current                         _extendMotorCurrent;
+    @Logged
+    private Voltage                         _sysIdRollerMotorVoltage;
+    @Logged
+    private Voltage                         _sysIdExtendMotorVoltage;
+    @NotLogged
+    private Debouncer                       _homingDebouncer;
+    @NotLogged
+    private Timer                           _homingTimer;
 
     public Intake()
     {
-        _extendMotor = new SparkFlex(CANConstants.INTAKE_EXTEND, MotorType.kBrushless);
+        _rollerMotor = new SparkFlex(CANConstants.INTAKE_EXTEND, MotorType.kBrushless);
+        _extendMotor = new SparkFlex(CANConstants.INTAKE_ROLLER, MotorType.kBrushless);
 
-        var extensionConfig = new SparkFlexConfig();
-        extensionConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit((int)IntakeConstants.EXTENSION_CURRENT_LIMIT.in(Amps)).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
+        _extendMotorPid = _extendMotor.getClosedLoopController();
 
-        var encoderConfig = new EncoderConfig();
-        encoderConfig.positionConversionFactor(IntakeConstants.EXTENSION_CONVERSION_FACTOR.in(Inches.per(Rotation)));
+        // @formatter:off
 
-        _extendMotor.setVoltage(Volts.zero());
+        var rollerMotorConfig = new SparkFlexConfig();
 
-        var limitSwitchConfig = new LimitSwitchConfig();
-        limitSwitchConfig.forwardLimitSwitchType(Type.kNormallyOpen).forwardLimitSwitchPosition(IntakeConstants.EXTENSION_MAX_POSITION.in(Inches)).forwardLimitSwitchTriggerBehavior(Behavior.kStopMovingMotor)
-                .reverseLimitSwitchType(Type.kNormallyOpen).reverseLimitSwitchPosition(IntakeConstants.EXTENSION_MIN_POSITION.in(Inches)).reverseLimitSwitchTriggerBehavior(Behavior.kStopMovingMotorAndSetPosition);
+        rollerMotorConfig
+            .inverted(false)
+            .idleMode(IdleMode.kBrake)
+            .smartCurrentLimit((int)IntakeConstants.ROLLER_CURRENT_LIMIT_ACTIVE.in(Amps))
+            .voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
 
-        _extendMotor.configure(extensionConfig.apply(encoderConfig).apply(limitSwitchConfig), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        _rollerMotor.configure(rollerMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        _intakeMotor = new SparkFlex(CANConstants.INTAKE, MotorType.kBrushless);
+        var extendMotorConfig = new SparkFlexConfig();
 
-        _rollerBaseConfig = new SparkFlexConfig();
-        _rollerBaseConfig.inverted(false).idleMode(IdleMode.kBrake).voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
-        applyRollerCurrentLimit((int)IntakeConstants.ROLLER_CURRENT_LIMIT_ACTIVE.in(Amps));
+        extendMotorConfig
+            .inverted(false)
+            .idleMode(IdleMode.kBrake)
+            .smartCurrentLimit((int)IntakeConstants.EXTENSION_CURRENT_LIMIT.in(Amps))
+            .voltageCompensation(GeneralConstants.MOTOR_VOLTAGE.in(Volts));
+
+        extendMotorConfig.encoder
+            .positionConversionFactor(IntakeConstants.EXTENSION_CONVERSION_FACTOR.in(Inches.per(Rotation)));
+
+        extendMotorConfig.closedLoop
+            .p(0)
+            .i(0)
+            .d(0)
+            .outputRange(-1, 1)
+            .allowedClosedLoopError(IntakeConstants.EXTENSION_PID_TOLERANCE.in(Inches), ClosedLoopSlot.kSlot0);
+
+        extendMotorConfig.closedLoop.feedForward
+            .kG(0)
+            .kS(0)
+            .kV(0)
+            .kA(0);
+
+        _extendMotor.configure(extendMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        // @formatter:on
 
         if (RobotBase.isReal())
         {
-            _extensionMotorModel = null;
-            _extensionMotorSim   = null;
-            _neoVortex           = null;
-            _intakeMotorSim      = null;
+            _rollerMotorModel = null;
+            _extendMotorModel = null;
+            _rollerMotorSim   = null;
+            _extendMotorSim   = null;
         }
         else
         {
-            _extensionMotorModel = DCMotor.getNeoVortex(1);
-            _extensionMotorSim   = new SparkFlexSim(_extendMotor, _extensionMotorModel);
-            _neoVortex           = DCMotor.getNeoVortex(1);
-            _intakeMotorSim      = new SparkFlexSim(_intakeMotor, _neoVortex);
+            _rollerMotorModel = DCMotor.getNeoVortex(1);
+            _extendMotorModel = DCMotor.getNeoVortex(1);
+            _rollerMotorSim   = new SparkFlexSim(_rollerMotor, _rollerMotorModel);
+            _extendMotorSim   = new SparkFlexSim(_extendMotor, _extendMotorModel);
         }
+
+        _rollerState    = RollerState.Off;
+        _extendState    = ExtendState.Homing;
+        _extendDistance = Inches.zero();
+
+        _rollerMotorVoltage = Volts.zero();
+        _rollerMotorCurrent = Amps.zero();
+
+        _extendMotorVoltage = Volts.zero();
+        _extendMotorCurrent = Amps.zero();
+
+        _sysIdRollerMotorVoltage = Volts.zero();
+        _sysIdExtendMotorVoltage = Volts.zero();
+
+        _homingDebouncer = new Debouncer(IntakeConstants.EXTENSION_HOMING_DEBOUNCE_TIME.in(Seconds), DebounceType.kRising);
+        _homingTimer     = new Timer();
+    }
+
+    public void setRollerState(RollerState desiredState)
+    {
+        _rollerState = desiredState;
+    }
+
+    public void setExtendState(ExtendState desiredState)
+    {
+        // Only allow going to another state if we've finished homing
+        if (_extendState != ExtendState.Homing)
+        {
+            _extendState = desiredState;
+        }
+    }
+
+    public boolean isRetracted()
+    {
+        return _extendState == ExtendState.Retracted && _extendMotorPid.isAtSetpoint();
+    }
+
+    public boolean isExtended()
+    {
+        return _extendState == ExtendState.Extended && _extendMotorPid.isAtSetpoint();
+    }
+
+    private void setRollerCurrentLimit(Current limit)
+    {
+        _rollerMotor.configure(new SparkFlexConfig().smartCurrentLimit((int)limit.in(Amps)), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     @Override
     public void periodic()
     {
-        // _outSwitchTriggered = _outLimitSwitch.isPressed();
-        // _inSwitchTriggered = _inLimitSwitch.isPressed();
+        // Sensor measurements
+        _extendDistance = Inches.of(_extendMotor.getEncoder().getPosition());
 
-        _currentExtension   = Inches.of(_extendMotor.getEncoder().getPosition());
-        _motorVoltage       = Volts.of(_extendMotor.getAppliedOutput() * _extendMotor.getBusVoltage());
-        _intakeMotorVoltage = Volts.of(_intakeMotor.getAppliedOutput() * _intakeMotor.getBusVoltage());
+        _rollerMotorVoltage = Volts.of(_rollerMotor.getAppliedOutput() * _rollerMotor.getBusVoltage());
+        _rollerMotorCurrent = Amps.of(_rollerMotor.getOutputCurrent());
 
-        applyDesiredRollerCurrentLimit();
+        _extendMotorVoltage = Volts.of(_extendMotor.getAppliedOutput() * _extendMotor.getBusVoltage());
+        _extendMotorCurrent = Amps.of(_extendMotor.getOutputCurrent());
+
+        // Control loops
+
+        // Clear the SysId roller motor voltage if SysId is not active
+        if (_rollerState != RollerState.SysId)
+        {
+            _sysIdRollerMotorVoltage = Volts.zero();
+        }
+
+        // Determine the roller motor voltage based on roller state
+        var rollerMotorVolts = switch (_rollerState)
+        {
+            case Off, Forward, Reverse -> _rollerState.voltage;
+            case SysId -> _sysIdRollerMotorVoltage;
+            default -> Volts.zero();
+        };
+
+        // Set the roller output voltage
+        _rollerMotor.setVoltage(rollerMotorVolts);
+
+        // Set the roller applied output in simulation
+        if (RobotBase.isSimulation())
+        {
+            _rollerMotorSim.setAppliedOutput(rollerMotorVolts.div(GeneralConstants.MOTOR_VOLTAGE).in(Value));
+        }
+
+        // Clear the SysId extend motor voltage if SysId is not active
+        if (_extendState != ExtendState.SysId)
+        {
+            _sysIdExtendMotorVoltage = Volts.zero();
+        }
+
+        // Determine the extend motor behavior based on extend state
+        switch (_extendState)
+        {
+            case Homing:
+                // Only perform homing operations if the robot is enabled
+                if (DriverStation.isEnabled())
+                {
+                    // If we're enabled and homing but the timer isn't running, we need to
+                    // start the timer and clear the debouncer (by making a new instance)
+                    if (!_homingTimer.isRunning())
+                    {
+                        _homingTimer.restart();
+                        _homingDebouncer = new Debouncer(IntakeConstants.EXTENSION_HOMING_DEBOUNCE_TIME.in(Seconds), DebounceType.kRising);
+                    }
+
+                    // The timer will be running here and the debouncer has been created.
+                    //
+                    // Check to make sure that one of the following is true:
+                    // 1. The motor current has been above its threshold for the debounce time
+                    // 2. The homing algorithm has been running for its full time limit
+                    //
+                    // If either of the above are true, turn off the motor, reset the encoder,
+                    // set our new state, and stop the timer.
+                    if (_homingDebouncer.calculate(_extendMotorCurrent.gt(IntakeConstants.EXTENSION_HOMING_CURRENT_THRESHOLD)) || _homingTimer.hasElapsed(IntakeConstants.EXTENSION_HOMING_TIME_LIMIT))
+                    {
+                        _extendMotor.setVoltage(0);
+                        _extendMotor.getEncoder().setPosition(ExtendState.Retracted.distance.in(Inches));
+                        _extendState = ExtendState.Retracted;
+                        _homingTimer.stop();
+                    }
+                    // The robot is enabled, but we haven't exceeded the homing current threshold
+                    // for long enough and haven't been running the homing algorithm for too long.
+                    else
+                    {
+                        _extendMotor.setVoltage(IntakeConstants.EXTENSION_HOMING_VOLTAGE);
+                    }
+                }
+                // The robot is disabled. Stop the timer and shut off the motor. We'll restart
+                // the timer once we're enabled again.
+                else
+                {
+                    _homingTimer.stop();
+                    _extendMotor.setVoltage(Volts.zero());
+                }
+                break;
+
+            case Extended:
+            case Retracted:
+                _extendMotorPid.setSetpoint(_extendState.distance.in(Inches), ControlType.kPosition);
+                break;
+
+            case SysId:
+                _extendMotor.setVoltage(_sysIdExtendMotorVoltage);
+                break;
+
+            default:
+                _extendMotor.setVoltage(Volts.zero());
+                break;
+        }
     }
 
     @Override
     public void simulationPeriodic()
     {
-        _extensionMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
-        _extensionMotorSim.iterate(_extensionMotorSim.getAppliedOutput() * RadiansPerSecond.of(_extensionMotorModel.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
+        _extendMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+        _extendMotorSim.iterate(_extendMotorSim.getAppliedOutput() * RadiansPerSecond.of(_extendMotorModel.freeSpeedRadPerSec).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
 
-        Distance      position       = Inches.of(_extensionMotorSim.getPosition());
-        Dimensionless output         = Value.of(_extensionMotorSim.getAppliedOutput());
-        boolean       forwardPressed = position.gte(SimulationConstants.EXTENDED_DISTANCE);
-        boolean       reversePressed = position.lte(SimulationConstants.RETRACTED_DISTANCE);
+        _rollerMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
+        _rollerMotorSim.iterate(RadiansPerSecond.of(_rollerMotorModel.freeSpeedRadPerSec).times(Value.of(_rollerMotorSim.getAppliedOutput())).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
+    }
 
-        _extensionMotorSim.getForwardLimitSwitchSim().setPressed(forwardPressed);
-        _extensionMotorSim.getReverseLimitSwitchSim().setPressed(reversePressed);
+    public Command runRollersForward()
+    {
+        return startEnd(() -> setRollerState(RollerState.Forward), () -> setRollerState(RollerState.Off));
+    }
 
-        if ((forwardPressed && output.gt(Value.zero())) || (reversePressed && output.lt(Value.zero())))
+    public Command startRollersForward()
+    {
+        return runOnce(() -> setRollerState(RollerState.Forward));
+    }
+
+    public Command runRollersReverse()
+    {
+        return startEnd(() -> setRollerState(RollerState.Reverse), () -> setRollerState(RollerState.Off));
+    }
+
+    public Command getRetractCmd()
+    {
+        return Commands.sequence(runOnce(() -> setRollerCurrentLimit(IntakeConstants.ROLLER_CURRENT_LIMIT_ACTIVE)), startRollersForward(), runOnce(() -> setExtendState(ExtendState.Retracted)), Commands.waitUntil(this::isRetracted))
+                .withTimeout(2.0).finallyDo(() ->
+                {
+                    setRollerState(RollerState.Off);
+                    setRollerCurrentLimit(IntakeConstants.ROLLER_CURRENT_LIMIT_EXTENDED);
+                });
+    }
+
+    public Command getExtendCmd()
+    {
+        return runOnce(() -> setExtendState(ExtendState.Extended));
+    }
+
+    public Command jiggle()
+    {
+        return runOnce(() ->
         {
-            _extensionMotorSim.setAppliedOutput(0);
-        }
-
-        _intakeMotorSim.setBusVoltage(RoboRioSim.getVInVoltage());
-        _intakeMotorSim.iterate(RadiansPerSecond.of(_neoVortex.freeSpeedRadPerSec).times(Value.of(_intakeMotorSim.getAppliedOutput())).in(RPM), RoboRioSim.getVInVoltage(), GeneralConstants.LOOP_PERIOD.in(Seconds));
-    }
-
-    public void extend(boolean finalState)
-    {
-        setExtensionVoltage(finalState ? IntakeConstants.EXTEND_VOLTS : IntakeConstants.RETRACT_VOLTS);
-    }
-
-    public Voltage getMotorVoltage()
-    {
-        return Volts.of(_extendMotor.getAppliedOutput() * _extendMotor.getBusVoltage());
-    }
-
-    public Distance getMotorPosition()
-    {
-        return _currentExtension;
-    }
-
-    public boolean isExtended()
-    {
-        return _outSwitchTriggered;
-    }
-
-    public boolean isRetracted()
-    {
-        return _inSwitchTriggered;
-    }
-
-    public void setIntakeState(IntakeState state)
-    {
-        _intakeState = state;
-
-        var volts = switch (_intakeState)
+            setRollerState(RollerState.Forward);
+            setRollerCurrentLimit(IntakeConstants.ROLLER_CURRENT_LIMIT_ACTIVE);
+            setExtendState(ExtendState.Extended);
+        }).andThen(
+                Commands.waitUntil(this::isExtended),
+                Commands.repeatingSequence(
+                        runOnce(() -> setExtendState(ExtendState.Extended)), Commands.waitSeconds(IntakeConstants.JIGGLE_MOVE_TIMEOUT.in(Seconds)), runOnce(() -> setExtendState(ExtendState.Retracted)),
+                        Commands.waitSeconds(IntakeConstants.JIGGLE_MOVE_TIMEOUT.in(Seconds))
+                )
+        ).finallyDo(() ->
         {
-            case Forward -> IntakeConstants.INTAKE_VOLTS;
-            case Reverse -> IntakeConstants.REVERSE_VOLTS;
-            case Off -> Volts.zero();
-        };
-
-        setIntakeVoltage(volts);
-    }
-
-    private void setIntakeVoltage(Voltage volts)
-    {
-        _intakeMotor.setVoltage(volts);
-
-        if (RobotBase.isSimulation())
-        {
-            _intakeMotorSim.setAppliedOutput(volts.div(GeneralConstants.MOTOR_VOLTAGE).in(Value));
-        }
-    }
-
-    private void setExtensionVoltage(Voltage volts)
-    {
-        _extendMotor.setVoltage(volts);
-
-        if (RobotBase.isSimulation())
-        {
-            _extensionMotorSim.setAppliedOutput(volts.div(GeneralConstants.MOTOR_VOLTAGE).in(Value));
-        }
-    }
-
-    private void setRollerCurrentLimitMode(RollerCurrentLimitMode mode)
-    {
-        _rollerCurrentLimitMode = mode;
-        applyDesiredRollerCurrentLimit();
-    }
-
-    private void applyDesiredRollerCurrentLimit()
-    {
-        int desiredAmps = switch (_rollerCurrentLimitMode)
-        {
-            case ForceActive -> (int)IntakeConstants.ROLLER_CURRENT_LIMIT_ACTIVE.in(Amps);
-            case AutoByExtension -> isExtended() ? (int)IntakeConstants.ROLLER_CURRENT_LIMIT_EXTENDED.in(Amps) : (int)IntakeConstants.ROLLER_CURRENT_LIMIT_ACTIVE.in(Amps);
-        };
-
-        applyRollerCurrentLimit(desiredAmps);
-    }
-
-    private void applyRollerCurrentLimit(int amps)
-    {
-        if (amps == _lastAppliedCurrentLimitAmps)
-        {
-            return;
-        }
-
-        _intakeMotor.configure(_rollerBaseConfig.smartCurrentLimit(amps), ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-        _lastAppliedCurrentLimitAmps = amps;
-    }
-
-    public IntakeState getIntakeState()
-    {
-        return _intakeState;
-    }
-
-    private class IntakeHook extends MotorHook
-    {
-        @Override
-        public void stop()
-        {
-            _intakeMotor.stopMotor();
-        }
-
-        @Override
-        public void setRate(double rate)
-        {
-            setIntakeVoltage(GeneralConstants.MOTOR_VOLTAGE.times(rate * _polarity));
-        }
-    }
-
-    public TestHook getHook()
-    {
-        return new IntakeHook();
+            setRollerState(RollerState.Off);
+            setRollerCurrentLimit(IntakeConstants.ROLLER_CURRENT_LIMIT_EXTENDED);
+            setExtendState(ExtendState.Retracted);
+        });
     }
 }

@@ -77,7 +77,7 @@ public final class Constants
          * CAN IDs 1 through 13 are used by the drive subsystem and configured in
          * TunerConstants
          */
-        public static final int INTAKE          = 14; // Vortex
+        public static final int INTAKE_ROLLER   = 14; // Vortex
         public static final int INTAKE_EXTEND   = 15; // Vortex
         public static final int FEEDER_MOTOR    = 16; // Vortex
         public static final int TURRET_MOTOR    = 17; // Talon
@@ -123,29 +123,20 @@ public final class Constants
 
     public static class IntakeConstants
     {
-        public static final Voltage                      INTAKE_VOLTS                  = Volts.of(4.0);
-        public static final Voltage                      REVERSE_VOLTS                 = Volts.of(-6.0);
-        public static final Current                      ROLLER_CURRENT_LIMIT_EXTENDED = Amps.of(80);
-        public static final Current                      ROLLER_CURRENT_LIMIT_ACTIVE   = Amps.of(40);
-        public static final Current                      EXTENSION_CURRENT_LIMIT       = Amps.of(60);
-        public static final int                          CAMERA_DEVICE_INDEX           = 0;
-        public static final String                       CAMERA_NAME                   = "IntakeCam";
-        public static final int                          CAMERA_WIDTH                  = 320;
-        public static final int                          CAMERA_HEIGHT                 = 240;
-        public static final int                          CAMERA_FPS                    = 15;
-        public static final Per<DistanceUnit, AngleUnit> EXTENSION_CONVERSION_FACTOR   = Inches.of(12).div(Rotations.of(6));
-        public static final Distance                     EXTENSION_MAX_POSITION        = Inches.of(12.0);
-        public static final Distance                     EXTENSION_MIN_POSITION        = Inches.of(0);
-        public static final Voltage                      EXTEND_VOLTS                  = Volts.of(1.5);
-        public static final Voltage                      RETRACT_VOLTS                 = Volts.of(-2.5);
-        public static final Voltage                      JIGGLE_RETRACT_VOLTS          = Volts.of(-6.0);
-        public static final Voltage                      JIGGLE_EXTEND_VOLTS           = Volts.of(2.5);
-        public static final double                       JIGGLE_RETRACT_FRACTION       = 0.2;
-        public static final double                       JIGGLE_RETRACT_STEP_FRACTION  = 0.3;
-        public static final Distance                     JIGGLE_LIMIT_MARGIN           = Inches.of(0.0);
-        public static final Time                         JIGGLE_MOVE_TIMEOUT           = Seconds.of(0.60);
-        public static final Time                         JIGGLE_PAUSE_TIME             = Seconds.of(0.02);
-        public static final Time                         RETRACT_TIMEOUT               = Seconds.of(4.0);
+        public static final Voltage                      ROLLER_FORWARD_VOLTS               = Volts.of(4.0);
+        public static final Voltage                      ROLLER_REVERSE_VOLTS               = Volts.of(-6.0);
+        public static final Current                      ROLLER_CURRENT_LIMIT_EXTENDED      = Amps.of(80);
+        public static final Current                      ROLLER_CURRENT_LIMIT_ACTIVE        = Amps.of(40);
+        public static final Current                      EXTENSION_CURRENT_LIMIT            = Amps.of(60);
+        public static final Per<DistanceUnit, AngleUnit> EXTENSION_CONVERSION_FACTOR        = Inches.of(12).div(Rotations.of(6));
+        public static final Distance                     EXTENSION_MAX_POSITION             = Inches.of(12.0);
+        public static final Distance                     EXTENSION_MIN_POSITION             = Inches.of(0);
+        public static final Distance                     EXTENSION_PID_TOLERANCE            = Inches.of(0.25);
+        public static final Voltage                      EXTENSION_HOMING_VOLTAGE           = Volts.of(-2.0);
+        public static final Time                         JIGGLE_MOVE_TIMEOUT                = Seconds.of(0.60);
+        public static final Current                      EXTENSION_HOMING_CURRENT_THRESHOLD = Amps.of(15);
+        public static final Time                         EXTENSION_HOMING_DEBOUNCE_TIME     = Seconds.of(0.25);
+        public static final Time                         EXTENSION_HOMING_TIME_LIMIT        = Seconds.of(2.0);
     }
 
     public static class GeneralConstants
