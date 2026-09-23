@@ -98,7 +98,7 @@ public class RobotContainer
         // _driver.button(14).onTrue(_shooter.setManualTurretAngle(Degrees.of(-135.0)));
         _driver.button(16).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
 
-        _driver.pov(0).onTrue(_shooter.setManualTurretAngle(Degrees.of(90)));
+        _driver.pov(0).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90)));
         _driver.pov(180).onTrue(_shooter.setManualTurretAngle(Degrees.of(90)));
         _driver.pov(225).onTrue(_shooter.setManualTurretAngle(Degrees.of(45)));
         _driver.pov(270).onTrue(_shooter.setManualTurretAngle(Degrees.of(0)));
