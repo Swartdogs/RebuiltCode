@@ -342,7 +342,7 @@ public class Shooter extends SubsystemBase
         }
     }
 
-    private void setManualTurretAngleCommand(Angle angle)
+    public void setManualTurretAngleCommand(Angle angle)
     {
         beginManualControl(true);
         _turret.setManualAngle(angle);

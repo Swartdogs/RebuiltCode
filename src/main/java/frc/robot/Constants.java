@@ -126,7 +126,7 @@ public final class Constants
         public static final Voltage                      INTAKE_VOLTS                  = Volts.of(4.0);
         public static final Voltage                      REVERSE_VOLTS                 = Volts.of(-6.0);
         public static final Current                      ROLLER_CURRENT_LIMIT_EXTENDED = Amps.of(80);
-        public static final Current                      ROLLER_CURRENT_LIMIT_ACTIVE   = Amps.of(40);
+        public static final Current                      ROLLER_CURRENT_LIMIT_ACTIVE   = Amps.of(60);
         public static final Current                      EXTENSION_CURRENT_LIMIT       = Amps.of(60);
         public static final int                          CAMERA_DEVICE_INDEX           = 0;
         public static final String                       CAMERA_NAME                   = "IntakeCam";
