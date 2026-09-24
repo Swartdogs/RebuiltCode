@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.TunerConstants;
@@ -40,6 +41,7 @@ public class RobotContainer
     private final Intake                     _intake                   = new Intake();
     private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
     private final Autos                      _autos                    = new Autos(_drive, _shooter, _intake);
+    private boolean                          _driverPOVReleased        = true;
     // private Dimensionless _driveMultiplier = DriveConstants.FULL_SPEED_SCALE;
     private double    _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
     private NetParams _params;
@@ -98,11 +100,26 @@ public class RobotContainer
         // _driver.button(14).onTrue(_shooter.setManualTurretAngle(Degrees.of(-135.0)));
         _driver.button(16).whileTrue(_drive.applyRequest(() -> _robotCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate())));
 
-        _driver.pov(0).onTrue(_shooter.setManualTurretAngle(Degrees.of(-90)));
-        _driver.pov(180).onTrue(_shooter.setManualTurretAngle(Degrees.of(90)));
-        _driver.pov(225).onTrue(_shooter.setManualTurretAngle(Degrees.of(45)));
-        _driver.pov(270).onTrue(_shooter.setManualTurretAngle(Degrees.of(0)));
-        _driver.pov(315).onTrue(_shooter.setManualTurretAngle(Degrees.of(-45)));
+        // Debounce the transition out of -1 by 50ms
+        Trigger povJustPressed = _driver.pov(-1).negate().debounce(0.05).and(() -> _driverPOVReleased);
+
+        povJustPressed.onTrue(Commands.runOnce(() ->
+        {
+            int angle = _driver.getHID().getPOV();
+            _driverPOVReleased = false;
+
+            _shooter.setManualTurretAngleCommand(Degrees.of(switch (angle)
+            {
+                case 0 -> -90;
+                case 180 -> 90;
+                case 225 -> 45;
+                case 315 -> -45;
+                default -> 0;
+            }));
+
+        }));
+
+        _driver.pov(-1).onTrue(Commands.runOnce(() -> _driverPOVReleased = true));
 
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
