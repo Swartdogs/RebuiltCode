@@ -11,9 +11,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Dimensionless;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
@@ -25,7 +23,6 @@ import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.MeasureUtil;
-import frc.robot.NetParams;
 
 @Logged
 public class RobotContainer
@@ -41,8 +38,7 @@ public class RobotContainer
     private final Shooter                    _shooter                  = new Shooter(_drive::getState, _intake::isExtended, _intake::isRetracted);
     private final Autos                      _autos                    = new Autos(_drive, _shooter, _intake);
     // private Dimensionless _driveMultiplier = DriveConstants.FULL_SPEED_SCALE;
-    private double    _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
-    private NetParams _params;
+    private double _manualFlywheelRPM = MANUAL_FLYWHEEL_START_RPM;
 
     public RobotContainer()
     {
@@ -69,6 +65,12 @@ public class RobotContainer
         return _fieldCentric.withVelocityX(getDrive()).withVelocityY(getStrafe()).withRotationalRate(getRotate());
     }
 
+    private void setManualFlywheelRPM(double rpm)
+    {
+        _manualFlywheelRPM = Math.max(0.0, rpm);
+        _shooter.setManualFlywheel(_manualFlywheelRPM);
+    }
+
     private void configureBindings()
     {
         _drive.setDefaultCommand(_drive.applyRequest(this::getFieldCentricRequest));
@@ -79,7 +81,7 @@ public class RobotContainer
         // _driver.button(1).whileTrue(Commands.parallel(_shooter.shoot(),
         // Commands.startEnd(() -> _drive.disableVisionPoseCorrection(true), () ->
         // _drive.disableVisionPoseCorrection(false))));
-        _driver.button(1).whileTrue(_shooter.manualShootCmd(() -> _params.flywheelSpeed));
+        _driver.button(1).whileTrue(_shooter.manualShootCmd(() -> _manualFlywheelRPM));
         // _driver.button(2).whileTrue(Commands.startEnd(() -> _driveMultiplier =
         // DriveConstants.SLOW_MODE_SCALE, () -> _driveMultiplier =
         // DriveConstants.FULL_SPEED_SCALE));
@@ -107,12 +109,13 @@ public class RobotContainer
         _operator.leftTrigger().whileTrue(_intake.runRollersForward());
         _operator.leftBumper().whileTrue(_intake.runRollersReverse());
         _operator.rightTrigger().whileTrue(_intake.jiggle());
+        _operator.y().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(MANUAL_FLYWHEEL_START_RPM)));
+        _operator.x().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM - MANUAL_FLYWHEEL_STEP_RPM)));
+        _operator.b().onTrue(Commands.runOnce(() -> setManualFlywheelRPM(_manualFlywheelRPM + MANUAL_FLYWHEEL_STEP_RPM)));
         _operator.a().onTrue(Commands.runOnce(_shooter::stopManualFlywheel));
         _operator.rightBumper().whileTrue(_shooter.runManualFeeder());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
-
-        SmartDashboard.putData(_shooter.setTurretAngleCmd(() -> _params.turretAngle));
     }
 
     public Command getAutonomousCommand()
