@@ -10,7 +10,7 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
-import frc.robot.Constants.ShooterConstants;
+import frc.robot.Constants.VisionConstants;
 
 /**
  * Utility class for reading REBUILT 2026 game data from the Driver Station /
@@ -27,7 +27,7 @@ public final class Utilities
     private static final Time          kShift2EndTimeSecs          = Seconds.of(80.0);  // 1:20
     private static final Time          kShift3EndTimeSecs          = Seconds.of(55.0);  // 0:55
     private static final Time          kShift4EndTimeSecs          = Seconds.of(30.0);  // 0:30
-    private static final List<Integer> kAllHubTagIds               = Stream.concat(ShooterConstants.RED_HUB_TAG_IDS.stream(), ShooterConstants.BLUE_HUB_TAG_IDS.stream()).toList();
+    private static final List<Integer> kAllHubTagIds               = Stream.concat(VisionConstants.RED_HUB_TAG_IDS.stream(), VisionConstants.BLUE_HUB_TAG_IDS.stream()).toList();
 
     private Utilities()
     {
@@ -94,9 +94,9 @@ public final class Utilities
         if (alliance.isEmpty()) return kAllHubTagIds;
         if (isRedAlliance())
         {
-            return ShooterConstants.RED_HUB_TAG_IDS;
+            return VisionConstants.RED_HUB_TAG_IDS;
         }
-        return ShooterConstants.BLUE_HUB_TAG_IDS;
+        return VisionConstants.BLUE_HUB_TAG_IDS;
     }
 
     private static int getAllianceShift(Time timeRemaining)
@@ -121,7 +121,7 @@ public final class Utilities
 
     public static Translation2d getHubCoordinates()
     {
-        return isBlueAlliance() ? ShooterConstants.BLUE_HUB : ShooterConstants.RED_HUB;
+        return isBlueAlliance() ? VisionConstants.BLUE_HUB : VisionConstants.RED_HUB;
     }
 
     /**
