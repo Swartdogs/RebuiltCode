@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -100,7 +101,15 @@ public class Turret
         outputConfig.NeutralMode = NeutralModeValue.Brake;
         outputConfig.Inverted    = InvertedValue.Clockwise_Positive;
 
-        _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig));
+        var feedbackConfig = new FeedbackConfigs();
+        feedbackConfig.SensorToMechanismRatio = 13;
+
+        // FF gains:
+        // - ks: 0.3349
+        // - kv: 1.091
+        // - ka: 0.60372
+
+        _turretMotor.getConfigurator().apply(new TalonFXConfiguration().withCurrentLimits(currentConfig).withMotorOutput(outputConfig).withFeedback(feedbackConfig));
         _pidController.setTolerance(ShooterConstants.TURRET_TOLERANCE.in(Degrees));
 
     }
@@ -327,16 +336,19 @@ public class Turret
         _currentCommandedMotorVoltage = volts;
     }
 
+    @Logged
     public Voltage getVoltage()
     {
         return _turretMotor.getMotorVoltage().getValue();
     }
 
+    @Logged
     public Angle getAngle()
     {
         return _turretMotor.getPosition().getValue();
     }
 
+    @Logged
     public AngularVelocity getVelocity()
     {
         return _turretMotor.getVelocity().getValue();

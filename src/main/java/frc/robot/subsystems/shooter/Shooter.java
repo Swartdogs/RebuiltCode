@@ -4,9 +4,11 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volt;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
@@ -111,7 +113,8 @@ public class Shooter extends SubsystemBase
         _flywheel.stop();
         _turret.clearTargetAngle();
 
-        SysIdRoutine.Config config = new SysIdRoutine.Config();
+        SysIdRoutine.Config config = new SysIdRoutine.Config(Volts.of(0.25).per(Second), Volts.of(1), Seconds.of(10));
+
         // @formatter:off
         Consumer<SysIdRoutineLog> logConsumer =
                 (log) -> log.motor("Turret Motor")
