@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter.rotor;
 
+import static edu.wpi.first.units.Units.RPM;
+
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -63,6 +65,13 @@ public class Rotor extends SubsystemBase
     // Sets the desired angular rate of rotation of the rotor
     public void setRate(AngularVelocity rate)
     {
+        // If a non-positive rate is requested, turn off the rotor
+        if (rate.lte(RPM.zero()))
+        {
+            stop();
+            return;
+        }
+
         _io.setRate(rate);
     }
 

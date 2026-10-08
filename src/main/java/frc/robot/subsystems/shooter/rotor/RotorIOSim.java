@@ -88,13 +88,6 @@ public class RotorIOSim implements RotorIO
     // Sets the desired angular rate of rotation of the rotor
     public void setRate(AngularVelocity rate)
     {
-        // If a non-positive speed is requested, turn off the rotor
-        if (rate.lte(RPM.zero()))
-        {
-            stop();
-            return;
-        }
-
         _targetVelocity = rate;
     }
 
