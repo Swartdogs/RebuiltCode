@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
@@ -206,5 +207,19 @@ public final class Constants
     {
         public static final Distance EXTENDED_DISTANCE  = Inches.of(10);
         public static final Distance RETRACTED_DISTANCE = Inches.of(0);
+    }
+
+    public static class ShooterConstants
+    {
+        // Rotor
+        public static final Current       ROTOR_CURRENT_LIMIT = Amps.of(80);
+        public static final Dimensionless ROTOR_GEAR_RATIO    = Value.of(36).div(Value.of(1)); // 36:1
+        public static final double        ROTOR_KG            = 0;
+        public static final double        ROTOR_KS            = 0;
+        public static final double        ROTOR_KV            = 0;
+        public static final double        ROTOR_KA            = 0;
+        public static final double        ROTOR_KP            = 0;
+        public static final double        ROTOR_KI            = 0;
+        public static final double        ROTOR_KD            = 0;
     }
 }
