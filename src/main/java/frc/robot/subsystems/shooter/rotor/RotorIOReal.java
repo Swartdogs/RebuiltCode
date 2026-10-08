@@ -2,7 +2,10 @@ package frc.robot.subsystems.shooter.rotor;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Value;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -47,13 +50,13 @@ public class RotorIOReal implements RotorIO
         config.MotorOutput.Inverted    = InvertedValue.Clockwise_Positive;
 
         // Motor configurations related to closed loop gains
-        config.Slot0.kG = ShooterConstants.ROTOR_KG;
-        config.Slot0.kS = ShooterConstants.ROTOR_KS;
-        config.Slot0.kV = ShooterConstants.ROTOR_KV;
-        config.Slot0.kA = ShooterConstants.ROTOR_KA;
-        config.Slot0.kP = ShooterConstants.ROTOR_KP;
-        config.Slot0.kI = ShooterConstants.ROTOR_KI;
-        config.Slot0.kD = ShooterConstants.ROTOR_KD;
+        config.Slot0.kG = 0.0;
+        config.Slot0.kS = ShooterConstants.ROTOR_KS.in(Volts);
+        config.Slot0.kV = ShooterConstants.ROTOR_KV.in(Volts.per(RPM));
+        config.Slot0.kA = ShooterConstants.ROTOR_KA.in(Volts.per(RotationsPerSecondPerSecond));
+        config.Slot0.kP = ShooterConstants.ROTOR_KP.in(Volts.per(RPM));
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = ShooterConstants.ROTOR_KD.in(Volts.per(RPM.per(Second)));
 
         // Set the gear ratio of the motor
         config.Feedback.SensorToMechanismRatio = ShooterConstants.ROTOR_GEAR_RATIO.in(Value);

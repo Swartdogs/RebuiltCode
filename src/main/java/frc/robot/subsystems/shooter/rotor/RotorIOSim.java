@@ -2,6 +2,8 @@ package frc.robot.subsystems.shooter.rotor;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
@@ -44,13 +46,13 @@ public class RotorIOSim implements RotorIO
         _rotorModel = DCMotor.getKrakenX60(1);
 
         // Initialize the simulation object
-        _rotorSim = new FlywheelSim(LinearSystemId.createFlywheelSystem(_rotorModel, 0.01, ShooterConstants.ROTOR_GEAR_RATIO.in(Value)), _rotorModel, null);
+        _rotorSim = new FlywheelSim(LinearSystemId.createFlywheelSystem(_rotorModel, 0.1, ShooterConstants.ROTOR_GEAR_RATIO.in(Value)), _rotorModel);
 
         // Initialize feed forward for velocity control
-        _feedForward = new SimpleMotorFeedforward(ShooterConstants.ROTOR_KS, ShooterConstants.ROTOR_KV, ShooterConstants.ROTOR_KA);
+        _feedForward = new SimpleMotorFeedforward(ShooterConstants.ROTOR_KS.in(Volts), ShooterConstants.ROTOR_KV.in(Volts.per(RPM)), ShooterConstants.ROTOR_KA.in(Volts.per(RotationsPerSecondPerSecond)));
 
         // Initialize pid for velocity control
-        _pid = new PIDController(ShooterConstants.ROTOR_KP, ShooterConstants.ROTOR_KI, ShooterConstants.ROTOR_KD);
+        _pid = new PIDController(ShooterConstants.ROTOR_KP.in(Volts.per(RPM)), 0.0, ShooterConstants.ROTOR_KD.in(Volts.per(RPM.per(Second))));
 
         // Initialize target velocity. Off by default
         _targetVelocity = RPM.zero();

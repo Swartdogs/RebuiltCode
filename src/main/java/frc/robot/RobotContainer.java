@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Value;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -19,6 +20,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.shooter.rotor.Rotor;
 import frc.robot.util.MeasureUtil;
 
 @Logged
@@ -32,6 +34,9 @@ public class RobotContainer
     private final Intake                     _intake       = new Intake();
     private final Autos                      _autos        = new Autos(_drive, _intake);
     // private Dimensionless _driveMultiplier = DriveConstants.FULL_SPEED_SCALE;
+
+    // Shooter subsystem components
+    private final Rotor _rotor = new Rotor();
 
     public RobotContainer()
     {
@@ -80,6 +85,12 @@ public class RobotContainer
         _operator.rightTrigger().whileTrue(_intake.jiggle());
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
+
+        // Rotor testing commands
+        _operator.a().onTrue(_rotor.commands.stop());
+        _operator.y().onTrue(_rotor.commands.setRate(RPM.of(80)));
+        _operator.b().whileTrue(_rotor.commands.run(RPM.of(100)));
+        _operator.x().whileTrue(_rotor.commands.run(RPM.of(60)));
     }
 
     public Command getAutonomousCommand()
