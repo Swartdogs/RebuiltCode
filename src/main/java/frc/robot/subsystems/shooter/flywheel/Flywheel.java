@@ -26,6 +26,11 @@ public class Flywheel extends SubsystemBase
     @NotLogged
     private final FlywheelIO _io;
 
+    // Provides a clean way for other classes to instantiate commands that run on
+    // this object
+    @NotLogged
+    public final FlywheelCommandFactory commands = new FlywheelCommandFactory();
+
     // The target rate of rotation for the flywheel
     @Logged
     private AngularVelocity _targetRate;

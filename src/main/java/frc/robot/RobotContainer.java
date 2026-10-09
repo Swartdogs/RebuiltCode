@@ -20,7 +20,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.shooter.rotor.Rotor;
+import frc.robot.subsystems.shooter.flywheel.Flywheel;
 import frc.robot.util.MeasureUtil;
 
 @Logged
@@ -36,7 +36,7 @@ public class RobotContainer
     // private Dimensionless _driveMultiplier = DriveConstants.FULL_SPEED_SCALE;
 
     // Shooter subsystem components
-    private final Rotor _rotor = new Rotor();
+    private final Flywheel _flywheel = new Flywheel();
 
     public RobotContainer()
     {
@@ -86,11 +86,11 @@ public class RobotContainer
         _operator.povDown().onTrue(_intake.getRetractCmd());
         _operator.povUp().onTrue(_intake.getExtendCmd());
 
-        // Rotor testing commands
-        _operator.a().onTrue(_rotor.commands.stop());
-        _operator.y().onTrue(_rotor.commands.setRate(RPM.of(80)));
-        _operator.b().whileTrue(_rotor.commands.run(RPM.of(100)));
-        _operator.x().whileTrue(_rotor.commands.run(RPM.of(60)));
+        // Flywheel testing commands
+        _operator.a().onTrue(_flywheel.commands.stop());
+        _operator.y().onTrue(_flywheel.commands.setRate(RPM.of(4800)));
+        _operator.b().whileTrue(_flywheel.commands.run(RPM.of(5400)));
+        _operator.x().whileTrue(_flywheel.commands.run(RPM.of(3600)));
     }
 
     public Command getAutonomousCommand()

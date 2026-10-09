@@ -228,9 +228,9 @@ public final class Constants
         // Flywheel
         public static final Current                                   FLYWHEEL_CURRENT_LIMIT = Amps.of(80);
         public static final Voltage                                   FLYWHEEL_KS            = Volts.of(0.0);
-        public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KV            = Volts.of(0.0).div(RPM.of(0.0));
+        public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KV            = Volts.of(12.0).div(RPM.of(6784.0));
         public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KA            = Volts.of(0.0).per(RotationsPerSecondPerSecond);
-        public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KP            = Volts.of(0.0).per(RPM);
+        public static final Per<VoltageUnit, AngularVelocityUnit>     FLYWHEEL_KP            = Volts.of(0.00015).per(RPM);
         public static final Per<VoltageUnit, AngularAccelerationUnit> FLYWHEEL_KD            = Volts.of(0.0).per(RPM.per(Second));
         public static final AngularVelocity                           FLYWHEEL_TOLERANCE     = RPM.of(50);
     }
