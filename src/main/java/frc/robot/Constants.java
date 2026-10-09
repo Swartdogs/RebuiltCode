@@ -12,7 +12,10 @@ import static edu.wpi.first.units.Units.Milliseconds;
 import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Value;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
@@ -28,7 +31,10 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularAccelerationUnit;
+import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -206,5 +212,17 @@ public final class Constants
     {
         public static final Distance EXTENDED_DISTANCE  = Inches.of(10);
         public static final Distance RETRACTED_DISTANCE = Inches.of(0);
+    }
+
+    public static class ShooterConstants
+    {
+        // Rotor
+        public static final Current                                   ROTOR_CURRENT_LIMIT = Amps.of(80);
+        public static final Dimensionless                             ROTOR_GEAR_RATIO    = Value.of(36).div(Value.of(1)); // 36:1
+        public static final Voltage                                   ROTOR_KS            = Volts.of(0.0);
+        public static final Per<VoltageUnit, AngularVelocityUnit>     ROTOR_KV            = Volts.of(12.0).div(RPM.of(6000.0).div(ROTOR_GEAR_RATIO));
+        public static final Per<VoltageUnit, AngularAccelerationUnit> ROTOR_KA            = Volts.of(0.0).per(RotationsPerSecondPerSecond);
+        public static final Per<VoltageUnit, AngularVelocityUnit>     ROTOR_KP            = Volts.of(0.025).per(RPM);
+        public static final Per<VoltageUnit, AngularAccelerationUnit> ROTOR_KD            = Volts.of(0.00005).per(RPM.per(Second));
     }
 }
