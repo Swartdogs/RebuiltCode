@@ -58,7 +58,7 @@ public class RotorIOSim implements RotorIO
         _targetVelocity = RPM.zero();
     }
 
-    // Allows the RotorIOReal object to read sensor inputs. Updated
+    // Allows the RotorIOSim object to read sensor inputs. Updated
     // values are loaded into the provided "inputs" parameter.
     public void updateInputs(RotorIOInputs inputs)
     {
